@@ -1,5 +1,6 @@
 package com.jwebmp.core.base.angular.client.services.interfaces;
 
+import com.google.common.base.*;
 import com.jwebmp.core.base.*;
 import com.jwebmp.core.base.angular.client.annotations.angular.*;
 import com.jwebmp.core.base.angular.client.annotations.components.*;
@@ -30,6 +31,7 @@ import static java.nio.charset.StandardCharsets.*;
 
 @NgImportReference(value = "ElementRef", reference = "@angular/core")
 @NgImportReference(value = "Input", reference = "@angular/core")
+@NgImportReference(value = "Injectable", reference = "@angular/core")
 
 @NgConstructorParameter("private cdref: ChangeDetectorRef")
 @NgConstructorParameter("private elementRef: ElementRef")
@@ -121,7 +123,8 @@ public interface INgComponent<J extends INgComponent<J>>
 		{
 			for (NgOnInit ngField : fInit)
 			{
-				outs.add(ngField.value().trim());
+				outs.add(ngField.value()
+				                .trim());
 			}
 		}
 		StringBuilder fInitOut = new StringBuilder();
@@ -162,7 +165,8 @@ public interface INgComponent<J extends INgComponent<J>>
 		{
 			for (NgOnDestroy ngField : fInit)
 			{
-				outs.add(ngField.value().trim());
+				outs.add(ngField.value()
+				                .trim());
 			}
 		}
 		StringBuilder fInitOut = new StringBuilder();
@@ -218,6 +222,25 @@ public interface INgComponent<J extends INgComponent<J>>
 		{
 			list = new ArrayList<>();
 		}
+		if (!getClass().isAnnotationPresent(NgComponent.class))
+		{
+			System.out.println("This one doesn't have a ng component");
+			return list;
+		}
+		NgComponent ngComponent = getAnnotations(getClass(), NgComponent.class).get(0);
+		if (!Strings.isNullOrEmpty(getClass().getAnnotation(NgComponent.class)
+		                                     .providedIn()))
+		{
+			list.add("@Injectable ({" +
+			         "  providedIn:" +
+			         (ngComponent.providedIn()
+			                     .startsWith("!") ? "" : "'") +
+			         ngComponent.providedIn() +
+			         (ngComponent.providedIn()
+			                     .startsWith("!") ? "" : "'") +
+			         "})");
+		}
+		
 		StringBuilder selector = new StringBuilder();
 		StringBuilder template = new StringBuilder();
 		StringBuilder styles = new StringBuilder();
@@ -227,12 +250,6 @@ public interface INgComponent<J extends INgComponent<J>>
 		StringBuilder providers = new StringBuilder();
 		StringBuilder hosts = new StringBuilder();
 		
-		if (!getClass().isAnnotationPresent(NgComponent.class))
-		{
-			System.out.println("This one doesn't have a ng component");
-		}
-		
-		NgComponent ngComponent = getAnnotations(getClass(), NgComponent.class).get(0);
 		
 		ComponentHierarchyBase chb = (ComponentHierarchyBase) this;
 		selector.append(ngComponent.value());
@@ -414,7 +431,8 @@ public interface INgComponent<J extends INgComponent<J>>
 		{
 			for (NgAfterViewInit ngField : fInit)
 			{
-				outs.add(ngField.value().trim());
+				outs.add(ngField.value()
+				                .trim());
 			}
 		}
 		StringBuilder fInitOut = new StringBuilder();
@@ -455,7 +473,8 @@ public interface INgComponent<J extends INgComponent<J>>
 		{
 			for (NgAfterViewChecked ngField : fInit)
 			{
-				outs.add(ngField.value().trim());
+				outs.add(ngField.value()
+				                .trim());
 			}
 		}
 		StringBuilder fInitOut = new StringBuilder();
@@ -496,7 +515,8 @@ public interface INgComponent<J extends INgComponent<J>>
 		{
 			for (NgAfterContentInit ngField : fInit)
 			{
-				outs.add(ngField.value().trim());
+				outs.add(ngField.value()
+				                .trim());
 			}
 		}
 		StringBuilder fInitOut = new StringBuilder();
@@ -536,7 +556,8 @@ public interface INgComponent<J extends INgComponent<J>>
 		{
 			for (NgAfterContentChecked ngField : fInit)
 			{
-				outs.add(ngField.value().trim());
+				outs.add(ngField.value()
+				                .trim());
 			}
 		}
 		StringBuilder fInitOut = new StringBuilder();

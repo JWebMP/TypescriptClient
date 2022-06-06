@@ -80,22 +80,25 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
 		
 		String dtRef = "";
 		dtRef = getTsFilename(DynamicData.class);
-		methods.add("fetchData(){\n" +
-		            "   this.socketClientService.send('data',{...this.additionalData,className :  '" +
-		            "" + getClass().getCanonicalName() + "'},this.listenerName);\n" +
-		            "}\n" +
+		methods.add("\tfetchData(){\n" +
+		            "\t\tthis.socketClientService.send('data',{...this.additionalData,className :  '" +getClass().getCanonicalName() + "'},this.listenerName);\n" +
+		            "\t}\n" +
 		            "" +
-		            "get data() : Observable<" + dtRef + "> {\n" +
-		            "        return this._data.asObservable();\n" +
-		            "    }" +
+		            "\tget data() : Observable<" + dtRef + "> {\n" +
+		            "\t\treturn this._data.asObservable();\n" +
+		            "\t}" +
 		            "" +
 		            "");
-		methods.add("public sendData(datas : any) {\n" +
-		            "        this.socketClientService.send('dataSend', {" +
-		            "           ...this.additionalData," +
-		            "       data :{...datas},\n" +
-		            "            className: '" + getClass().getCanonicalName() + "'}, this.listenerName);\n" +
-		            "    }");
+		methods.add("\tpublic sendData(datas : any) {\n" +
+		            "\t\tthis.socketClientService.send('dataSend', {" +
+		            "\t\t\t...this.additionalData," +
+		            "\t\t\tdata :{...datas},\n" +
+		            "\t\tclassName: '" + getClass().getCanonicalName() + "'}, this.listenerName);\n" +
+		            "\t}");
+		
+		methods.add("\tpublic reset(){\n" +
+		            "\t\tthis._data.next({});" +
+		            "\t}\n");
 		return methods;
 	}
 	
@@ -121,6 +124,19 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
 	{
 		return false;
 	}
+	default int bufferTime()
+	{
+		return 100;
+	}
+	default boolean takeLast()
+	{
+		return false;
+	}
+	default int takeLastCount()
+	{
+		return 100;
+	}
+	
 	
 	default String providedIn()
 	{

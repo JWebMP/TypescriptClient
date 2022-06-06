@@ -16,6 +16,7 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
 @NgImportReference(value = "Injectable", reference = "@angular/core")
 
 @NgField("private subscription?: Subscription;")
+@NgField("public additionalData: any = {};")
 @NgOnDestroy("this.subscription?.unsubscribe();")
 
 @NgImportReference(value = "OnDestroy", reference = "@angular/core")
@@ -83,8 +84,12 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
 	default List<String> componentConstructorBody()
 	{
 		List<String> out = IComponent.super.componentConstructorBody();
-		String s = "this.subscription = this.service.data.subscribe(observer => {\n" +
-		           "            if (observer && observer.out && observer.out.length > 0) {\n";
+		String s = "this.subscription = this.service.data" +
+		           "" + (buffer() ? ".pipe(bufferTime(" + bufferTime() + "))" : "") +
+		           "" + (takeLast() ? ".pipe(takeLast(" + takeLastCount() + "))" : "") +
+		           "" +
+		           ".subscribe(observer => {\n" +
+		           "            if (observer && observer.out) {\n";
 		s += "                this." + getAnnotation().variableName() + " = observer.out[0];\n";
 		s += "                this._onUpdate.next(true);" +
 		     "            }\n" +
@@ -97,28 +102,34 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
 	default List<String> componentMethods()
 	{
 		List<String> out = IComponent.super.componentMethods();
-		out.add("public sendData(datas : any){" +
-		        "   this.service.sendData(datas);" +
-		        "}");
-		NgServiceProvider provider = getAnnotation();
-		out.add("get onUpdate(): Observable<boolean> {\n" +
-		        "        return this._onUpdate.asObservable();\n" +
-		        "    }");
-		if(provider.dataArray())
-		out.add("checkData()\n" +
-		        "    {\n" +
-		        "        if(this." + getAnnotation().variableName() + ".length == 0) {\n" +
-		        "            this.service.fetchData();\n" +
-		        "        }\n" +
-		        "    }");
-		else {
-			out.add("checkData()\n" +
-			        "    {\n" +
-			        "        if(!this." + getAnnotation().variableName() + ") {\n" +
-			        "            this.service.fetchData();\n" +
-			        "        }\n" +
-			        "    }");
+		out.add("\tpublic sendData(datas : any){\n" +
+		        "\t\tthis.service.additionalData = this.additionalData;\n" +
+		        "\t\tthis.service.sendData(datas);\n" +
+		        "\t}");
+	
+		out.add("\tget onUpdate(): Observable<boolean> {\n" +
+		        "\t\treturn this._onUpdate.asObservable();\n" +
+		        "\t}");
+		out.add("\tcheckData()\n" +
+		        "\t{\n" +
+		        "\t\tthis.service.fetchData();\n" +
+		        "\t}");
+		
+		String resetString = "\treset() {\n" +
+		                     "\t\tthis._onUpdate.next(false);\n" +
+		                     "\t\tthis.service.additionalData = {};\n" +
+		                     "\t\tthis.service.additionalData = this.additionalData;\n";
+		if (!getAnnotation().dataArray())
+		{
+			resetString += "\t\tthis." + getAnnotation().variableName() + " = {};";
 		}
+		else
+		{
+			resetString += "\t\tthis." + getAnnotation().variableName() + " = [];";
+			
+		}
+		resetString += "\t}\n";
+		out.add(resetString);
 		return out;
 	}
 	
@@ -174,5 +185,25 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
 		   .append("\n");
 		out.append("}\n");
 		return out.toString();
+	}
+	
+	default boolean buffer()
+	{
+		return false;
+	}
+	
+	default int bufferTime()
+	{
+		return 500;
+	}
+	
+	default boolean takeLast()
+	{
+		return false;
+	}
+	
+	default int takeLastCount()
+	{
+		return 100;
 	}
 }

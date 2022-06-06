@@ -16,4 +16,6 @@ public @interface NgComponent
 	 * @return
 	 */
 	String value();
+	
+	String providedIn() default "";
 }
