@@ -15,13 +15,14 @@ import java.util.*;
 @NgImportReference(value = "Location", reference = "@angular/common")
 @NgImportReference(value = "ElementRef", reference = "@angular/core")
 @NgImportReference(value = "BehaviorSubject", reference = "rxjs/internal/BehaviorSubject")
+@NgImportReference(value = "Subject", reference = "rxjs")
 @NgImportReference(value = "webSocket", reference = "rxjs/webSocket")
 @NgImportReference(value = "retry, RetryConfig", reference = "rxjs/operators")
 @NgImportReference(value = "RouterModule, ParamMap,Router", reference = "@angular/router")
 @NgImportReference(value = "ActivatedRoute", reference = "@angular/router")
 
 @NgField("static websocket: any;")
-@NgField("static dataListenerMappings = new Map<string, BehaviorSubject<any>>();")
+@NgField("static dataListenerMappings = new Map<string, Subject<any>>();")
 
 @NgConstructorParameter("private routeLocation: Location")
 @NgConstructorParameter("private router: Router")
@@ -50,7 +51,7 @@ import java.util.*;
           "   let observer = SocketClientService.dataListenerMappings.get(listener);" +
           "   if(!observer)" +
           "   {" +
-          "       SocketClientService.dataListenerMappings.set(listener,observer = new BehaviorSubject<object>({}));" +
+          "       SocketClientService.dataListenerMappings.set(listener,observer = new Subject<object>());" +
           "   }" +
           "   return observer;" +
           "}")
