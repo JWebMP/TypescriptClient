@@ -1,6 +1,7 @@
 package com.jwebmp.core.base.angular.client.services.interfaces;
 
 import com.jwebmp.core.base.angular.client.annotations.angular.*;
+import com.jwebmp.core.base.angular.client.annotations.components.*;
 import com.jwebmp.core.base.angular.client.annotations.functions.*;
 import com.jwebmp.core.base.angular.client.annotations.references.*;
 import com.jwebmp.core.base.angular.client.annotations.structures.*;
@@ -102,11 +103,13 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
 	default List<String> componentMethods()
 	{
 		List<String> out = IComponent.super.componentMethods();
-		out.add("\tpublic sendData(datas : any){\n" +
-		        "\t\tthis.service.additionalData = this.additionalData;\n" +
-		        "\t\tthis.service.sendData(datas);\n" +
-		        "\t}");
-	
+		String sendDataString = "\tpublic sendData(datas : any){\n";
+		sendDataString += "\t\tthis.service.additionalData = this.additionalData;\n" +
+		                  "\t\tthis.service.sendData(datas);\n" +
+		                  "\t}";
+		
+		out.add(sendDataString);
+		
 		out.add("\tget onUpdate(): Observable<boolean> {\n" +
 		        "\t\treturn this._onUpdate.asObservable();\n" +
 		        "\t}");

@@ -26,7 +26,7 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
 @NgImportReference(value = "OnDestroy", reference = "@angular/core")
 public interface INgDataService<J extends INgDataService<J>> extends IComponent<J>
 {
-	DynamicData getData(AjaxCall<?> call);
+	DynamicData getData(AjaxCall<?> call, AjaxResponse<?> response);
 	
 	default void receiveData(AjaxCall<?> call, AjaxResponse<?> response)
 	{

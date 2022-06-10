@@ -14,5 +14,7 @@ public @interface NgInput
 {
 	String value();
 	
+	boolean additionalData() default false;
+	
 	int sortOrder() default 100;
 }
