@@ -45,13 +45,12 @@ import java.util.*;
 
 @NgConstructorBody("}")
 
-
 @NgMethod("registerListener(listener:string) : any" +
           "{" +
           "   let observer = SocketClientService.dataListenerMappings.get(listener);" +
           "   if(!observer)" +
           "   {" +
-          "       SocketClientService.dataListenerMappings.set(listener,observer = new Subject<object>());" +
+          "       SocketClientService.dataListenerMappings.set(listener,observer = new BehaviorSubject<any>(undefined));" +
           "   }" +
           "   return observer;" +
           "}")
@@ -80,6 +79,7 @@ import java.util.*;
           "news.data.hashbang = window.location.hash;\n" +
           "news.data.route = this.routeLocation.path();\n" +
           "news.data.state = this.routeLocation.getState();\n" +
+          "news.data.history = history.state;\n" +
           "news.data.datetime = new Date().getUTCDate();\n" +
           "news.data.eventType = eventType;\n" +
           "news.data.headers = {};\n" +
@@ -98,17 +98,11 @@ import java.util.*;
           "if(component)\n" +
           "{\n" +
           "        let ele = component.nativeElement;\n" +
-          "        let attributeNames: string[] =  ele.getAttributeNames();\n" +
-          "        let attributes: any = {};\n" +
-          "        for (let attr of attributeNames) {\n" +
-          "            try {\n" +
-          "                attributes[attr] = ele.getAttribute(attr);\n" +
-          "            } catch (error) {\n" +
-          "                console.log(error);\n" +
-          "            }\n" +
-          "        }\n" +
-          "        news.data.attributes = attributes;\n" +
           "        news.componentId = ele.getAttribute(\"id\");\n" +
+          "        news.data.attributes = {};\n" +
+          "            for (const attributeName of ele.getAttributeNames()) {\n" +
+          "                news.data.attributes[attributeName] = ele.getAttribute(attributeName);\n" +
+          "            }\n" +
           "   }\n" +
           "" +
           //	"alert('news : ' + JSON.stringify(news));" +
@@ -192,6 +186,14 @@ import java.util.*;
 @NgProvider
 public class SocketClientService<J extends SocketClientService<J>> implements INgProvider<J>
 {
+	@Override
+	public List<String> globalFields()
+	{
+		List<String> out = INgProvider.super.globalFields();
+		out.add("declare var $:any;");
+		return out;
+	}
+	
 	@Override
 	public List<String> componentDecorators()
 	{

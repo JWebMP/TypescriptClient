@@ -40,6 +40,11 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
 		return out;
 	}
 	
+	default boolean checkDataIsArray()
+	{
+		return false;
+	}
+	
 	@Override
 	default List<String> componentConstructorBody()
 	{
@@ -48,8 +53,13 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
 		           "" + (buffer() ? ".pipe(bufferTime(1500))" : "") +
 		           ".subscribe((message : " + getTsFilename(DynamicData.class) + ") => {\n" +
 		           "" +
-		           "" +
-		           "this.dataStore.datas = message; \n" +
+		           "" + (checkDataIsArray() ?
+				"if (Array.isArray(message)) {\n" +
+				"                this.dataStore.datas = message[0];\n" +
+				"            } else\n" +
+				"                this.dataStore.datas = message;\n" : "" +
+				                                                      "this.dataStore.datas = message;\n")
+		           +
 		           "this._data.next(Object.assign({}, this.dataStore).datas);" +
 		           "" +
 		           "" +
@@ -81,7 +91,7 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
 		String dtRef = "";
 		dtRef = getTsFilename(DynamicData.class);
 		methods.add("\tfetchData(){\n" +
-		            "\t\tthis.socketClientService.send('data',{...this.additionalData,className :  '" +getClass().getCanonicalName() + "'},this.listenerName);\n" +
+		            "\t\tthis.socketClientService.send('data',{...this.additionalData,className :  '" + getClass().getCanonicalName() + "'},this.listenerName);\n" +
 		            "\t}\n" +
 		            "" +
 		            "\tget data() : Observable<" + dtRef + "> {\n" +
@@ -124,14 +134,17 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
 	{
 		return false;
 	}
+	
 	default int bufferTime()
 	{
 		return 100;
 	}
+	
 	default boolean takeLast()
 	{
 		return false;
 	}
+	
 	default int takeLastCount()
 	{
 		return 100;

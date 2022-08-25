@@ -208,7 +208,7 @@ public interface INgComponent<J extends INgComponent<J>>
 		ngComponent.sort(Comparator.comparingInt(NgInput::sortOrder));
 		for (NgInput ngInput : ngComponent)
 		{
-			list.add("\t@Input(\"" + ngInput.value() + "\") " + ngInput.value() + "? :any;");
+			list.add("\t@Input(\"" + ngInput.value() + "\") " + ngInput.value() + "? :" + (getTsFilename(ngInput.type())) + ";");
 		}
 		
 		return list;

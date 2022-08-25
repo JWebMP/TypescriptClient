@@ -68,7 +68,7 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
 		if (!getAnnotation().dataArray())
 		{
 			out.add(0, "public " + getAnnotation().variableName() + " : " + getAnnotation().dataType()
-			                                                                               .getSimpleName() + " = {};");
+			                                                                               .getSimpleName() + " = " + INgDataType.renderObjectStructure(getAnnotation().dataType()) + ";");
 			
 			
 		}
@@ -92,9 +92,9 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
 		           ".subscribe(observer => {\n" +
 		           "            if (observer && observer.out) {\n";
 		s += "                this." + getAnnotation().variableName() + " = observer.out[0];\n";
-		s += "                this._onUpdate.next(true);" +
+		s += "                this._onUpdate.next(true);\n" +
 		     "            }\n" +
-		     "        });";
+		     "        });\n";
 		out.add(s);
 		return out;
 	}
@@ -124,7 +124,7 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
 		                     "\t\tthis.service.additionalData = this.additionalData;\n";
 		if (!getAnnotation().dataArray())
 		{
-			resetString += "\t\tthis." + getAnnotation().variableName() + " = {};";
+			resetString += "\t\tthis." + getAnnotation().variableName() + " = " + INgDataType.renderObjectStructure(getAnnotation().dataType()) + ";";
 		}
 		else
 		{

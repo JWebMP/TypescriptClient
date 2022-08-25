@@ -6,17 +6,17 @@ import com.jwebmp.core.base.angular.client.annotations.typescript.*;
 
 import java.util.*;
 
-@TsDependency(value = "@angular/common", version = "^13.3.4", overrides = true)
-@TsDependency(value = "@angular/compiler", version = "^13.3.4",overrides = true)
-@TsDependency(value = "@angular/core", version = "^13.3.4",overrides = true)
-@TsDependency(value = "@angular/forms", version = "^13.3.4",overrides = true)
+@TsDependency(value = "@angular/common", version = "~13.3.6")
+@TsDependency(value = "@angular/compiler", version = "~13.3.6")
+@TsDependency(value = "@angular/core", version = "~13.3.6")
+@TsDependency(value = "@angular/forms", version = "~13.3.6")
 @TsDependency(value = "rxjs", version = "^7.5.0")
 @TsDependency(value = "tslib", version = "^2.3.0")
 @TsDependency(value = "zone.js", version = "^0.11.4")
 
-@TsDevDependency(value = "@angular-devkit/build-angular", version = "^13.3.3")
-@TsDevDependency(value = "@angular/cli", version = "^13.3.3")
-@TsDevDependency(value = "@angular/compiler-cli", version = "^13.3.3")
+@TsDevDependency(value = "@angular-devkit/build-angular", version = "~13.3.6")
+@TsDevDependency(value = "@angular/cli", version = "~13.3.6")
+@TsDevDependency(value = "@angular/compiler-cli", version = "~13.3.6")
 @TsDevDependency(value = "@types/node", version = "^12.20.48")
 @TsDevDependency(value = "typescript", version = "^4.5.5")
 
