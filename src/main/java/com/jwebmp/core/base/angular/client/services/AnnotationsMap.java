@@ -43,6 +43,7 @@ public class AnnotationsMap
 	private static final Map<Class<? extends Annotation>, Class<? extends Annotation>> ngComponents
 			= Map.of(
 			NgInput.class, NgInputs.class,
+			NgComponentTagAttribute.class, NgComponentTagAttributes.class,
 			NgOutput.class, NgOutput.class,
 			NgGlobalComponentConstructorParameter.class,NgGlobalComponentConstructorParameters.class,
 			NgGlobalConstructorParameter.class,NgGlobalConstructorParameters.class,
@@ -57,7 +58,8 @@ public class AnnotationsMap
 			NgBootProvider.class, NgBootProviders.class,
 			NgBootConstructorBody.class, NgBootConstructorBodys.class,
 			NgBootConstructorParameter.class, NgBootConstructorParameters.class,
-			NgBootGlobalField.class, NgBootGlobalFields.class
+			NgBootGlobalField.class, NgBootGlobalFields.class,
+			NgBootModuleSchema.class, NgBootModuleSchemas.class
 	);
 	private static final Map<Class<? extends Annotation>, Class<? extends Annotation>> ngReferences
 			= Map.of(
@@ -72,7 +74,8 @@ public class AnnotationsMap
 			NgConstructorParameter.class, NgConstructorParameters.class,
 			NgField.class, NgFields.class,
 			NgInterface.class, NgInterfaces.class,
-			NgMethod.class, NgMethods.class
+			NgMethod.class, NgMethods.class,
+			NgValidator.class,NgValidators.class
 	);
 	
 	private static final Map<Class<? extends Annotation>, Class<? extends Annotation>> ngAllMultiples = new HashMap<>();
@@ -96,6 +99,7 @@ public class AnnotationsMap
 			NgOnDestroy.class,
 			NgBootDeclaration.class,
 			NgBootModuleImport.class,
+			NgBootModuleSchema.class,
 			NgBootImportReference.class,
 			NgBootProvider.class,
 			NgBootConstructorParameter.class,
@@ -129,11 +133,14 @@ public class AnnotationsMap
 			NgAfterContentChecked.class,
 			
 			NgInput.class,
+			NgComponentTagAttribute.class,
 			NgOutput.class,
 			
 			NgGlobalConstructorParameter.class,
 			NgGlobalComponentConstructorParameter.class,
-			NgGlobalComponentImportReference.class
+			NgGlobalComponentImportReference.class,
+			
+			NgValidator.class
 	);
 	
 	private Class<?> clazz;

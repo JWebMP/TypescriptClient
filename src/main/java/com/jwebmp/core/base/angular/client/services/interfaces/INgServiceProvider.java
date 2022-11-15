@@ -82,20 +82,44 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
 	}
 	
 	@Override
-	default List<String> componentConstructorBody()
+	default List<String> constructorBody()
 	{
 		List<String> out = IComponent.super.componentConstructorBody();
-		String s = "this.subscription = this.service.data" +
+		String s = "this.subscription = this.service.data\n" +
 		           "" + (buffer() ? ".pipe(bufferTime(" + bufferTime() + "))" : "") +
 		           "" + (takeLast() ? ".pipe(takeLast(" + takeLastCount() + "))" : "") +
 		           "" +
-		           ".subscribe(observer => {\n" +
-		           "            if (observer && observer.out) {\n";
-		s += "                this." + getAnnotation().variableName() + " = observer.out[0];\n";
+		           ".subscribe(message => {\n" +
+		           "" +
+		           "" +
+		           "if (message) {\n" +
+		           "\t\t\t\tif(Array.isArray(message))\n" +
+		           "\t\t\t\t{\n" +
+		           "\t\t\t\t\tfor (let m of message) {\n" +
+		           "\t\t\t\t\t\tif(m.out && m.out[0]) {\n";
+		s += "                this." + getAnnotation().variableName() + " = m.out[0];\n";
+		s += "\t\t\t\t\t\t\tthis._onUpdate.next(true);\n" +
+		     "\t\t\t\t\t\t}\n" +
+		     "\t\t\t\t\t}\n" +
+		     "\t\t\t\t}else {\n" +
+		     "\t\t\t\t\tif(message.out && message.out[0]) {\n";
+		s += "                this." + getAnnotation().variableName() + " = message.out[0];\n";
+		s += "\t\t\t\t\t\tthis._onUpdate.next(true);\n" +
+		     "\t\t\t\t\t}\n" +
+		     "\t\t\t\t}\n" +
+		     "            }" +
+		     "" +
+		     "" +
+		     "" +
+/*		     "" +
+		     "" +
+		     "            if (message && observer.out) {\n";
+		s += "                this." + getAnnotation().variableName() + " = message.out[0];\n";
 		s += "                this._onUpdate.next(true);\n" +
-		     "            }\n" +
-		     "        });\n";
+		     "            }\n" +*/
+             "        });\n";
 		out.add(s);
+		//out.add("this.checkData();");
 		return out;
 	}
 	
@@ -146,6 +170,7 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
 	{
 		List<String> out = IComponent.super.componentInterfaces();
 		out.add("OnDestroy");
+		//out.add("OnInit");
 		return out;
 	}
 	
@@ -189,6 +214,7 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
 		out.append("}\n");
 		return out.toString();
 	}
+	
 	
 	default boolean buffer()
 	{

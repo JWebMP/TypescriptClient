@@ -33,8 +33,12 @@ import static java.nio.charset.StandardCharsets.*;
 @NgImportReference(value = "Input", reference = "@angular/core")
 @NgImportReference(value = "Injectable", reference = "@angular/core")
 
+
+@NgImportReference(value = "Router", reference = "@angular/router")
+
 @NgConstructorParameter("private cdref: ChangeDetectorRef")
 @NgConstructorParameter("private elementRef: ElementRef")
+@NgConstructorParameter("private router: Router")
 
 public interface INgComponent<J extends INgComponent<J>>
 		extends IComponent<J>, IConfiguration
@@ -57,6 +61,24 @@ public interface INgComponent<J extends INgComponent<J>>
 	{
 		List<String> out = IComponent.super.afterContentChecked();
 		//out.add("this.cdref.detectChanges();");
+		return out;
+	}
+	
+	@Override
+	default List<String> componentMethods()
+	{
+		List<String> out = IComponent.super.componentMethods();
+		out.add("""
+		        public routeMe(location : string, tabData? : object, browserData? : object, skipLocationChange : boolean = true, )
+		            {
+		                if (tabData) {
+		                    Object.entries(tabData).forEach(([key, value]) => sessionStorage.setItem(key, value))
+		                }
+		                if (browserData) {
+		                    Object.entries(browserData).forEach(([key, value]) => localStorage.setItem(key, value))
+		                }
+		                this.router.navigateByUrl(location);
+		            }""");
 		return out;
 	}
 	
@@ -572,5 +594,11 @@ public interface INgComponent<J extends INgComponent<J>>
 		out.append("}\n");
 		
 		return out.toString();
+	}
+	
+	default J routeTo(String location, Map<String,String> tabData,Map<String,String> browserData)
+	{
+		
+		return (J)this;
 	}
 }

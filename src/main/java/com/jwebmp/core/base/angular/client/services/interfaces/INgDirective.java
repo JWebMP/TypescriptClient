@@ -83,27 +83,27 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
 	
 	default List<String> styleUrls()
 	{
-		return List.of();
+		return new ArrayList<>();
 	}
 	
 	default List<String> providers()
 	{
-		return List.of();
+		return new ArrayList<>();
 	}
 	
 	default List<String> inputs()
 	{
-		return List.of();
+		return new ArrayList<>();
 	}
 	
 	default List<String> outputs()
 	{
-		return List.of();
+		return new ArrayList<>();
 	}
 	
 	default List<String> host()
 	{
-		return List.of();
+		return new ArrayList<>();
 	}
 	
 	@Override

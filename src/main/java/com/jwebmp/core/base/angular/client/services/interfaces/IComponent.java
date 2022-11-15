@@ -81,7 +81,6 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
 		{
 			interceptor.perform(out, this);
 		}
-		
 		return out;
 	}
 	
@@ -309,6 +308,21 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
 			                .value()
 			                .description())
 			   .append(" ");
+			String functionName = cType.get(0)
+			                           .name();
+			if(!Strings.isNullOrEmpty(cType.get(0).returnType()))
+			{
+				if (!Strings.isNullOrEmpty(functionName))
+				{
+					out.append(" " + functionName + " ");
+				}
+				else {
+					out.append(" " + getTsFilename(getClass()) + " ");
+				}
+				out.append( "() :  ")
+				   .append(cType.get(0)
+				                .returnType());
+			}
 		}
 		else
 		{
@@ -325,21 +339,33 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
 		out.append(renderInterfaces());
 		
 		out.append("\n");
-		
 		out.append(renderClassBody());
-		
 		return out;
 	}
 	
+	/**
+	 * Renders after the class statement
+	 * @return
+	 */
+	default StringBuilder renderAfterClassEntry()
+	{
+		StringBuilder out = new StringBuilder();
+		return out;
+	}
+	default StringBuilder renderBeforeClassBodyEnd()
+	{
+		StringBuilder out = new StringBuilder();
+		return out;
+	}
 	default StringBuilder renderClassBody()
 	{
 		StringBuilder out = new StringBuilder();
 		out.append("{\n");
-		
+		out.append(renderAfterClassEntry());
 		out.append(renderFields());
 		out.append(renderConstructor());
 		out.append(renderMethods());
-		
+		out.append(renderBeforeClassBodyEnd());
 		out.append("}\n");
 		
 		return out;

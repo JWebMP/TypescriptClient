@@ -14,9 +14,12 @@ public @interface NgDataType
 	
 	boolean exports() default true;
 	
+	String name() default "";
+	
 	enum DataTypeClass
 	{
 		Class,
+		Function,
 		Enum,
 		AbstractClass,
 		Interface,
@@ -28,4 +31,10 @@ public @interface NgDataType
 			return name().toLowerCase();
 		}
 	}
+	
+	/**
+	 * If a function what is the return type, after the :
+	 * @return
+	 */
+	String returnType() default "";
 }
