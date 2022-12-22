@@ -73,6 +73,7 @@ import java.util.*;
           "};\n" +
           "news.data = data;\n" +
           "news.action = action;\n" +
+          "news.data.url = window.location;\n" +
           "news.data.localStorage = window.localStorage;\n" +
           "news.data.sessionStorage = window.sessionStorage;\n" +
           "news.data.parameters = this.getParametersObject();\n" +
