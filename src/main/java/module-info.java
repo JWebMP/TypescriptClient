@@ -27,7 +27,7 @@ module com.jwebmp.core.base.angular.client {
 	exports com.jwebmp.core.base.angular.client.annotations.boot;
 	
 	provides IGuiceScanModuleInclusions with AngularTypeScriptClientModuleInclusion;
-	
+
 	uses OnGetAllConstructorParameters;
 	uses OnGetAllConstructorBodies;
 	uses OnGetAllFields;

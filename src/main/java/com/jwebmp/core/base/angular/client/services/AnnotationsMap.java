@@ -44,7 +44,7 @@ public class AnnotationsMap
 			= Map.of(
 			NgInput.class, NgInputs.class,
 			NgComponentTagAttribute.class, NgComponentTagAttributes.class,
-			NgOutput.class, NgOutput.class,
+			NgOutput.class, NgOutputs.class,
 			NgGlobalComponentConstructorParameter.class,NgGlobalComponentConstructorParameters.class,
 			NgGlobalConstructorParameter.class,NgGlobalConstructorParameters.class,
 			NgGlobalComponentImportReference.class, NgGlobalComponentImportReferences.class
@@ -275,7 +275,7 @@ public class AnnotationsMap
 			}
 			catch (Exception e)
 			{
-				log.log(Level.SEVERE,"Cannot read multiple annotations",e);
+				log.log(Level.SEVERE,"Cannot read multiple annotations - " + clazz + " - " + multipleAnnotation,e);
 			}
 		}
 		if (clazz.isAnnotationPresent(singularAnnotation))
