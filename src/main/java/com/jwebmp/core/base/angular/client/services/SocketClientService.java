@@ -66,124 +66,108 @@ import java.util.*;
           "        return {};\n" +
           "    }\n" +
           "}\n")
-@NgMethod("send(action:string,data:object, eventType :string,event? : any, component? : ElementRef<any>) : void {\n" +
-          "" +
-          //"alert('sending...');" +
-          "const news : any = {\n" +
-          "};\n" +
-          "news.data = data;\n" +
-          "news.action = action;\n" +
-          "news.data.url = window.location;\n" +
-          "news.data.localStorage = window.localStorage;\n" +
-          "news.data.sessionStorage = window.sessionStorage;\n" +
-          "news.data.parameters = this.getParametersObject();\n" +
-          "news.data.hashbang = window.location.hash;\n" +
-          "news.data.route = this.routeLocation.path();\n" +
-          "news.data.state = this.routeLocation.getState();\n" +
-          "news.data.history = history.state;\n" +
-          "news.data.datetime = new Date().getUTCDate();\n" +
-          "news.data.eventType = eventType;\n" +
-          "news.data.headers = {};\n" +
-          "news.data.headers.useragent = navigator.userAgent;\n" +
-        //  "news.data.headers.appClassName = EnvironmentModule.appClass;\n" +
-          "news.data.headers.cookieEnabled = navigator.cookieEnabled ;\n" +
-          "news.data.headers.appName = navigator.appName  ;\n" +
-          "news.data.headers.appVersion = navigator.appVersion   ;\n" +
-          "news.data.headers.language = navigator.language ;\n" +
-          "" +
-          "if(event)\n" +
-          "{\n" +
-          "   news.event = JSON.stringify(event);\n" +
-          "}\n" +
-          "" +
-          "if(component)\n" +
-          "{\n" +
-          "        let ele = component.nativeElement;\n" +
-          "        news.componentId = ele.getAttribute(\"id\");\n" +
-          "        news.data.attributes = {};\n" +
-          "            for (const attributeName of ele.getAttributeNames()) {\n" +
-          "                news.data.attributes[attributeName] = ele.getAttribute(attributeName);\n" +
-          "            }\n" +
-          "   }\n" +
-          "" +
-          //	"alert('news : ' + JSON.stringify(news));" +
-          "SocketClientService.websocket.next(news);\n" +
-          "}\n")
+@NgMethod(//"alert('sending...');" +
+//  "news.data.headers.appClassName = EnvironmentModule.appClass;\n" +
+//	"alert('news : ' + JSON.stringify(news));" +
+        """
+                send(action:string,data:object, eventType :string,event? : any, component? : ElementRef<any>) : void {
+					const news : any = {
+					};
+					news.data = data;
+					news.action = action;
+					news.data.url = window.location;
+					news.data.localStorage = window.localStorage;
+					news.data.sessionStorage = window.sessionStorage;
+					news.data.parameters = this.getParametersObject();
+					news.data.hashbang = window.location.hash;
+					news.data.route = this.routeLocation.path();
+					news.data.state = this.routeLocation.getState();
+					news.data.history = history.state;
+					news.data.datetime = new Date().getUTCDate();
+					news.data.eventType = eventType;
+					news.data.headers = {};
+					news.data.headers.useragent = navigator.userAgent;
+					news.data.headers.cookieEnabled = navigator.cookieEnabled ;
+					news.data.headers.appName = navigator.appName  ;
+					news.data.headers.appVersion = navigator.appVersion   ;
+					news.data.headers.language = navigator.language ;
+					if(event)
+					{
+					   news.event = JSON.stringify(event);
+					}
+					if(component)
+					{
+						let ele = component.nativeElement;
+						news.componentId = ele.getAttribute("id");
+						news.data.attributes = {};
+						for (const attributeName of ele.getAttributeNames()) {
+							news.data.attributes[attributeName] = ele.getAttribute(attributeName);
+						}
+					}
+					SocketClientService.websocket.next(news);
+                }
+                """)
 
-@NgMethod("processResult(response:any)\n" +
-          "{\n" +
-          //	"   console.log('message received: ' + JSON.stringify(response));\n" +
-          "   if(response.localStorage)\n" +
-          "   {\n" +
-          "      " +
-          //	"       alert('update local storage');" +
-          //	"       alert('ttt - ' + typeof response.localStorage);" +
-          "       " +
-          "      Object.keys(response.localStorage).forEach(prop => {\n" +
-          "         window.localStorage.setItem(prop, response.localStorage[prop]);\n" +
-          "           });\n" +
-          "" +
-          "   }\n" +
-          "" +
-          "   if(response.sessionStorage)\n" +
-          "   {\n" +
-          "      " +
-          //	"       alert('update local storage');" +
-          //	"       alert('ttt - ' + typeof response.localStorage);" +
-          "       " +
-          "      Object.keys(response.sessionStorage).forEach(prop => {\n" +
-          "         window.sessionStorage.setItem(prop, response.sessionStorage[prop]);\n" +
-          "           });\n" +
-          "" +
-          "   }\n" +
-          "" +
-          "if(response.features)\n" +
-          "{\n" +
-          "   " +
-          "}\n" +
-          "" +
-          "" +
-          //	"debugger;" +
-          "if(response.reactions)\n" +
-          "{\n" +
-          "    for(let reaction of response.reactions)\n" +
-          "   {\n" +
-          "      const react : any = reaction; \n" +
-          "      if(\"RedirectUrl\" == react.reactionType)\n" +
-          "       {\n" +
-          //	"          alert('redirect to - ' + react.reactionMessage);\n" +
-          "            this.router.navigateByUrl(react.reactionMessage);\n " +
-          "       }\n" +
-          "   }\n" +
-          "}\n" +
-          "" +
-          "" +
-          //	"debugger;" +
-          "if(response.data)\n" +
-          "{\n" +
-          //     "   alert('data is response'); " +
-          // "   for(let d of response.data)\n" +
-          //   "   {\n" +
-          "      const dMap : any = Object.keys(response.data); " +
-          // "       alert('keys returned - ' + dMap);\n" +
-          "      for(let key of dMap)" +
-          "       {" +
-          "           const jsonString = response.data[key];" +
-          "           const jsonValue = JSON.parse(jsonString);" +
-          //   "               alert('key and subject?' + key + ' - ' + jsonString);" +
-          "           const subject = SocketClientService.dataListenerMappings.get(key);" +
-          "           if(subject) " +
-          "           {" +
-          //    "               alert('subject is found - sending notify' + key + ' - ' + jsonString);" +
-          "               subject.next(jsonValue);" +
-          "           }" +
-          //   "       }" +
-          "       " +
-          "   }\n" +
-          "}\n" +
-          "" +
-          "" +
-          "}\n")
+@NgMethod(//	"   console.log('message received: ' + JSON.stringify(response));\n" +
+//	"       alert('update local storage');" +
+//	"       alert('ttt - ' + typeof response.localStorage);" +
+//	"       alert('update local storage');" +
+//	"       alert('ttt - ' + typeof response.localStorage);" +
+//	"debugger;" +
+//	"          alert('redirect to - ' + react.reactionMessage);\n" +
+//	"debugger;" +
+//     "   alert('data is response'); " +
+// "   for(let d of response.data)\n" +
+//   "   {\n" +
+// "       alert('keys returned - ' + dMap);\n" +
+//    "           const jsonValue = JSON.parse(jsonString);" +
+//   "               alert('key and subject?' + key + ' - ' + jsonString);" +
+//    "               alert('subject is found - sending notify' + key + ' - ' + jsonString);" +
+//   "       }" +
+        """
+                processResult(response:any)
+                {
+                   if(response.localStorage)
+                   {
+                       Object.keys(response.localStorage).forEach(prop => {
+                         window.localStorage.setItem(prop, response.localStorage[prop]);
+                       });
+                   }
+                   if(response.sessionStorage)
+                   {
+                       Object.keys(response.sessionStorage).forEach(prop => {
+                         window.sessionStorage.setItem(prop, response.sessionStorage[prop]);
+                        });
+                   }
+					if(response.features)
+					{
+					}
+					if(response.reactions)
+					{
+						for(let reaction of response.reactions)
+					   {
+						  const react : any = reaction;
+						  if("RedirectUrl" == react.reactionType)
+						   {
+								this.router.navigateByUrl(react.reactionMessage);
+							}
+					   }
+					}
+					if(response.data)
+					{
+                      const dMap : any = Object.keys(response.data);
+                      for(let key of dMap)
+                       {
+                           const jsonString = response.data[key];
+                           const subject = SocketClientService.dataListenerMappings.get(key);
+                           if(subject)
+                           {
+                               subject.next(jsonString);
+                           }
+                       }
+                	}
+                }
+                """)
 @NgProvider
 public class SocketClientService<J extends SocketClientService<J>> implements INgProvider<J>
 {

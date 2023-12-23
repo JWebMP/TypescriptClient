@@ -12,11 +12,16 @@ import org.apache.commons.lang3.*;
 import java.lang.reflect.*;
 import java.math.*;
 import java.nio.file.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.logging.*;
 
 import static com.guicedee.guicedinjection.interfaces.ObjectBinderKeys.*;
 import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.*;
+
 
 public interface INgDataType<J extends INgDataType<J>>
 		extends IComponent<J>, IJsonRepresentation<J>
@@ -88,6 +93,15 @@ public interface INgDataType<J extends INgDataType<J>>
 		else if (Boolean.class.isAssignableFrom(fieldType) || boolean.class.isAssignableFrom(fieldType))
 		{
 			out.append(" public " + fieldName + optionalString + " : boolean" + (array ? "[]" : "") + " =" + (array ? "[]" : "false") + ";\n");
+		}
+		else if (OffsetDateTime.class.isAssignableFrom(fieldType) ||
+				LocalDateTime.class.isAssignableFrom(fieldType) ||
+				ZonedDateTime.class.isAssignableFrom(fieldType) ||
+				LocalDate.class.isAssignableFrom(fieldType) ||
+				Date.class.isAssignableFrom(fieldType)
+		)
+		{
+			out.append(" public " + fieldName + optionalString + " : Date" + (array ? "[]" : "") + " =" + (array ? "[]" : "new Date()") + ";\n");
 		}
 		else if (INgDataType.class.isAssignableFrom(fieldType))
 		{
@@ -211,6 +225,13 @@ public interface INgDataType<J extends INgDataType<J>>
 					case "Double":
 						out.append("0");
 						break;
+					case "OffsetDateTime":
+					case "Date":
+					case "LocalDateTime":
+					case "ZonedDateTime":
+					case "LocalDate":
+						out.append("new Date()");
+						break;
 					case "List":
 					case "Set":
 					case "HashMap":
@@ -296,5 +317,12 @@ public interface INgDataType<J extends INgDataType<J>>
 			}
 		}
 		return refs;
+	}
+
+	@Override
+	default Map<String, String> imports() {
+		Map<String, String> imports = IComponent.super.imports();
+
+		return imports;
 	}
 }
