@@ -1,33 +1,36 @@
 package com.jwebmp.core.base.angular.client.services.interfaces;
 
-import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.databind.*;
-import com.guicedee.guicedinjection.*;
-import com.guicedee.guicedinjection.representations.*;
-import com.guicedee.logger.*;
-import com.jwebmp.core.base.angular.client.annotations.references.*;
-import jakarta.validation.constraints.*;
-import org.apache.commons.lang3.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.guicedee.guicedinjection.GuiceContext;
+import com.guicedee.services.jsonrepresentation.IJsonRepresentation;
+import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
+import jakarta.validation.constraints.NotNull;
+import org.apache.commons.lang3.StringUtils;
 
-import java.lang.reflect.*;
-import java.math.*;
-import java.nio.file.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.nio.file.InvalidPathException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.logging.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import static com.guicedee.guicedinjection.interfaces.ObjectBinderKeys.*;
-import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.*;
+import static com.guicedee.guicedinjection.interfaces.ObjectBinderKeys.DefaultObjectMapper;
+import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getNgComponentReference;
+import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getTsFilename;
 
 
 public interface INgDataType<J extends INgDataType<J>>
 		extends IComponent<J>, IJsonRepresentation<J>
 {
-	Logger log = LogFactory.getLog(INgDataType.class);
-	
+
 	@Override
 	default List<String> componentFields()
 	{
@@ -139,7 +142,7 @@ public interface INgDataType<J extends INgDataType<J>>
 						}
 						catch (InvalidPathException ipe)
 						{
-							log.log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
+							Logger.getLogger("INgDataType").log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
 						}
 					}
 					else if (arg0 instanceof Class<?>)
@@ -150,7 +153,7 @@ public interface INgDataType<J extends INgDataType<J>>
 						}
 						catch (InvalidPathException ipe)
 						{
-							log.log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
+							Logger.getLogger("INgDataType").log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
 						}
 					}
 				}
@@ -167,7 +170,7 @@ public interface INgDataType<J extends INgDataType<J>>
 				}
 				catch (InvalidPathException ipe)
 				{
-					log.log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
+					Logger.getLogger("INgDataType").log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
 				}
 			}
 		}
@@ -292,7 +295,7 @@ public interface INgDataType<J extends INgDataType<J>>
 						}
 						catch (InvalidPathException ipe)
 						{
-							log.log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
+							Logger.getLogger("INgDataType").log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
 						}
 					}
 					else if (arg0 instanceof Class<?> && !arg0.equals(Object.class) && !arg0.equals(String.class) && !arg0.equals(Boolean.class) && !arg0.equals(Integer.class) && !arg0.equals(Double.class))

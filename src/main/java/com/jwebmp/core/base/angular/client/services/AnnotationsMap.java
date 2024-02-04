@@ -1,27 +1,33 @@
 package com.jwebmp.core.base.angular.client.services;
 
-import com.guicedee.guicedinjection.*;
-import com.guicedee.logger.*;
+import com.guicedee.guicedinjection.GuiceContext;
 import com.jwebmp.core.base.angular.client.annotations.angular.*;
 import com.jwebmp.core.base.angular.client.annotations.angularconfig.*;
 import com.jwebmp.core.base.angular.client.annotations.boot.*;
 import com.jwebmp.core.base.angular.client.annotations.components.*;
-import com.jwebmp.core.base.angular.client.annotations.constructors.*;
+import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorBody;
+import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorBodys;
+import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorParameter;
+import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorParameters;
 import com.jwebmp.core.base.angular.client.annotations.functions.*;
 import com.jwebmp.core.base.angular.client.annotations.globals.*;
 import com.jwebmp.core.base.angular.client.annotations.references.*;
-import com.jwebmp.core.base.angular.client.annotations.routing.*;
+import com.jwebmp.core.base.angular.client.annotations.routing.NgRoutable;
+import com.jwebmp.core.base.angular.client.annotations.routing.NgRouteData;
 import com.jwebmp.core.base.angular.client.annotations.structures.*;
-import io.github.classgraph.*;
+import io.github.classgraph.ClassInfo;
+import lombok.extern.java.Log;
 
-import java.lang.annotation.*;
-import java.lang.reflect.*;
-import java.util.*;
-import java.util.logging.*;
-
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+@Log
 public class AnnotationsMap
 {
-	private static final Logger log = LogFactory.getLog(AnnotationsMap.class);
 	private static final Map<Class<? extends Annotation>, Class<? extends Annotation>> ngConfigs
 			= Map.of(
 			NgAsset.class, NgAssets.class,

@@ -1,24 +1,29 @@
 package com.jwebmp.core.base.angular.client;
 
-import com.guicedee.guicedinjection.*;
-import com.guicedee.guicedinjection.properties.*;
-import com.guicedee.logger.*;
-import com.jwebmp.core.base.angular.client.annotations.angular.*;
-import com.jwebmp.core.base.angular.client.services.interfaces.*;
-import io.github.classgraph.*;
-import org.apache.commons.io.*;
+import com.guicedee.guicedinjection.GuiceContext;
+import com.guicedee.guicedinjection.properties.GlobalProperties;
+import com.jwebmp.core.base.angular.client.annotations.angular.NgApp;
+import com.jwebmp.core.base.angular.client.services.interfaces.INgApp;
+import io.github.classgraph.ClassInfo;
+import io.github.classgraph.ScanResult;
+import lombok.extern.java.Log;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 
 import java.io.*;
-import java.nio.file.*;
-import java.util.*;
-import java.util.logging.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
 
-import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.*;
-import static com.jwebmp.core.base.angular.client.services.interfaces.ImportsStatementsComponent.*;
+import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getTsFilename;
+import static com.jwebmp.core.base.angular.client.services.interfaces.ImportsStatementsComponent.getClassLocationDirectory;
 
+@Log
 public class AppUtils
 {
-	private static final Logger log = LogFactory.getLog(AppUtils.class);
 	
 	//app name to base user directory map
 	private static final Map<String,File> baseAppDirectories = new HashMap<>();

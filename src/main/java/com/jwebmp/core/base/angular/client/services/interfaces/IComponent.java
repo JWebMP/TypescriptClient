@@ -1,19 +1,28 @@
 package com.jwebmp.core.base.angular.client.services.interfaces;
 
-import com.google.common.base.*;
-import com.guicedee.guicedinjection.interfaces.*;
-import com.jwebmp.core.base.angular.client.annotations.angular.*;
-import com.jwebmp.core.base.angular.client.annotations.constructors.*;
-import com.jwebmp.core.base.angular.client.annotations.globals.*;
-import com.jwebmp.core.base.angular.client.annotations.references.*;
-import com.jwebmp.core.base.angular.client.annotations.structures.*;
-import com.jwebmp.core.base.angular.client.services.*;
-import com.jwebmp.core.base.angular.client.services.spi.*;
+import com.google.common.base.Strings;
+import com.guicedee.guicedinjection.GuiceContext;
+import com.guicedee.guicedinjection.interfaces.IDefaultService;
+import com.jwebmp.core.base.angular.client.annotations.angular.NgDataType;
+import com.jwebmp.core.base.angular.client.annotations.angular.NgServiceProvider;
+import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorBody;
+import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorParameter;
+import com.jwebmp.core.base.angular.client.annotations.globals.NgGlobalConstructorParameter;
+import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
+import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
+import com.jwebmp.core.base.angular.client.annotations.structures.NgField;
+import com.jwebmp.core.base.angular.client.annotations.structures.NgInterface;
+import com.jwebmp.core.base.angular.client.annotations.structures.NgMethod;
+import com.jwebmp.core.base.angular.client.services.spi.OnGetAllConstructorBodies;
+import com.jwebmp.core.base.angular.client.services.spi.OnGetAllConstructorParameters;
+import com.jwebmp.core.base.angular.client.services.spi.OnGetAllFields;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
-import static com.jwebmp.core.base.angular.client.services.AnnotationsMap.*;
+import static com.jwebmp.core.base.angular.client.services.AnnotationsMap.getAllAnnotations;
+import static com.jwebmp.core.base.angular.client.services.AnnotationsMap.getAnnotations;
 import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.*;
 
 public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>, ImportsStatementsComponent<J>
@@ -76,7 +85,7 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
 			out.add(getNgField(field));
 		}
 		
-		Set<OnGetAllFields> interceptors = IDefaultService.loaderToSet(ServiceLoader.load(OnGetAllFields.class));
+		Set<OnGetAllFields> interceptors = GuiceContext.instance().loaderToSet(ServiceLoader.load(OnGetAllFields.class));
 		for (OnGetAllFields interceptor : interceptors)
 		{
 			interceptor.perform(out, this);
@@ -144,7 +153,7 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
 		}
 		
 		
-		Set<OnGetAllConstructorParameters> interceptors = IDefaultService.loaderToSet(ServiceLoader.load(OnGetAllConstructorParameters.class));
+		Set<OnGetAllConstructorParameters> interceptors = GuiceContext.instance().loaderToSet(ServiceLoader.load(OnGetAllConstructorParameters.class));
 		for (OnGetAllConstructorParameters interceptor : interceptors)
 		{
 			interceptor.perform(out, this);
@@ -186,7 +195,7 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
 			out.add(getNgConstructorBody(body));
 		}
 		
-		Set<OnGetAllConstructorBodies> interceptors = IDefaultService.loaderToSet(ServiceLoader.load(OnGetAllConstructorBodies.class));
+		Set<OnGetAllConstructorBodies> interceptors = GuiceContext.instance().loaderToSet(ServiceLoader.load(OnGetAllConstructorBodies.class));
 		for (OnGetAllConstructorBodies interceptor : interceptors)
 		{
 			interceptor.perform(out, this);

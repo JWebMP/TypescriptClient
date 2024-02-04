@@ -1,20 +1,21 @@
 package com.jwebmp.core.base.angular.client.services.interfaces;
 
-import com.google.common.base.*;
-import com.guicedee.logger.*;
-import com.jwebmp.core.base.angular.client.annotations.angular.*;
-import com.jwebmp.core.base.angular.client.annotations.constructors.*;
-import com.jwebmp.core.base.angular.client.annotations.references.*;
-import com.jwebmp.core.base.angular.client.annotations.structures.*;
-import com.jwebmp.core.base.angular.client.annotations.typescript.*;
+import com.google.common.base.Strings;
+import com.jwebmp.core.base.angular.client.annotations.angular.NgApp;
+import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorBody;
+import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorParameter;
+import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
+import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
+import com.jwebmp.core.base.angular.client.annotations.structures.NgField;
+import com.jwebmp.core.base.angular.client.annotations.structures.NgMethod;
+import com.jwebmp.core.base.angular.client.annotations.typescript.NgSourceDirectoryReference;
 
-import java.lang.annotation.*;
-import java.util.logging.*;
+import java.lang.annotation.Annotation;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public interface AnnotationUtils
 {
-	Logger log = LogFactory.getLog(AnnotationUtils.class);
-	
 	static String getTsFilename(INgApp<?> clazz)
 	{
 		NgApp app;
@@ -42,7 +43,7 @@ public interface AnnotationUtils
 			}
 		}catch (Exception e)
 		{
-			log.log(Level.SEVERE, "Unable to render a ts file name for " + clazz.getCanonicalName(), e);
+			Logger.getLogger("AnnotationUtils").log(Level.SEVERE, "Unable to render a ts file name for " + clazz.getCanonicalName(), e);
 		}
 		return clazz.getSimpleName();
 	}

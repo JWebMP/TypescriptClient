@@ -1,5 +1,5 @@
-import com.guicedee.guicedinjection.interfaces.*;
-import com.jwebmp.core.base.angular.client.implementations.*;
+import com.guicedee.guicedinjection.interfaces.IGuiceScanModuleInclusions;
+import com.jwebmp.core.base.angular.client.implementations.AngularTypeScriptClientModuleInclusion;
 import com.jwebmp.core.base.angular.client.services.spi.*;
 
 module com.jwebmp.core.base.angular.client {
@@ -7,6 +7,9 @@ module com.jwebmp.core.base.angular.client {
 	
 	requires transitive com.jwebmp.core;
 	requires org.apache.commons.io;
+	
+	requires static lombok;
+	requires com.guicedee.jsonrepresentation;
 	
 	exports com.jwebmp.core.base.angular.client.annotations.angular;
 	exports com.jwebmp.core.base.angular.client.annotations.components;

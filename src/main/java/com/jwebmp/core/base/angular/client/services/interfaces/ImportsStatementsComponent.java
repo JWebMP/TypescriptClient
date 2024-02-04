@@ -1,15 +1,19 @@
 package com.jwebmp.core.base.angular.client.services.interfaces;
 
-import com.guicedee.guicedinjection.interfaces.*;
-import com.jwebmp.core.base.angular.client.annotations.references.*;
-import com.jwebmp.core.base.angular.client.services.spi.*;
+import com.guicedee.guicedinjection.GuiceContext;
+import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
+import com.jwebmp.core.base.angular.client.annotations.references.NgDataTypeReference;
+import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
+import com.jwebmp.core.base.angular.client.services.spi.OnGetAllImports;
 
-import java.io.*;
-import java.nio.file.*;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 
-import static com.jwebmp.core.base.angular.client.services.AnnotationsMap.*;
-import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.*;
+import static com.jwebmp.core.base.angular.client.services.AnnotationsMap.getAnnotations;
+import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getNgComponentReference;
+import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getTsFilename;
 
 public interface ImportsStatementsComponent<J extends ImportsStatementsComponent<J>>
 {
@@ -38,7 +42,7 @@ public interface ImportsStatementsComponent<J extends ImportsStatementsComponent
 		}
 		refs.addAll(getAnnotations(getClass(), NgImportReference.class));
 		
-		Set<OnGetAllImports> interceptors = IDefaultService.loaderToSet(ServiceLoader.load(OnGetAllImports.class));
+		Set<OnGetAllImports> interceptors = GuiceContext.instance().loaderToSet(ServiceLoader.load(OnGetAllImports.class));
 		for (OnGetAllImports interceptor : interceptors)
 		{
 			interceptor.perform(refs, this);
