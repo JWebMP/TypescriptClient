@@ -199,11 +199,16 @@ public class AnnotationsMap
 	private void readSubclassHierarchy(Class<?> clazz)
 	{
 		Class<?> clazzes = clazz.getSuperclass();
-		while (clazzes != Object.class)
+		if(clazzes != null)
+			while (clazzes != Object.class)
+			{
+				readAnnotations(clazzes);
+				readInterfaceHierarchy(clazzes);
+				clazzes = clazzes.getSuperclass();
+			}
+		else
 		{
-			readAnnotations(clazzes);
-			readInterfaceHierarchy(clazzes);
-			clazzes = clazzes.getSuperclass();
+			log.fine("Reached the top of the hierarchy, superclass is null - " + clazz);
 		}
 	}
 	
@@ -341,7 +346,11 @@ public class AnnotationsMap
 			{
 				try
 				{
-					getAnnotationMap(allClass.loadClass());
+					Class<?> aClass = allClass.loadClass();
+					if(aClass != null)
+						getAnnotationMap(aClass);
+					else
+						log.warning("Class Info [" + allClass.getName() + "/" + allClass.getModuleRef()+ "] could not be loaded by Annotations Map");
 				}
 				catch (Exception e)
 				{
