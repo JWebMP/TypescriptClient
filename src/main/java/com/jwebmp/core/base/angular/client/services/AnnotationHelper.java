@@ -2,7 +2,6 @@ package com.jwebmp.core.base.angular.client.services;
 
 import com.guicedee.client.IGuiceContext;
 import com.guicedee.guicedinjection.GuiceContext;
-import com.jwebmp.core.base.angular.client.annotations.angular.NgApp;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ClassInfoList;
 import io.github.classgraph.ScanResult;
@@ -97,10 +96,6 @@ public class AnnotationHelper
         {
             if (clazz.isAnnotationPresent(aClass))
             {
-                if (aClass.equals(NgApp.class))
-                {
-                    System.out.println("here");
-                }
                 Annotation a = clazz.getAnnotation(aClass);
                 parentMapping.addLookup(aClass, a);
             }
