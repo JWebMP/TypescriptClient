@@ -1,6 +1,7 @@
 package com.jwebmp.core.base.angular.client.services.interfaces;
 
 import com.google.common.base.Strings;
+import com.guicedee.client.IGuiceContext;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgComponent;
 import com.jwebmp.core.base.angular.client.annotations.components.NgInput;
 import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorParameter;
@@ -10,6 +11,7 @@ import com.jwebmp.core.base.angular.client.annotations.globals.NgGlobalComponent
 import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportProvider;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
+import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
 import com.jwebmp.core.base.interfaces.IComponentHierarchyBase;
 import com.jwebmp.core.databind.IConfiguration;
 import org.apache.commons.io.FileUtils;
@@ -18,7 +20,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static com.jwebmp.core.base.angular.client.services.AnnotationsMap.getAnnotations;
 import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getTsFilename;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -88,7 +89,8 @@ public interface INgComponent<J extends INgComponent<J>>
     default List<NgImportReference> getAllImportAnnotations()
     {
         List<NgImportReference> refs = IComponent.super.getAllImportAnnotations();
-        List<NgGlobalComponentImportReference> annos = getAnnotations(getClass(), NgGlobalComponentImportReference.class);
+        List<NgGlobalComponentImportReference> annos = IGuiceContext.get(AnnotationHelper.class)
+                                                                    .getAnnotationFromClass(getClass(), NgGlobalComponentImportReference.class);
         for (NgGlobalComponentImportReference anno : annos)
         {
             refs.add(AnnotationUtils.getNgImportReference(anno.value(), anno.reference()));
@@ -113,7 +115,8 @@ public interface INgComponent<J extends INgComponent<J>>
     default List<String> componentConstructorParameters()
     {
         List<String> out = IComponent.super.componentConstructorParameters();
-        List<NgGlobalComponentConstructorParameter> annos = getAnnotations(getClass(), NgGlobalComponentConstructorParameter.class);
+        List<NgGlobalComponentConstructorParameter> annos = IGuiceContext.get(AnnotationHelper.class)
+                                                                         .getAnnotationFromClass(getClass(), NgGlobalComponentConstructorParameter.class);
         for (NgGlobalComponentConstructorParameter anno : annos)
         {
             out.add(anno.value());
@@ -140,7 +143,8 @@ public interface INgComponent<J extends INgComponent<J>>
                .append("\n");
         }
 
-        List<NgOnInit> fInit = getAnnotations(getClass(), NgOnInit.class);
+        List<NgOnInit> fInit = IGuiceContext.get(AnnotationHelper.class)
+                                            .getAnnotationFromClass(getClass(), NgOnInit.class);
         fInit.sort(Comparator.comparingInt(NgOnInit::sortOrder));
         Set<String> outs = new LinkedHashSet<>();
         if (!fInit.isEmpty())
@@ -182,7 +186,8 @@ public interface INgComponent<J extends INgComponent<J>>
                .append(s)
                .append("\n");
         }
-        List<NgOnDestroy> fInit = getAnnotations(getClass(), NgOnDestroy.class);
+        List<NgOnDestroy> fInit = IGuiceContext.get(AnnotationHelper.class)
+                                               .getAnnotationFromClass(getClass(), NgOnDestroy.class);
         fInit.sort(Comparator.comparingInt(NgOnDestroy::sortOrder));
         Set<String> outs = new LinkedHashSet<>();
         if (!fInit.isEmpty())
@@ -210,7 +215,8 @@ public interface INgComponent<J extends INgComponent<J>>
     default List<String> componentAfterContentChecked()
     {
         Set<String> out = new LinkedHashSet<>(IComponent.super.componentAfterContentChecked());
-        List<NgAfterContentChecked> ngComponent = getAnnotations(getClass(), NgAfterContentChecked.class);
+        List<NgAfterContentChecked> ngComponent = IGuiceContext.get(AnnotationHelper.class)
+                                                               .getAnnotationFromClass(getClass(), NgAfterContentChecked.class);
         ngComponent.sort(Comparator.comparingInt(NgAfterContentChecked::sortOrder));
         for (NgAfterContentChecked ngInput : ngComponent)
         {
@@ -228,7 +234,8 @@ public interface INgComponent<J extends INgComponent<J>>
             list = new ArrayList<>();
         }
 
-        List<NgInput> ngComponent = getAnnotations(getClass(), NgInput.class);
+        List<NgInput> ngComponent = IGuiceContext.get(AnnotationHelper.class)
+                                                 .getAnnotationFromClass(getClass(), NgInput.class);
         ngComponent.sort(Comparator.comparingInt(NgInput::sortOrder));
         for (NgInput ngInput : ngComponent)
         {
@@ -251,7 +258,9 @@ public interface INgComponent<J extends INgComponent<J>>
             System.out.println("This one doesn't have a ng component");
             return list;
         }
-        NgComponent ngComponent = getAnnotations(getClass(), NgComponent.class).get(0);
+        NgComponent ngComponent = IGuiceContext.get(AnnotationHelper.class)
+                                               .getAnnotationFromClass(getClass(), NgComponent.class)
+                                               .get(0);
         if (!Strings.isNullOrEmpty(getClass().getAnnotation(NgComponent.class)
                                              .providedIn()))
         {
@@ -344,14 +353,16 @@ public interface INgComponent<J extends INgComponent<J>>
                              .append("\n");
                 });
 
-        List<NgImportProvider> refs = getAnnotations(getClass(), NgImportProvider.class);
+        List<NgImportProvider> refs = IGuiceContext.get(AnnotationHelper.class)
+                                                   .getAnnotationFromClass(getClass(), NgImportProvider.class);
         for (NgImportProvider ref : refs)
         {
             providers.append(ref.value())
                      .append(",")
                      .append("\n");
         }
-        List<NgComponentReference> compRefs = getAnnotations(getClass(), NgComponentReference.class);
+        List<NgComponentReference> compRefs = IGuiceContext.get(AnnotationHelper.class)
+                                                           .getAnnotationFromClass(getClass(), NgComponentReference.class);
         for (NgComponentReference compRef : compRefs)
         {
             if (compRef.provides())
@@ -452,7 +463,8 @@ public interface INgComponent<J extends INgComponent<J>>
                .append(s)
                .append("\n");
         }
-        List<NgAfterViewInit> fInit = getAnnotations(getClass(), NgAfterViewInit.class);
+        List<NgAfterViewInit> fInit = IGuiceContext.get(AnnotationHelper.class)
+                                                   .getAnnotationFromClass(getClass(), NgAfterViewInit.class);
         fInit.sort(Comparator.comparingInt(NgAfterViewInit::sortOrder));
         Set<String> outs = new LinkedHashSet<>();
         if (!fInit.isEmpty())
@@ -494,7 +506,8 @@ public interface INgComponent<J extends INgComponent<J>>
                .append(s)
                .append("\n");
         }
-        List<NgAfterViewChecked> fInit = getAnnotations(getClass(), NgAfterViewChecked.class);
+        List<NgAfterViewChecked> fInit = IGuiceContext.get(AnnotationHelper.class)
+                                                      .getAnnotationFromClass(getClass(), NgAfterViewChecked.class);
         fInit.sort(Comparator.comparingInt(NgAfterViewChecked::sortOrder));
         Set<String> outs = new LinkedHashSet<>();
         if (!fInit.isEmpty())
@@ -536,7 +549,8 @@ public interface INgComponent<J extends INgComponent<J>>
                .append(s)
                .append("\n");
         }
-        List<NgAfterContentInit> fInit = getAnnotations(getClass(), NgAfterContentInit.class);
+        List<NgAfterContentInit> fInit = IGuiceContext.get(AnnotationHelper.class)
+                                                      .getAnnotationFromClass(getClass(), NgAfterContentInit.class);
         fInit.sort(Comparator.comparingInt(NgAfterContentInit::sortOrder));
         Set<String> outs = new LinkedHashSet<>();
         if (!fInit.isEmpty())
@@ -577,7 +591,8 @@ public interface INgComponent<J extends INgComponent<J>>
                .append(s)
                .append("\n");
         }
-        List<NgAfterContentChecked> fInit = getAnnotations(getClass(), NgAfterContentChecked.class);
+        List<NgAfterContentChecked> fInit = IGuiceContext.get(AnnotationHelper.class)
+                                                         .getAnnotationFromClass(getClass(), NgAfterContentChecked.class);
         fInit.sort(Comparator.comparingInt(NgAfterContentChecked::sortOrder));
         Set<String> outs = new LinkedHashSet<>();
         if (!fInit.isEmpty())

@@ -4,6 +4,7 @@ import com.guicedee.client.IGuiceContext;
 import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgDataTypeReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
+import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
 import com.jwebmp.core.base.angular.client.services.spi.OnGetAllImports;
 
 import java.io.File;
@@ -11,7 +12,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
-import static com.jwebmp.core.base.angular.client.services.AnnotationsMap.getAnnotations;
 import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getNgComponentReference;
 import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getTsFilename;
 
@@ -29,18 +29,21 @@ public interface ImportsStatementsComponent<J extends ImportsStatementsComponent
     {
         List<NgImportReference> refs = new ArrayList<>();
 
-        List<NgComponentReference> moduleRefs = getAnnotations(getClass(), NgComponentReference.class);
+        List<NgComponentReference> moduleRefs = IGuiceContext.get(AnnotationHelper.class)
+                                                             .getAnnotationFromClass(getClass(), NgComponentReference.class);
         moduleRefs.addAll(getComponentReferences());
         for (NgComponentReference moduleRef : moduleRefs)
         {
             refs.addAll(putRelativeLinkInMap(getClass(), moduleRef));
         }
-        List<NgDataTypeReference> dataTypeReferences = getAnnotations(getClass(), NgDataTypeReference.class);
+        List<NgDataTypeReference> dataTypeReferences = IGuiceContext.get(AnnotationHelper.class)
+                                                                    .getAnnotationFromClass(getClass(), NgDataTypeReference.class);
         for (NgDataTypeReference moduleRef : dataTypeReferences)
         {
             refs.addAll(putRelativeLinkInMap(getClass(), getNgComponentReference(moduleRef.value())));
         }
-        refs.addAll(getAnnotations(getClass(), NgImportReference.class));
+        refs.addAll(IGuiceContext.get(AnnotationHelper.class)
+                                 .getAnnotationFromClass(getClass(), NgImportReference.class));
 
         Set<OnGetAllImports> interceptors = IGuiceContext.loaderToSet(ServiceLoader.load(OnGetAllImports.class));
         for (OnGetAllImports interceptor : interceptors)

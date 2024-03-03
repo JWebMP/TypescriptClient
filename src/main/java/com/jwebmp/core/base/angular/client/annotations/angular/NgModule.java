@@ -13,12 +13,12 @@ import static java.lang.annotation.RetentionPolicy.*;
 @NgImportReference(value = "NgModule", reference = "@angular/core")
 public @interface NgModule
 {
-	/**
-	 * The name of the .ts file to render
-	 *
-	 * @return
-	 */
-	String name() default "";
-	
-	boolean renderInAngularBootModule() default true;
+    /**
+     * The name of the .ts file to render
+     *
+     * @return
+     */
+    String value() default "";
+
+    boolean renderInAngularBootModule() default true;
 }

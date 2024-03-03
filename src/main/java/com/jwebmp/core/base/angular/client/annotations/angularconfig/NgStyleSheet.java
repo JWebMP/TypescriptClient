@@ -11,11 +11,12 @@ import static java.lang.annotation.RetentionPolicy.*;
 @Repeatable(NgStyleSheets.class)
 public @interface NgStyleSheet
 {
-	String value();
-	
-	String[] replaces() default {};
-	
-	String name() default "";
-	
-	int sortOrder() default 100;
+    String value();
+
+    String[] replaces() default {};
+
+    String name() default "";
+
+    int sortOrder() default 100;
+
 }

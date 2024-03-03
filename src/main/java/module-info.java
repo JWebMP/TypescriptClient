@@ -1,5 +1,9 @@
+import com.guicedee.guicedinjection.interfaces.IGuiceConfigurator;
+import com.guicedee.guicedinjection.interfaces.IGuicePostStartup;
 import com.guicedee.guicedinjection.interfaces.IGuiceScanModuleInclusions;
 import com.jwebmp.core.base.angular.client.implementations.AngularTypeScriptClientModuleInclusion;
+import com.jwebmp.core.base.angular.client.implementations.AngularTypeScriptPostStartup;
+import com.jwebmp.core.base.angular.client.implementations.GuicedConfig;
 import com.jwebmp.core.base.angular.client.services.spi.*;
 
 module com.jwebmp.core.base.angular.client {
@@ -7,6 +11,8 @@ module com.jwebmp.core.base.angular.client {
     requires com.jwebmp.client;
     //requires transitive com.jwebmp.core;
     //requires org.apache.commons.io;
+
+    requires com.guicedee.guicedinjection;
 
     requires static lombok;
     requires com.guicedee.jsonrepresentation;
@@ -39,7 +45,11 @@ module com.jwebmp.core.base.angular.client {
     uses OnGetAllImports;
     uses OnGetAllMethods;
 
+    provides IGuiceConfigurator with GuicedConfig;
+    provides IGuicePostStartup with AngularTypeScriptPostStartup;
+
     opens com.jwebmp.core.base.angular.client.services.spi to com.google.guice, com.fasterxml.jackson.databind;
     opens com.jwebmp.core.base.angular.client to com.google.guice, com.fasterxml.jackson.databind;
+    opens com.jwebmp.core.base.angular.client.implementations to com.google.guice, com.fasterxml.jackson.databind;
     opens com.jwebmp.core.base.angular.client.services to com.google.guice, com.fasterxml.jackson.databind;
 }

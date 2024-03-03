@@ -19,16 +19,12 @@ import io.github.classgraph.ClassInfo;
 import lombok.extern.java.Log;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
+import java.util.*;
 
 @Log
 public class AnnotationsMap
 {
+/*
     private static final Map<Class<? extends Annotation>, Class<? extends Annotation>> ngConfigs
             = Map.of(
             NgAsset.class, NgAssets.class,
@@ -36,6 +32,7 @@ public class AnnotationsMap
             NgStyleSheet.class, NgStyleSheets.class,
             NgPolyfill.class, NgPolyfills.class
     );
+*/
 
     private static final Map<Class<? extends Annotation>, Class<? extends Annotation>> ngEvents
             = Map.of(
@@ -57,6 +54,17 @@ public class AnnotationsMap
             NgGlobalComponentImportReference.class, NgGlobalComponentImportReferences.class
     );
 
+    private static final Map<Class<? extends Annotation>, Class<? extends Annotation>> ngGlobals
+            = Map.of(
+            NgGlobalComponentConstructorParameter.class, NgGlobalComponentConstructorParameters.class,
+            NgGlobalConstructorParameter.class, NgGlobalConstructorParameters.class,
+            NgGlobalComponentImportReference.class, NgGlobalComponentImportReferences.class,
+            NgAsset.class, NgAssets.class,
+            NgScript.class, NgScripts.class,
+            NgStyleSheet.class, NgStyleSheets.class,
+            NgPolyfill.class, NgPolyfills.class
+    );
+
     private static final Map<Class<? extends Annotation>, Class<? extends Annotation>> ngBootConfigs
             = Map.of(
             NgBootDeclaration.class, NgBootDeclarations.class,
@@ -68,6 +76,7 @@ public class AnnotationsMap
             NgBootGlobalField.class, NgBootGlobalFields.class,
             NgBootModuleSchema.class, NgBootModuleSchemas.class
     );
+
     private static final Map<Class<? extends Annotation>, Class<? extends Annotation>> ngReferences
             = Map.of(
             NgComponentReference.class, NgComponentReferences.class,
@@ -85,16 +94,19 @@ public class AnnotationsMap
             NgValidator.class, NgValidators.class
     );
 
-    private static final Map<Class<? extends Annotation>, Class<? extends Annotation>> ngAllMultiples = new HashMap<>();
+    public static final Map<Class<? extends Annotation>, Class<? extends Annotation>> ngAllMultiples = new HashMap<>();
+    public static final Map<Class<? extends Annotation>, Class<? extends Annotation>> ngAllGlobals = new HashMap<>();
 
     static
     {
-        ngAllMultiples.putAll(ngConfigs);
+        //   ngAllMultiples.putAll(ngConfigs);
         ngAllMultiples.putAll(ngEvents);
-        ngAllMultiples.putAll(ngBootConfigs);
         ngAllMultiples.putAll(ngReferences);
         ngAllMultiples.putAll(ngClassStructures);
         ngAllMultiples.putAll(ngComponents);
+
+        ngAllGlobals.putAll(ngGlobals);
+        ngAllGlobals.putAll(ngBootConfigs);
     }
 
     public static final List<Class<? extends Annotation>> annotations
@@ -150,195 +162,18 @@ public class AnnotationsMap
             NgValidator.class
     );
 
-    private Class<?> clazz;
-    private Map<Class<? extends Annotation>, List<Annotation>> annotationsMapping = new HashMap<>();
 
-    private static Map<Class<?>, AnnotationsMap> annoMap = new HashMap<>();
-
-    public static AnnotationsMap getAnnotationMap(Class<?> clazz)
+    public static Set<Class<?>> loadAllClasses()
     {
-        AnnotationsMap mappy = null;
-        if (!getAnnoMap().containsKey(clazz))
-        {
-            mappy = new AnnotationsMap(clazz);
-            getAnnoMap().put(clazz, mappy);
-        }
-        else
-        {
-            mappy = getAnnoMap().get(clazz);
-        }
-        return mappy;
-    }
+        Set<Class<?>> allAffectedClasses = new HashSet<>();
 
-    public static <A extends Annotation> List<A> getAnnotations(Class<?> clazz, Class<A> annotation)
-    {
-        AnnotationsMap mappy = getAnnotationMap(clazz);
-        var out = (List<A>) mappy.annotationsMapping.get(annotation);
-        if (out == null)
-        {
-            return new ArrayList<>();
-        }
-        return out;
-    }
-
-    private AnnotationsMap(Class<?> clazz)
-    {
-        this.clazz = clazz;
-        readClass();
-    }
-
-    private void readClass()
-    {
-        if (!annoMap.containsKey(clazz))
-        {
-            readAnnotations(clazz);
-            readSubclassHierarchy(clazz);
-            readInterfaceHierarchy(clazz);
-        }
-    }
-
-    private void readSubclassHierarchy(Class<?> clazz)
-    {
-        Class<?> clazzes = clazz.getSuperclass();
-        if (clazzes != null)
-        {
-            while (clazzes != Object.class)
-            {
-                readAnnotations(clazzes);
-                readInterfaceHierarchy(clazzes);
-                clazzes = clazzes.getSuperclass();
-            }
-        }
-        else
-        {
-            log.fine("Reached the top of the hierarchy, superclass is null - " + clazz);
-        }
-    }
-
-    private void readInterfaceHierarchy(Class<?> clazz)
-    {
-        Class<?>[] clazzes = clazz.getInterfaces();
-        for (Class<?> aClass : clazzes)
-        {
-            readAnnotations(aClass);
-            readInterfaceHierarchy(aClass);
-        }
-    }
-
-    private void readAnnotations(Class<?> clazz)
-    {
-        Annotation[] annos = clazz.getAnnotations();
-        for (Annotation anno : annos)
-        {
-            if (ngAllMultiples.containsValue(anno.annotationType()))
-            {
-                var key = getKey(ngAllMultiples, anno.annotationType());
-                var allAnnos = getListOfAnnotations(clazz, key, ngAllMultiples.get(key));
-                for (Annotation allAnno : allAnnos)
-                {
-                    addAnnotation(allAnno);
-                    readAnnotations(allAnno.getClass());
-                }
-            }
-            if (annotations.contains(anno.annotationType()))
-            {
-                addAnnotation(anno);
-                readAnnotations(anno.annotationType());
-            }
-        }
-    }
-
-    public <K, V> K getKey(Map<K, V> map, V value)
-    {
-        for (Map.Entry<K, V> entry : map.entrySet())
-        {
-            if (entry.getValue()
-                     .equals(value))
-            {
-                return entry.getKey();
-            }
-        }
-        return null;
-    }
-
-    public void addAnnotation(Annotation source)
-    {
-        if (!annotationsMapping.containsKey(source.annotationType()))
-        {
-            annotationsMapping.put(source.annotationType(), new ArrayList<>());
-        }
-        annotationsMapping.get(source.annotationType())
-                          .add(source);
-    }
-
-    private <T extends Annotation> List<T> getListOfAnnotations(Class<?> clazz, Class<T> singularAnnotation, Class<? extends Annotation> multipleAnnotation)
-    {
-        List<T> out = new ArrayList<>();
-        if (clazz.isAnnotationPresent(multipleAnnotation))
-        {
-            Annotation refAnnotation = clazz.getAnnotation(multipleAnnotation);
-            try
-            {
-                Method valueMethod = refAnnotation.annotationType()
-                                                  .getDeclaredMethod("value");
-                Annotation[] result = (Annotation[]) valueMethod.invoke(refAnnotation);
-                for (Annotation annotation : result)
-                {
-                    out.add((T) annotation);
-                }
-            }
-            catch (Exception e)
-            {
-                log.log(Level.SEVERE, "Cannot read multiple annotations - " + clazz + " - " + multipleAnnotation, e);
-            }
-        }
-        if (clazz.isAnnotationPresent(singularAnnotation))
-        {
-            out.add(clazz.getAnnotation(singularAnnotation));
-        }
-        return out;
-    }
-
-    public static <T extends Annotation> List<T> getAllAnnotations(Class<T> annotation)
-    {
-        List<T> annos = new ArrayList<>();
-        getAnnoMap().forEach((key, value) -> {
-            value.annotationsMapping.forEach((key2, value2) -> {
-                for (Annotation annotation1 : value2)
-                {
-                    if (annotation1.annotationType()
-                                   .equals(annotation))
-                    {
-                        annos.add((T) annotation1);
-                    }
-                }
-            });
-        });
-
-        return annos;
-    }
-
-    public static Map<Class<?>, AnnotationsMap> getAnnoMap()
-    {
-        return annoMap;
-    }
-
-    public static void loadAllClasses()
-    {
         for (Class<? extends Annotation> annotation : annotations)
         {
             for (ClassInfo allClass : IGuiceContext.instance()
                                                    .getScanResult()
                                                    .getClassesWithAnnotation(annotation))
             {
-                try
-                {
-                    getAnnotationMap(allClass.loadClass());
-                }
-                catch (Exception e)
-                {
-                    e.printStackTrace();
-                }
+                allAffectedClasses.add(allClass.loadClass());
             }
         }
         for (Class<? extends Annotation> annotation : ngAllMultiples.values())
@@ -347,24 +182,10 @@ public class AnnotationsMap
                                                    .getScanResult()
                                                    .getClassesWithAnnotation(annotation))
             {
-                try
-                {
-                    Class<?> aClass = allClass.loadClass();
-                    if (aClass != null)
-                    {
-                        getAnnotationMap(aClass);
-                    }
-                    else
-                    {
-                        log.warning("Class Info [" + allClass.getName() + "/" + allClass.getModuleRef() + "] could not be loaded by Annotations Map");
-                    }
-                }
-                catch (Exception e)
-                {
-                    e.printStackTrace();
-                }
+                allAffectedClasses.add(allClass.loadClass());
             }
         }
+        return allAffectedClasses;
     }
 
 }

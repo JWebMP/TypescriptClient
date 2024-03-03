@@ -11,55 +11,55 @@ import static com.jwebmp.core.base.angular.client.annotations.typescript.NgSourc
 @NgSourceDirectoryReference(Main)
 public interface INgApp<J extends INgApp<J>> extends IComponent<J>, IPage<J>
 {
-	default NgApp getAnnotation()
-	{
-		return getClass().getAnnotation(NgApp.class);
-	}
-	
-	default String name()
-	{
-		return getAnnotation().name();
-	}
-	
-	/**
-	 * The name of the .ts file for this app
-	 *
-	 * @return
-	 */
-	default List<String> assets()
-	{
-		return List.of();
-	}
-	
-	
-	/**
-	 * The name of the .ts file for this app
-	 *
-	 * @return
-	 */
-	default List<String> stylesheets()
-	{
-		return List.of();
-	}
-	
-	/**
-	 * The name of the .ts file for this app
-	 *
-	 * @return
-	 */
-	default List<String> scripts()
-	{
-		return List.of();
-	}
-	
-	/**
-	 * Include the packages to render
-	 *
-	 * @return
-	 */
-	default List<String> includePackages()
-	{
-		return List.of(getClass().getPackageName());
-	}
-	
+    default NgApp getAnnotation()
+    {
+        return getClass().getAnnotation(NgApp.class);
+    }
+
+    default String name()
+    {
+        return getAnnotation().value();
+    }
+
+    /**
+     * The name of the .ts file for this app
+     *
+     * @return
+     */
+    default List<String> assets()
+    {
+        return List.of();
+    }
+
+
+    /**
+     * The name of the .ts file for this app
+     *
+     * @return
+     */
+    default List<String> stylesheets()
+    {
+        return List.of();
+    }
+
+    /**
+     * The name of the .ts file for this app
+     *
+     * @return
+     */
+    default List<String> scripts()
+    {
+        return List.of();
+    }
+
+    /**
+     * Include the packages to render
+     *
+     * @return
+     */
+    default List<String> includePackages()
+    {
+        return List.of(getClass().getPackageName());
+    }
+
 }

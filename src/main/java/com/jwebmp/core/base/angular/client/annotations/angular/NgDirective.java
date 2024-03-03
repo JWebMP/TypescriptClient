@@ -10,17 +10,17 @@ import static java.lang.annotation.RetentionPolicy.*;
 @Inherited
 public @interface NgDirective
 {
-	String selector();
-	
-	String[] inputs() default {};
-	
-	String[] outputs() default {};
-	
-	String exportAs() default "";
-	
-	String[] queries() default {};
-	
-	String host() default "";
-	
-	boolean includeADeclaration() default true;
+    String value();
+
+    String[] inputs() default {};
+
+    String[] outputs() default {};
+
+    String exportAs() default "";
+
+    String[] queries() default {};
+
+    String host() default "";
+
+    boolean includeADeclaration() default true;
 }

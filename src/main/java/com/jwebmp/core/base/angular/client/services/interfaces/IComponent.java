@@ -13,6 +13,7 @@ import com.jwebmp.core.base.angular.client.annotations.references.NgImportRefere
 import com.jwebmp.core.base.angular.client.annotations.structures.NgField;
 import com.jwebmp.core.base.angular.client.annotations.structures.NgInterface;
 import com.jwebmp.core.base.angular.client.annotations.structures.NgMethod;
+import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
 import com.jwebmp.core.base.angular.client.services.spi.OnGetAllConstructorBodies;
 import com.jwebmp.core.base.angular.client.services.spi.OnGetAllConstructorParameters;
 import com.jwebmp.core.base.angular.client.services.spi.OnGetAllFields;
@@ -21,8 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static com.jwebmp.core.base.angular.client.services.AnnotationsMap.getAllAnnotations;
-import static com.jwebmp.core.base.angular.client.services.AnnotationsMap.getAnnotations;
 import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.*;
 
 public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>, ImportsStatementsComponent<J>
@@ -57,17 +56,20 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
     default List<NgField> getAllFields()
     {
         List<NgField> out = new ArrayList<>();
-        for (NgField annotation : getAnnotations(getClass(), NgField.class))
+        for (NgField annotation : IGuiceContext.get(AnnotationHelper.class)
+                                               .getAnnotationFromClass(getClass(), NgField.class))
         {
             if (annotation.onSelf())
             {
                 out.add(annotation);
             }
         }
-        for (NgComponentReference annotation : getAnnotations(getClass(), NgComponentReference.class))
+        for (NgComponentReference annotation : IGuiceContext.get(AnnotationHelper.class)
+                                                            .getAnnotationFromClass(getClass(), NgComponentReference.class))
         {
             Class<?> reference = annotation.value();
-            for (NgField ngField : getAnnotations(reference, NgField.class))
+            for (NgField ngField : IGuiceContext.get(AnnotationHelper.class)
+                                                .getAnnotationFromClass(getClass(), NgField.class))
             {
                 if (ngField.onParent())
                 {
@@ -97,7 +99,8 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
     {
         List<NgConstructorParameter> out = new ArrayList<>();
 
-        for (NgConstructorParameter annotation : getAnnotations(getClass(), NgConstructorParameter.class))
+        for (NgConstructorParameter annotation : IGuiceContext.get(AnnotationHelper.class)
+                                                              .getAnnotationFromClass(getClass(), NgConstructorParameter.class))
         {
             if (annotation.onSelf())
             {
@@ -106,7 +109,8 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         }
 
 
-        List<NgGlobalConstructorParameter> allGlobals = getAllAnnotations(NgGlobalConstructorParameter.class);
+        List<NgGlobalConstructorParameter> allGlobals = IGuiceContext.get(AnnotationHelper.class)
+                                                                     .getGlobalAnnotations(NgGlobalConstructorParameter.class);
         for (NgGlobalConstructorParameter global : allGlobals)
         {
             NgConstructorParameter param = getNgConstructorParameter(global.value());
@@ -114,7 +118,8 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         }
 
         //check references for constructors needed
-        for (NgComponentReference annotation : getAnnotations(getClass(), NgComponentReference.class))
+        for (NgComponentReference annotation : IGuiceContext.get(AnnotationHelper.class)
+                                                            .getAnnotationFromClass(getClass(), NgComponentReference.class))
         {
             if (annotation.provides() && !INgServiceProvider.class.isAssignableFrom(annotation.value()))
             {
@@ -134,7 +139,8 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
             }
             //get component referenced constructor parameters that say on parem
             Class<?> referencedClass = annotation.value();
-            for (NgConstructorParameter ngConstructorParameter : getAnnotations(referencedClass, NgConstructorParameter.class))
+            for (NgConstructorParameter ngConstructorParameter : IGuiceContext.get(AnnotationHelper.class)
+                                                                              .getAnnotationFromClass(referencedClass, NgConstructorParameter.class))
             {
                 if (ngConstructorParameter.onParent())
                 {
@@ -165,7 +171,8 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
     default List<NgConstructorBody> getAllConstructorBodies()
     {
         List<NgConstructorBody> out = new ArrayList<>();
-        for (NgConstructorBody annotation : getAnnotations(getClass(), NgConstructorBody.class))
+        for (NgConstructorBody annotation : IGuiceContext.get(AnnotationHelper.class)
+                                                         .getAnnotationFromClass(getClass(), NgConstructorBody.class))
         {
             if (annotation.onSelf())
             {
@@ -174,10 +181,12 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         }
 
         //check references for constructors needed
-        for (NgComponentReference annotation : getAnnotations(getClass(), NgComponentReference.class))
+        for (NgComponentReference annotation : IGuiceContext.get(AnnotationHelper.class)
+                                                            .getAnnotationFromClass(getClass(), NgComponentReference.class))
         {
             Class<?> clazz = annotation.value();
-            for (NgConstructorBody ngConstructorBody : getAnnotations(clazz, NgConstructorBody.class))
+            for (NgConstructorBody ngConstructorBody : IGuiceContext.get(AnnotationHelper.class)
+                                                                    .getAnnotationFromClass(clazz, NgConstructorBody.class))
             {
                 if (ngConstructorBody.onParent())
                 {
@@ -207,17 +216,20 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
     default List<NgMethod> getAllMethods()
     {
         List<NgMethod> out = new ArrayList<>();
-        for (NgMethod annotation : getAnnotations(getClass(), NgMethod.class))
+        for (NgMethod annotation : IGuiceContext.get(AnnotationHelper.class)
+                                                .getAnnotationFromClass(getClass(), NgMethod.class))
         {
             if (annotation.onSelf())
             {
                 out.add(annotation);
             }
         }
-        for (NgComponentReference annotation : getAnnotations(getClass(), NgComponentReference.class))
+        for (NgComponentReference annotation : IGuiceContext.get(AnnotationHelper.class)
+                                                            .getAnnotationFromClass(getClass(), NgComponentReference.class))
         {
             Class<?> reference = annotation.value();
-            for (NgMethod ngMethod : getAnnotations(reference, NgMethod.class))
+            for (NgMethod ngMethod : IGuiceContext.get(AnnotationHelper.class)
+                                                  .getAnnotationFromClass(reference, NgMethod.class))
             {
                 if (ngMethod.onParent())
                 {
@@ -310,7 +322,8 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         StringBuilder out = new StringBuilder();
         out.append(exportsClass() ? "export " : "");
 
-        List<NgDataType> cType = getAnnotations(getClass(), NgDataType.class);
+        List<NgDataType> cType = IGuiceContext.get(AnnotationHelper.class)
+                                              .getAnnotationFromClass(getClass(), NgDataType.class);
         if (!cType.isEmpty())
         {
             out.append(cType.get(0)
@@ -389,7 +402,8 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
     {
         StringBuilder out = new StringBuilder();
         Set<String> ints = new HashSet<>(interfaces());
-        List<NgInterface> interfacs = getAnnotations(getClass(), NgInterface.class);
+        List<NgInterface> interfacs = IGuiceContext.get(AnnotationHelper.class)
+                                                   .getAnnotationFromClass(getClass(), NgInterface.class);
         for (NgInterface interfac : interfacs)
         {
             if (interfac.onSelf())
@@ -530,7 +544,8 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
     default List<String> constructorParameters()
     {
         List<String> parms = new ArrayList<>();
-        List<NgComponentReference> compRefs = getAnnotations(getClass(), NgComponentReference.class);
+        List<NgComponentReference> compRefs = IGuiceContext.get(AnnotationHelper.class)
+                                                           .getAnnotationFromClass(getClass(), NgComponentReference.class);
         for (NgComponentReference compRef : compRefs)
         {
             if (compRef.provides() && compRef.onSelf())

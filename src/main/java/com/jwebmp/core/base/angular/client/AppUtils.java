@@ -220,7 +220,7 @@ public class AppUtils
     public static String getAppName(Class<? extends INgApp<?>> app)
     {
         NgApp appAnnotation = app.getAnnotation(NgApp.class);
-        return appAnnotation.name();
+        return appAnnotation.value();
     }
 
     public static File getAppPath(Class<? extends INgApp<?>> app)

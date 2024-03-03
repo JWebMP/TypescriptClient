@@ -11,11 +11,13 @@ import static java.lang.annotation.RetentionPolicy.*;
 @Inherited
 public @interface NgBootImportReference
 {
-	String reference();
-	String name();
-	
-	boolean overrides() default false;
-	
-	boolean onParent() default false;
-	boolean onSelf() default true;
+    String reference();
+
+    String value();
+
+    boolean overrides() default false;
+
+    boolean onParent() default false;
+
+    boolean onSelf() default true;
 }
