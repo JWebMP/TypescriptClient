@@ -72,7 +72,7 @@ public class ClassAnnotationMapping
         }
         catch (NoSuchMethodException nsme)
         {
-            log.log(Level.WARNING, "Cannot read value method of annotation - " + key);
+            log.log(Level.FINER, "Cannot read value method of annotation - " + key);
             annotationsLists.add(lookup);
         }
     }
