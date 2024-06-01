@@ -12,10 +12,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 
 import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getTsFilename;
@@ -53,9 +50,9 @@ public class AppUtils
 
     static
     {
-        String userDir = GlobalProperties.getSystemPropertyOrEnvironment("JWEBMP_ROOT_PATH", FileUtils.getUserDirectory()
-                                                                                                      .getPath());
-        baseUserDirectory = new File(userDir.replaceAll("\\\\", "/") + "/jwebmp/");
+        String userDir = GlobalProperties.getSystemPropertyOrEnvironment("JWEBMP_ROOT_PATH", new File(System.getProperty("user.dir"))
+                .getPath());
+        baseUserDirectory = new File(userDir.replaceAll("\\\\", "/") + "/webroot/");
         try
         {
             if (!baseUserDirectory.exists())
@@ -501,7 +498,7 @@ public class AppUtils
         {
             try
             {
-                File appBaseDirectory = new File(baseUserDirectory.getCanonicalPath() + "/" + appName + "/dist/jwebmp/");
+                File appBaseDirectory = new File(baseUserDirectory.getCanonicalPath() + "/" + appName + "/dist/jwebmp/browser/");
                 if (!appBaseDirectory.exists())
                 {
                     FileUtils.forceMkdirParent(appBaseDirectory);
@@ -654,6 +651,13 @@ public class AppUtils
         saveAsset(app, inputStream, fileName, false);
     }
 
+    private static Map<Class<? extends INgApp<?>>, List<String>> appAssets = new HashMap<>();
+
+    public static List<String> getAssetList(Class<? extends INgApp<?>> app)
+    {
+        return appAssets.get(app);
+    }
+
     public static void saveAsset(Class<? extends INgApp<?>> app, InputStream inputStream, String fileName, boolean includeDist)
     {
         File appAssetsPath = getAppAssetsPath(app);
@@ -671,10 +675,7 @@ public class AppUtils
         {
             fileName = fileName.substring(1);
         }
-        if (fileName.startsWith("src/assets/") || fileName.startsWith("src\\assets\\"))
-        {
-            fileName = fileName.substring(11);
-        }
+        fileName = fileName.substring(fileName.indexOf("assets/") + 7);
         String assetFilePath;
         try
         {
@@ -685,6 +686,13 @@ public class AppUtils
             throw new UnsupportedOperationException(e);
         }
         writeFile(new ByteArrayInputStream(data), assetFilePath);
+        if (!appAssets.containsKey(app))
+        {
+            appAssets.put(app, new ArrayList<>());
+        }
+        appAssets.get(app)
+                 .add("src/assets/" + fileName);
+        
         if (includeDist)
         {
             try

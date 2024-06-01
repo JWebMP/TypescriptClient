@@ -16,6 +16,7 @@ import com.jwebmp.core.base.angular.client.annotations.routing.NgRoutable;
 import com.jwebmp.core.base.angular.client.annotations.routing.NgRouteData;
 import com.jwebmp.core.base.angular.client.annotations.structures.*;
 import io.github.classgraph.ClassInfo;
+import io.github.classgraph.ScanResult;
 import lombok.extern.java.Log;
 
 import java.lang.annotation.Annotation;
@@ -166,11 +167,11 @@ public class AnnotationsMap
     public static Set<Class<?>> loadAllClasses()
     {
         Set<Class<?>> allAffectedClasses = new HashSet<>();
-
+        ScanResult scanResult = IGuiceContext.instance()
+                                             .getScanResult();
         for (Class<? extends Annotation> annotation : annotations)
         {
-            for (ClassInfo allClass : IGuiceContext.instance()
-                                                   .getScanResult()
+            for (ClassInfo allClass : scanResult
                                                    .getClassesWithAnnotation(annotation))
             {
                 allAffectedClasses.add(allClass.loadClass());
@@ -178,8 +179,7 @@ public class AnnotationsMap
         }
         for (Class<? extends Annotation> annotation : ngAllMultiples.values())
         {
-            for (ClassInfo allClass : IGuiceContext.instance()
-                                                   .getScanResult()
+            for (ClassInfo allClass : scanResult
                                                    .getClassesWithAnnotation(annotation))
             {
                 allAffectedClasses.add(allClass.loadClass());

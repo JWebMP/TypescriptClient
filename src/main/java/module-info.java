@@ -18,6 +18,7 @@ module com.jwebmp.core.base.angular.client {
     requires com.guicedee.jsonrepresentation;
     requires org.apache.commons.lang3;
     requires org.apache.commons.io;
+    requires jakarta.validation;
 
     exports com.jwebmp.core.base.angular.client.annotations.angular;
     exports com.jwebmp.core.base.angular.client.annotations.components;
