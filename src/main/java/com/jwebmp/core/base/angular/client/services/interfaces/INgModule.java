@@ -9,21 +9,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@TsDependency(value = "@angular/common", version = "^17.2.0")
-@TsDependency(value = "@angular/compiler", version = "^17.2.0")
-@TsDependency(value = "@angular/core", version = "^17.2.0")
-@TsDependency(value = "@angular/forms", version = "^17.2.0")
+@TsDependency(value = "@angular/common", version = "^18.0.1")
+@TsDependency(value = "@angular/compiler", version = "^18.0.1")
+@TsDependency(value = "@angular/core", version = "^18.0.1")
+@TsDependency(value = "@angular/forms", version = "^18.0.1")
 @TsDependency(value = "rxjs", version = "~7.8.0")
 @TsDependency(value = "tslib", version = "^2.3.0")
 @TsDependency(value = "zone.js", version = "~0.14.3")
 
-@TsDevDependency(value = "@angular-devkit/build-angular", version = "^17.2.2")
-@TsDevDependency(value = "@angular/cli", version = "^17.2.2")
-@TsDevDependency(value = "@angular/compiler-cli", version = "^17.2.0")
+@TsDevDependency(value = "@angular-devkit/build-angular", version = "^18.0.1")
+@TsDevDependency(value = "@angular/cli", version = "^18.0.1")
+@TsDevDependency(value = "@angular/compiler-cli", version = "^18.0.1")
 @TsDevDependency(value = "@types/node", version = "^18.18.0")
 @TsDevDependency(value = "@types/express", version = "~4.17.17")
 @TsDevDependency(value = "@types/jasmine", version = "~5.1.0")
-@TsDevDependency(value = "typescript", version = "~5.3.2")
+@TsDevDependency(value = "typescript", version = "~5.4.5")
 @TsDevDependency(value = "jasmine-core", version = "~5.1.0")
 @TsDevDependency(value = "karma", version = "~6.4.0")
 @TsDevDependency(value = "karma-chrome-launcher", version = "~3.2.0")
@@ -116,7 +116,7 @@ public interface INgModule<J extends INgModule<J>>
         StringBuilder importNames = new StringBuilder();
 
         Arrays.stream(moduleImports()
-                      .toArray())
+                              .toArray())
               .forEach((key) -> {
 
                   importNames.append(key)
