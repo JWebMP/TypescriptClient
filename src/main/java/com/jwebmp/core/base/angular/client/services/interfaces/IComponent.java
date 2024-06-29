@@ -263,8 +263,12 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         List<NgImportReference> refs = getAllImportAnnotations();
         refs = clean(refs);
         refs.forEach((ref) -> {
-            if (!ref.value()
-                    .startsWith("!"))
+            if (ref.direct())
+            {
+                sb.append(String.format(importDirectString, ref.value()));
+            }
+            else if (!ref.value()
+                         .startsWith("!"))
             {
                 sb.append(String.format(importString, ref.value(), ref.reference()));
             }

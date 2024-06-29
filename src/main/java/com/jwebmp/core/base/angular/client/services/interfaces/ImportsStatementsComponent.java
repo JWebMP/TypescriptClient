@@ -19,6 +19,7 @@ public interface ImportsStatementsComponent<J extends ImportsStatementsComponent
 {
     String importString = "import { %s } from '%s';\n";
     String importPlainString = "import %s from '%s';\n";
+    String importDirectString = "import '%s';\n";
 
     default List<NgComponentReference> getComponentReferences()
     {
@@ -112,7 +113,7 @@ public interface ImportsStatementsComponent<J extends ImportsStatementsComponent
         //	for (File file : srcRelative)
         //{
         out.putAll(Map.of(getTsFilename(getClass()),
-                getClassLocationDirectory(getClass()) + getTsFilename(getClass()))
+                          getClassLocationDirectory(getClass()) + getTsFilename(getClass()))
         );
         //}
         return out;

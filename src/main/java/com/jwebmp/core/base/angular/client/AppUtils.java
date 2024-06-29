@@ -28,6 +28,7 @@ public class AppUtils
 
     private static final Map<String, File> baseAppMainTSFiles = new HashMap<>();
     private static final Map<String, File> baseAppPackageJsonFiles = new HashMap<>();
+    private static final Map<String, File> baseAppNpmrcFiles = new HashMap<>();
 
     private static final Map<String, File> baseAppTSConfigAppFiles = new HashMap<>();
     private static final Map<String, File> baseAppTSConfigFiles = new HashMap<>();
@@ -113,6 +114,17 @@ public class AppUtils
         }
         return false;
     }
+
+    private static boolean hasNprmcFile(Class<? extends INgApp<?>> app)
+    {
+        String appName = getAppName(app);
+        if (baseAppNpmrcFiles.containsKey(appName))
+        {
+            return true;
+        }
+        return false;
+    }
+
 
     private static boolean hasTSConfigAppFile(Class<? extends INgApp<?>> app)
     {
@@ -306,6 +318,37 @@ public class AppUtils
             }
         }
         return baseAppPackageJsonFiles.get(appName);
+    }
+
+    public static File getAppNpmrcPath(Class<? extends INgApp<?>> app, boolean createNew)
+    {
+        String appName = getAppName(app);
+        if (!hasNprmcFile(app))
+        {
+            try
+            {
+                File appBaseDirectory = new File(getAppPath(app) + "/.npmrc");
+                if (!appBaseDirectory.exists())
+                {
+                    FileUtils.forceMkdirParent(appBaseDirectory);
+                }
+                if (createNew && appBaseDirectory.exists())
+                {
+                    appBaseDirectory.delete();
+                    appBaseDirectory.createNewFile();
+                }
+                else if (!appBaseDirectory.exists())
+                {
+                    appBaseDirectory.createNewFile();
+                }
+                baseAppNpmrcFiles.put(appName, appBaseDirectory);
+            }
+            catch (IOException e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        return baseAppNpmrcFiles.get(appName);
     }
 
     public static File getAppTsConfigAppPath(Class<? extends INgApp<?>> app, boolean createNew)
@@ -521,7 +564,7 @@ public class AppUtils
         {
             try
             {
-                File appBaseDirectory = new File(baseUserDirectory.getCanonicalPath() + "/" + appName + "/dist/jwebmp/assets/");
+                File appBaseDirectory = new File(baseUserDirectory.getCanonicalPath() + "/" + appName + "/dist/jwebmp/browser/assets/");
                 if (!appBaseDirectory.exists())
                 {
                     FileUtils.forceMkdirParent(appBaseDirectory);
@@ -675,7 +718,10 @@ public class AppUtils
         {
             fileName = fileName.substring(1);
         }
-        fileName = fileName.substring(fileName.indexOf("assets/") + 7);
+        if (fileName.startsWith("assets/"))
+        {
+            fileName = fileName.substring(fileName.indexOf("assets/") + 7);
+        }
         String assetFilePath;
         try
         {
@@ -692,7 +738,7 @@ public class AppUtils
         }
         appAssets.get(app)
                  .add("src/assets/" + fileName);
-        
+
         if (includeDist)
         {
             try
