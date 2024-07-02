@@ -71,6 +71,7 @@ public class AnnotationsMap
             NgBootDeclaration.class, NgBootDeclarations.class,
             NgBootModuleImport.class, NgBootModuleImports.class,
             NgBootImportReference.class, NgBootImportReferences.class,
+            NgBootImportProvider.class, NgBootImportProviders.class,
             NgBootProvider.class, NgBootProviders.class,
             NgBootConstructorBody.class, NgBootConstructorBodys.class,
             NgBootConstructorParameter.class, NgBootConstructorParameters.class,
@@ -172,7 +173,7 @@ public class AnnotationsMap
         for (Class<? extends Annotation> annotation : annotations)
         {
             for (ClassInfo allClass : scanResult
-                                                   .getClassesWithAnnotation(annotation))
+                    .getClassesWithAnnotation(annotation))
             {
                 allAffectedClasses.add(allClass.loadClass());
             }
@@ -180,7 +181,7 @@ public class AnnotationsMap
         for (Class<? extends Annotation> annotation : ngAllMultiples.values())
         {
             for (ClassInfo allClass : scanResult
-                                                   .getClassesWithAnnotation(annotation))
+                    .getClassesWithAnnotation(annotation))
             {
                 allAffectedClasses.add(allClass.loadClass());
             }
