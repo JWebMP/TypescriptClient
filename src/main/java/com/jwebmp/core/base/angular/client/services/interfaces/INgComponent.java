@@ -9,9 +9,11 @@ import com.jwebmp.core.base.angular.client.annotations.functions.*;
 import com.jwebmp.core.base.angular.client.annotations.globals.NgGlobalComponentConstructorParameter;
 import com.jwebmp.core.base.angular.client.annotations.globals.NgGlobalComponentImportReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
+import com.jwebmp.core.base.angular.client.annotations.references.NgImportModule;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportProvider;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
 import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
+import com.jwebmp.core.base.angular.client.services.spi.OnGetAllModuleImports;
 import com.jwebmp.core.base.interfaces.IComponentHierarchyBase;
 import com.jwebmp.core.databind.IConfiguration;
 import org.apache.commons.io.FileUtils;
@@ -35,6 +37,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 @NgImportReference(value = "ElementRef", reference = "@angular/core")
 @NgImportReference(value = "Input", reference = "@angular/core")
 @NgImportReference(value = "Injectable", reference = "@angular/core")
+@NgImportReference(value = "NgForOf", reference = "@angular/common")
+@NgImportReference(value = "NgIf", reference = "@angular/common")
 
 
 @NgImportReference(value = "Router", reference = "@angular/router")
@@ -42,6 +46,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 @NgConstructorParameter("private cdref: ChangeDetectorRef")
 @NgConstructorParameter("private elementRef: ElementRef")
 @NgConstructorParameter("private router: Router")
+
 
 public interface INgComponent<J extends INgComponent<J>>
         extends IComponent<J>, IConfiguration
@@ -59,6 +64,22 @@ public interface INgComponent<J extends INgComponent<J>>
             \thost:%s
             })""";
 
+    String componentStandaloneString = """
+            @Component({
+            \tselector:'%s',
+            \ttemplateUrl:'%s',
+            \tstyles: [%s],
+            \tstyleUrls:[%s],
+            \tviewProviders:[%s],
+            \tanimations:[%s],
+            \tproviders:[%s],
+            \tpreserveWhitespaces:true,
+            \thost:%s,
+            \timports:[%s],
+            \tstandalone:%b
+            })""";
+
+
     @Override
     default List<String> afterContentChecked()
     {
@@ -72,16 +93,16 @@ public interface INgComponent<J extends INgComponent<J>>
     {
         List<String> out = IComponent.super.componentMethods();
         out.add("""
-                public routeMe(location : string, tabData? : object, browserData? : object, skipLocationChange : boolean = true, )
-                    {
-                        if (tabData) {
-                            Object.entries(tabData).forEach(([key, value]) => sessionStorage.setItem(key, value))
-                        }
-                        if (browserData) {
-                            Object.entries(browserData).forEach(([key, value]) => localStorage.setItem(key, value))
-                        }
-                        this.router.navigateByUrl(location);
-                    }""");
+                        public routeMe(location : string, tabData? : object, browserData? : object, skipLocationChange : boolean = true, )
+                            {
+                                if (tabData) {
+                                    Object.entries(tabData).forEach(([key, value]) => sessionStorage.setItem(key, value))
+                                }
+                                if (browserData) {
+                                    Object.entries(browserData).forEach(([key, value]) => localStorage.setItem(key, value))
+                                }
+                                this.router.navigateByUrl(location);
+                            }""");
         return out;
     }
 
@@ -102,12 +123,46 @@ public interface INgComponent<J extends INgComponent<J>>
     default List<String> componentInterfaces()
     {
         List<String> out = IComponent.super.componentInterfaces();
-        out.add("AfterContentInit");
-        out.add("AfterContentChecked");
-        out.add("AfterViewInit");
-        out.add("AfterViewChecked");
-        out.add("OnInit");
-        out.add("OnDestroy");
+
+        List<NgAfterContentInit> fAfterContentInit = IGuiceContext.get(AnnotationHelper.class)
+                                                                  .getAnnotationFromClass(getClass(), NgAfterContentInit.class);
+        if (!(fAfterContentInit.isEmpty() && componentAfterContentInit().isEmpty() && afterContentInit().isEmpty()))
+        {
+            out.add("AfterContentInit");
+        }
+        List<NgAfterContentChecked> ngComponent = IGuiceContext.get(AnnotationHelper.class)
+                                                               .getAnnotationFromClass(getClass(), NgAfterContentChecked.class);
+        if (!(ngComponent.isEmpty() && componentAfterContentChecked().isEmpty() && afterContentChecked().isEmpty()))
+        {
+            out.add("AfterContentChecked");
+        }
+
+        List<NgAfterViewInit> fViewInit = IGuiceContext.get(AnnotationHelper.class)
+                                                       .getAnnotationFromClass(getClass(), NgAfterViewInit.class);
+        if (!(fViewInit.isEmpty() && afterViewInit().isEmpty() && componentAfterViewInit().isEmpty()))
+        {
+            out.add("AfterViewInit");
+        }
+
+        List<NgAfterViewChecked> fAfterViewVhecked = IGuiceContext.get(AnnotationHelper.class)
+                                                                  .getAnnotationFromClass(getClass(), NgAfterViewChecked.class);
+        if (!(fAfterViewVhecked.isEmpty() && componentAfterViewChecked().isEmpty() && afterViewChecked().isEmpty()))
+        {
+            out.add("AfterViewChecked");
+        }
+
+        List<NgOnInit> fInit = IGuiceContext.get(AnnotationHelper.class)
+                                            .getAnnotationFromClass(getClass(), NgOnInit.class);
+        if (!(fInit.isEmpty() && componentOnInit().isEmpty() && onInit().isEmpty()))
+        {
+            out.add("OnInit");
+        }
+        List<NgOnDestroy> fDestroy = IGuiceContext.get(AnnotationHelper.class)
+                                                  .getAnnotationFromClass(getClass(), NgOnDestroy.class);
+        if (!(fDestroy.isEmpty() && componentOnDestroy().isEmpty() && onDestroy().isEmpty()))
+        {
+            out.add("OnDestroy");
+        }
         return out;
     }
 
@@ -129,6 +184,13 @@ public interface INgComponent<J extends INgComponent<J>>
     default String renderOnInitMethod()
     {
         StringBuilder out = new StringBuilder(IComponent.super.renderOnInitMethod());
+        List<NgOnInit> fInit = IGuiceContext.get(AnnotationHelper.class)
+                                            .getAnnotationFromClass(getClass(), NgOnInit.class);
+        if (fInit.isEmpty() && componentOnInit().isEmpty() && onInit().isEmpty())
+        {
+            return out.toString();
+        }
+
         out.append("ngOnInit() {\n");
         for (String s : componentOnInit())
         {
@@ -142,9 +204,6 @@ public interface INgComponent<J extends INgComponent<J>>
                .append(s)
                .append("\n");
         }
-
-        List<NgOnInit> fInit = IGuiceContext.get(AnnotationHelper.class)
-                                            .getAnnotationFromClass(getClass(), NgOnInit.class);
         fInit.sort(Comparator.comparingInt(NgOnInit::sortOrder));
         Set<String> outs = new LinkedHashSet<>();
         if (!fInit.isEmpty())
@@ -173,6 +232,13 @@ public interface INgComponent<J extends INgComponent<J>>
     default String renderOnDestroyMethod()
     {
         StringBuilder out = new StringBuilder(IComponent.super.renderOnDestroyMethod());
+        List<NgOnDestroy> fInit = IGuiceContext.get(AnnotationHelper.class)
+                                               .getAnnotationFromClass(getClass(), NgOnDestroy.class);
+        if (fInit.isEmpty() && componentOnDestroy().isEmpty() && onDestroy().isEmpty())
+        {
+            return out.toString();
+        }
+
         out.append("ngOnDestroy() {\n");
         for (String s : componentOnDestroy())
         {
@@ -186,8 +252,7 @@ public interface INgComponent<J extends INgComponent<J>>
                .append(s)
                .append("\n");
         }
-        List<NgOnDestroy> fInit = IGuiceContext.get(AnnotationHelper.class)
-                                               .getAnnotationFromClass(getClass(), NgOnDestroy.class);
+
         fInit.sort(Comparator.comparingInt(NgOnDestroy::sortOrder));
         Set<String> outs = new LinkedHashSet<>();
         if (!fInit.isEmpty())
@@ -221,6 +286,10 @@ public interface INgComponent<J extends INgComponent<J>>
         for (NgAfterContentChecked ngInput : ngComponent)
         {
             out.add(ngInput.value());
+        }
+        for (String s : afterContentChecked())
+        {
+            out.add(s);
         }
         return new ArrayList<>(out);
     }
@@ -265,13 +334,13 @@ public interface INgComponent<J extends INgComponent<J>>
                                              .providedIn()))
         {
             list.add("@Injectable ({" +
-                    "  providedIn:" +
-                    (ngComponent.providedIn()
-                                .startsWith("!") ? "" : "'") +
-                    ngComponent.providedIn() +
-                    (ngComponent.providedIn()
-                                .startsWith("!") ? "" : "'") +
-                    "})");
+                             "  providedIn:" +
+                             (ngComponent.providedIn()
+                                         .startsWith("!") ? "" : "'") +
+                             ngComponent.providedIn() +
+                             (ngComponent.providedIn()
+                                         .startsWith("!") ? "" : "'") +
+                             "})");
         }
 
         StringBuilder selector = new StringBuilder();
@@ -283,6 +352,8 @@ public interface INgComponent<J extends INgComponent<J>>
         StringBuilder providers = new StringBuilder();
         StringBuilder hosts = new StringBuilder();
 
+        StringBuilder importsModules = new StringBuilder();
+        boolean standalone = false;
 
         IComponentHierarchyBase<?, ?> chb = (IComponentHierarchyBase<?, ?>) this;
         selector.append(ngComponent.value());
@@ -389,13 +460,58 @@ public interface INgComponent<J extends INgComponent<J>>
         {
             hosts.append("{}");
         }
+        standalone = ngComponent.standalone();
+        var override = standaloneOverride();
+        if (override != null)
+        {
+            standalone = override;
+        }
 
-        String componentString = String.format(INgComponent.componentString, selector, templateUrls, styles, styleUrls,
-                "", //viewProviders
-                "", //Animations
-                providers, //Directive Providers,
-                hosts //hosts entry
-        );
+        if (standalone)
+        {
+            List<NgImportModule> importModules = IGuiceContext.get(AnnotationHelper.class)
+                                                              .getAnnotationFromClass(getClass(), NgImportModule.class);
+            for (NgImportModule compRef : importModules)
+            {
+                if (compRef.onSelf())
+                {
+                    importsModules.append(compRef.value())
+                                  .append(",\n");
+                }
+            }
+            for (String customImportModule : importModules())
+            {
+                importsModules.append(customImportModule)
+                              .append(",\n");
+            }
+
+            if (importsModules.length() > 1)
+            {
+                importsModules.deleteCharAt(importsModules.length() - 2);
+            }
+        }
+
+        String componentString;
+        if (!standalone)
+        {
+            componentString = String.format(INgComponent.componentString, selector, templateUrls, styles, styleUrls,
+                                            "", //viewProviders
+                                            "", //Animations
+                                            providers, //Directive Providers,
+                                            hosts //hosts entry
+            );
+        }
+        else
+        {
+            componentString = String.format(INgComponent.componentStandaloneString, selector, templateUrls, styles, styleUrls,
+                                            "", //viewProviders
+                                            "", //Animations
+                                            providers, //Directive Providers,
+                                            hosts, //hosts entry
+                                            importsModules,
+                                            standalone
+            );
+        }
 
         list.add(componentString);
         return list;
@@ -450,6 +566,13 @@ public interface INgComponent<J extends INgComponent<J>>
     default String renderAfterViewInit()
     {
         StringBuilder out = new StringBuilder(IComponent.super.renderAfterViewInit());
+        List<NgAfterViewInit> fInit = IGuiceContext.get(AnnotationHelper.class)
+                                                   .getAnnotationFromClass(getClass(), NgAfterViewInit.class);
+        if (fInit.isEmpty() && componentAfterViewInit().isEmpty() && afterViewInit().isEmpty())
+        {
+            return out.toString();
+        }
+
         out.append("ngAfterViewInit() {\n");
         for (String s : componentAfterViewInit())
         {
@@ -463,8 +586,7 @@ public interface INgComponent<J extends INgComponent<J>>
                .append(s)
                .append("\n");
         }
-        List<NgAfterViewInit> fInit = IGuiceContext.get(AnnotationHelper.class)
-                                                   .getAnnotationFromClass(getClass(), NgAfterViewInit.class);
+
         fInit.sort(Comparator.comparingInt(NgAfterViewInit::sortOrder));
         Set<String> outs = new LinkedHashSet<>();
         if (!fInit.isEmpty())
@@ -493,6 +615,13 @@ public interface INgComponent<J extends INgComponent<J>>
     default String renderAfterViewChecked()
     {
         StringBuilder out = new StringBuilder(IComponent.super.renderAfterViewChecked());
+        List<NgAfterViewChecked> fInit = IGuiceContext.get(AnnotationHelper.class)
+                                                      .getAnnotationFromClass(getClass(), NgAfterViewChecked.class);
+        if (fInit.isEmpty() && componentAfterViewChecked().isEmpty() && afterViewChecked().isEmpty())
+        {
+            return out.toString();
+        }
+
         out.append("ngAfterViewChecked() {\n");
         for (String s : componentAfterViewChecked())
         {
@@ -506,8 +635,7 @@ public interface INgComponent<J extends INgComponent<J>>
                .append(s)
                .append("\n");
         }
-        List<NgAfterViewChecked> fInit = IGuiceContext.get(AnnotationHelper.class)
-                                                      .getAnnotationFromClass(getClass(), NgAfterViewChecked.class);
+
         fInit.sort(Comparator.comparingInt(NgAfterViewChecked::sortOrder));
         Set<String> outs = new LinkedHashSet<>();
         if (!fInit.isEmpty())
@@ -536,6 +664,13 @@ public interface INgComponent<J extends INgComponent<J>>
     default String renderAfterContentInit()
     {
         StringBuilder out = new StringBuilder(IComponent.super.renderAfterContentInit());
+        List<NgAfterContentInit> fInit = IGuiceContext.get(AnnotationHelper.class)
+                                                      .getAnnotationFromClass(getClass(), NgAfterContentInit.class);
+        if (fInit.isEmpty() && componentAfterContentInit().isEmpty() && afterContentInit().isEmpty())
+        {
+            return out.toString();
+        }
+
         out.append("ngAfterContentInit() {\n");
         for (String s : componentAfterContentInit())
         {
@@ -549,8 +684,7 @@ public interface INgComponent<J extends INgComponent<J>>
                .append(s)
                .append("\n");
         }
-        List<NgAfterContentInit> fInit = IGuiceContext.get(AnnotationHelper.class)
-                                                      .getAnnotationFromClass(getClass(), NgAfterContentInit.class);
+
         fInit.sort(Comparator.comparingInt(NgAfterContentInit::sortOrder));
         Set<String> outs = new LinkedHashSet<>();
         if (!fInit.isEmpty())
@@ -578,6 +712,13 @@ public interface INgComponent<J extends INgComponent<J>>
     default String renderAfterContentChecked()
     {
         StringBuilder out = new StringBuilder(IComponent.super.renderAfterContentChecked());
+        List<NgAfterContentChecked> fInit = IGuiceContext.get(AnnotationHelper.class)
+                                                         .getAnnotationFromClass(getClass(), NgAfterContentChecked.class);
+        if (fInit.isEmpty() && componentAfterContentChecked().isEmpty() && afterContentChecked().isEmpty())
+        {
+            return out.toString();
+        }
+
         out.append("ngAfterContentChecked() {\n");
         for (String s : componentAfterContentChecked())
         {
@@ -591,8 +732,7 @@ public interface INgComponent<J extends INgComponent<J>>
                .append(s)
                .append("\n");
         }
-        List<NgAfterContentChecked> fInit = IGuiceContext.get(AnnotationHelper.class)
-                                                         .getAnnotationFromClass(getClass(), NgAfterContentChecked.class);
+
         fInit.sort(Comparator.comparingInt(NgAfterContentChecked::sortOrder));
         Set<String> outs = new LinkedHashSet<>();
         if (!fInit.isEmpty())
@@ -621,5 +761,23 @@ public interface INgComponent<J extends INgComponent<J>>
     {
 
         return (J) this;
+    }
+
+    default Boolean standaloneOverride()
+    {
+        return null;
+    }
+
+    default Set<String> importModules()
+    {
+        List<String> list = new ArrayList<>();
+        ServiceLoader<OnGetAllModuleImports> load = ServiceLoader.load(OnGetAllModuleImports.class);
+        for (OnGetAllModuleImports onGetAllModuleImports : load)
+        {
+            onGetAllModuleImports.perform(list, this);
+        }
+        list.add("NgForOf");
+        list.add("NgIf");
+        return new HashSet<>(list);
     }
 }

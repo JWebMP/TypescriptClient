@@ -17,6 +17,7 @@ import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
 import com.jwebmp.core.base.angular.client.services.spi.OnGetAllConstructorBodies;
 import com.jwebmp.core.base.angular.client.services.spi.OnGetAllConstructorParameters;
 import com.jwebmp.core.base.angular.client.services.spi.OnGetAllFields;
+import com.jwebmp.core.base.angular.client.services.spi.OnGetAllMethods;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,7 +70,7 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         {
             Class<?> reference = annotation.value();
             for (NgField ngField : IGuiceContext.get(AnnotationHelper.class)
-                                                .getAnnotationFromClass(getClass(), NgField.class))
+                                                .getAnnotationFromClass(reference, NgField.class))
             {
                 if (ngField.onParent())
                 {
@@ -247,7 +248,6 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         {
             out.add(getNgMethod(componentMethod.trim()));
         }
-
         return out;
     }
 
@@ -447,6 +447,10 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
                .append(field)
                .append("\n");
         }
+
+
+        //ng output event emitter
+
         return out;
     }
 
@@ -527,7 +531,13 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
     {
         StringBuilder out = new StringBuilder();
         List<NgMethod> allMethods = getAllMethods();
+        allMethods = new ArrayList<>(new HashSet<>(allMethods));
         Set<String> methodStrings = new LinkedHashSet<>();
+        Set<OnGetAllMethods> interceptors = IGuiceContext.loaderToSet(ServiceLoader.load(OnGetAllMethods.class));
+        for (OnGetAllMethods interceptor : interceptors)
+        {
+            interceptor.perform(allMethods, this);
+        }
         for (NgMethod allMethod : allMethods)
         {
             methodStrings.add(allMethod.value());
@@ -745,6 +755,11 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
     }
 
     default List<String> decorators()
+    {
+        return new ArrayList<>();
+    }
+
+    default List<String> moduleImports()
     {
         return new ArrayList<>();
     }

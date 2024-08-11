@@ -45,6 +45,7 @@ module com.jwebmp.core.base.angular.client {
     uses OnGetAllFields;
     uses OnGetAllImports;
     uses OnGetAllMethods;
+    uses OnGetAllModuleImports;
 
     provides IGuiceConfigurator with GuicedConfig;
     provides IGuicePostStartup with AngularTypeScriptPostStartup;

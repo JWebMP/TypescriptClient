@@ -131,6 +131,12 @@ public interface ImportsStatementsComponent<J extends ImportsStatementsComponent
                                                                 .getCanonicalPath(), moduleRef.value()));
             String importName = getTsFilename(moduleRef.value());
             String reference = getRelativePath(me, destination, null);
+            if (moduleRef.value()
+                         .getSimpleName()
+                         .contains("PackInstructionsListProvider"))
+            {
+                //   System.out.println("SOMETHING HERE");
+            }
             NgImportReference importReference = AnnotationUtils.getNgImportReference(importName, reference);
             refs.add(importReference);
             //out.putIfAbsent(getTsFilename(moduleRef.value()), getRelativePath(me, destination, null));
@@ -165,7 +171,16 @@ public interface ImportsStatementsComponent<J extends ImportsStatementsComponent
     {
         //get the directories of each to compare them
         File original = new File(absolutePath1.toString());
+        if (original.isFile())
+        {
+            original = original.getParentFile();
+        }
         File requestedForPath = new File(absolutePath2.toString());
+        File requestedForFile = new File(absolutePath2.toString() + ".ts");
+        if (requestedForPath.isFile())
+        {
+            //    requestedForPath = requestedForPath.getParentFile();
+        }
         if (absolutePath2.toString()
                          .contains("!"))
         {

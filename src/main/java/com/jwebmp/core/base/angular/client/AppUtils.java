@@ -701,6 +701,22 @@ public class AppUtils
         return appAssets.get(app);
     }
 
+    public static String cleanAssetName(String assetName)
+    {
+        if (assetName.contains("src/assets/src/assets/"))
+        {
+            assetName = assetName.replace("src/assets/src/assets/", "src/assets/");
+        }
+        if (assetName.startsWith("src/assets/"))
+        {
+            return assetName.replace("src/assets/", "");
+        }
+        else
+        {
+            return assetName;
+        }
+    }
+
     public static void saveAsset(Class<? extends INgApp<?>> app, InputStream inputStream, String fileName, boolean includeDist)
     {
         File appAssetsPath = getAppAssetsPath(app);
@@ -714,14 +730,15 @@ public class AppUtils
             throw new UnsupportedOperationException(e);
         }
 
-        if (fileName.startsWith("/"))
+        fileName = cleanAssetName(fileName);
+        /*if (fileName.startsWith("/"))
         {
             fileName = fileName.substring(1);
         }
         if (fileName.startsWith("assets/"))
         {
             fileName = fileName.substring(fileName.indexOf("assets/") + 7);
-        }
+        }*/
         String assetFilePath;
         try
         {

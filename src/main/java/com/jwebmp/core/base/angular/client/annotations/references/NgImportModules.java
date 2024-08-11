@@ -1,4 +1,4 @@
-package com.jwebmp.core.base.angular.client.annotations.angular;
+package com.jwebmp.core.base.angular.client.annotations.references;
 
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
@@ -10,19 +10,12 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target({TYPE})
 @Retention(RUNTIME)
 @Inherited
-public @interface NgComponent
+public @interface NgImportModules
 {
     /**
-     * The selector going to be used
+     * The string name of the dev dependency for the given ng app
      *
      * @return
      */
-    String value();
-
-    String providedIn() default "";
-
-    /**
-     * @return If the component must render as a standalone component
-     */
-    boolean standalone() default false;
+    NgImportModule[] value();
 }

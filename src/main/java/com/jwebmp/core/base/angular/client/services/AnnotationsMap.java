@@ -71,6 +71,7 @@ public class AnnotationsMap
             NgBootDeclaration.class, NgBootDeclarations.class,
             NgBootModuleImport.class, NgBootModuleImports.class,
             NgBootImportReference.class, NgBootImportReferences.class,
+            NgBootEntryComponent.class, NgBootEntryComponents.class,
             NgBootImportProvider.class, NgBootImportProviders.class,
             NgBootProvider.class, NgBootProviders.class,
             NgBootConstructorBody.class, NgBootConstructorBodys.class,
@@ -83,6 +84,7 @@ public class AnnotationsMap
             = Map.of(
             NgComponentReference.class, NgComponentReferences.class,
             NgImportProvider.class, NgImportProviders.class,
+            NgImportModule.class, NgImportModules.class,
             NgImportReference.class, NgImportReferences.class,
             NgDataTypeReference.class, NgDataTypeReferences.class
     );

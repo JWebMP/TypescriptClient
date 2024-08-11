@@ -44,7 +44,6 @@ public interface INgModule<J extends INgModule<J>>
             "\texports:[%s],\n" +
             "\tbootstrap:%s,\n" +
             "\tschemas:[%s]\n" +
-            "" +
             "})";
 
 
@@ -62,6 +61,7 @@ public interface INgModule<J extends INgModule<J>>
         StringBuilder exports = new StringBuilder();
         StringBuilder bootstrap = new StringBuilder();
         StringBuilder schemas = new StringBuilder();
+        StringBuilder entryComponents = new StringBuilder();
 
         declarations()
                 .forEach(a -> {
@@ -129,6 +129,20 @@ public interface INgModule<J extends INgModule<J>>
             importNames.deleteCharAt(importNames.length() - 2);
         }
 
+        Arrays.stream(entryComponents()
+                              .toArray())
+              .forEach((key) -> {
+
+                  entryComponents.append(key)
+                                 .append(",")
+                                 .append("\n");
+              });
+
+        if (entryComponents.length() > 1)
+        {
+            entryComponents.deleteCharAt(entryComponents.length() - 2);
+        }
+
         String componentString = String.format(moduleString, importNames, declarations, providers, exports, bootstrap, schemas);
         list.add(componentString);
         return list;
@@ -166,6 +180,11 @@ public interface INgModule<J extends INgModule<J>>
     }
 
     default List<String> schemas()
+    {
+        return new ArrayList<>();
+    }
+
+    default List<String> entryComponents()
     {
         return new ArrayList<>();
     }
