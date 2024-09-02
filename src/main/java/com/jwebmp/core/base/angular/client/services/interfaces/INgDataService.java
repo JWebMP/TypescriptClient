@@ -1,17 +1,21 @@
 package com.jwebmp.core.base.angular.client.services.interfaces;
 
 import com.guicedee.client.IGuiceContext;
-import com.jwebmp.core.base.ajax.*;
-import com.jwebmp.core.base.angular.client.*;
-import com.jwebmp.core.base.angular.client.annotations.angular.*;
-import com.jwebmp.core.base.angular.client.annotations.functions.*;
-import com.jwebmp.core.base.angular.client.annotations.references.*;
-import com.jwebmp.core.base.angular.client.services.*;
+import com.jwebmp.core.base.ajax.AjaxCall;
+import com.jwebmp.core.base.ajax.AjaxResponse;
+import com.jwebmp.core.base.angular.client.DynamicData;
+import com.jwebmp.core.base.angular.client.annotations.angular.NgDataService;
+import com.jwebmp.core.base.angular.client.annotations.functions.NgOnDestroy;
+import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
+import com.jwebmp.core.base.angular.client.annotations.references.NgDataTypeReference;
+import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
+import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
+import com.jwebmp.core.base.angular.client.services.SocketClientService;
+import com.jwebmp.core.base.angular.client.services.any;
 
 import java.util.*;
 
-import static com.jwebmp.core.base.angular.client.services.AnnotationsMap.*;
-import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.*;
+import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getTsFilename;
 
 @NgImportReference(value = "Injectable", reference = "@angular/core")
 @NgImportReference(value = "BehaviorSubject, Observable, Subject, Subscription", reference = "rxjs")
@@ -34,9 +38,9 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
     }
 
     @Override
-    default List<String> componentInterfaces()
+    default List<String> interfaces()
     {
-        List<String> out = IComponent.super.componentInterfaces();
+        List<String> out = IComponent.super.interfaces();
         out.add("OnDestroy");
         //	out.add("OnInit");
         return out;
@@ -48,9 +52,9 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
     }
 
     @Override
-    default List<String> componentMethods()
+    default List<String> methods()
     {
-        List<String> methods = IComponent.super.componentMethods();
+        List<String> methods = IComponent.super.methods();
         if (methods == null)
         {
             methods = new ArrayList<>();
@@ -59,24 +63,24 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
         String dtRef = "";
         dtRef = getTsFilename(DynamicData.class);
         methods.add("\tfetchData(){\n" +
-                "\t\tthis.socketClientService.send('data',{...this.additionalData,className :  '" + getClass().getCanonicalName() + "'},this.listenerName);\n" +
-                "\t}\n" +
-                "" +
-                "\tget data() : Observable<" + dtRef + " | undefined> {\n" +
-                "\t\treturn this._data.asObservable();\n" +
-                "\t}" +
-                "" +
-                "");
+                            "\t\tthis.socketClientService.send('data',{...this.additionalData,className :  '" + getClass().getCanonicalName() + "'},this.listenerName);\n" +
+                            "\t}\n" +
+                            "" +
+                            "\tget data() : Observable<" + dtRef + " | undefined> {\n" +
+                            "\t\treturn this._data.asObservable();\n" +
+                            "\t}" +
+                            "" +
+                            "");
         methods.add("\tpublic sendData(datas : any) {\n" +
-                "\t\tthis.socketClientService.send('dataSend', {" +
-                "\t\t\t...this.additionalData," +
-                "\t\t\tdata :{...datas},\n" +
-                "\t\tclassName: '" + getClass().getCanonicalName() + "'}, this.listenerName);\n" +
-                "\t}");
+                            "\t\tthis.socketClientService.send('dataSend', {" +
+                            "\t\t\t...this.additionalData," +
+                            "\t\t\tdata :{...datas},\n" +
+                            "\t\tclassName: '" + getClass().getCanonicalName() + "'}, this.listenerName);\n" +
+                            "\t}");
 
         methods.add("\tpublic reset(){\n" +
-                "\t\tthis._data.next({});" +
-                "\t}\n");
+                            "\t\tthis._data.next({});" +
+                            "\t}\n");
         return methods;
     }
 
@@ -85,26 +89,26 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
     {
         List<String> strings = IComponent.super.constructorBody();
         strings.add("this.subscription = this.socketClientService.registerListener(this.listenerName)" + "\n" +
-                "" + (buffer() ? ".pipe(bufferTime(" + bufferTime() + "))" : "") + "\n" +
-                ".subscribe((message : " + getTsFilename(any.class) + ") => {\n" +
-                "if (message)\n" +
-                "            {\n" +
-                "                if (Array.isArray(message)) {\n" +
-                "                    for (let m of message) {\n" +
-                "                        if (m && m.out && m.out[0]) {\n" +
-                "                            this.dataStore.datas = m;\n" +
-                "                            this._data.next(Object.assign({}, this.dataStore).datas);\n" +
-                "                        }\n" +
-                "                    }\n" +
-                "                }else {\n" +
-                "                    if (message.out && message.out[0]) {\n" +
-                "                        this.dataStore.datas = message;\n" +
-                "                        this._data.next(Object.assign({}, this.dataStore).datas);\n" +
-                "                    }\n" +
-                "                }\n" +
-                "            }" +
-                "" +
-                "});\n");
+                            "" + (buffer() ? ".pipe(bufferTime(" + bufferTime() + "))" : "") + "\n" +
+                            ".subscribe((message : " + getTsFilename(any.class) + ") => {\n" +
+                            "if (message)\n" +
+                            "            {\n" +
+                            "                if (Array.isArray(message)) {\n" +
+                            "                    for (let m of message) {\n" +
+                            "                        if (m && m.out && m.out[0]) {\n" +
+                            "                            this.dataStore.datas = m;\n" +
+                            "                            this._data.next(Object.assign({}, this.dataStore).datas);\n" +
+                            "                        }\n" +
+                            "                    }\n" +
+                            "                }else {\n" +
+                            "                    if (message.out && message.out[0]) {\n" +
+                            "                        this.dataStore.datas = message;\n" +
+                            "                        this._data.next(Object.assign({}, this.dataStore).datas);\n" +
+                            "                    }\n" +
+                            "                }\n" +
+                            "            }" +
+                            "" +
+                            "});\n");
 
         if (getClass().isAnnotationPresent(NgDataService.class))
         {
@@ -118,13 +122,13 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
     }
 
     @Override
-    default List<String> componentFields()
+    default List<String> fields()
     {
-        List<String> fields = IComponent.super.componentFields();
+        List<String> fields = IComponent.super.fields();
 
         fields.add(" private _data = new BehaviorSubject<" + getTsFilename(DynamicData.class) + " | undefined>(undefined);");
-        fields.add(" private dataStore: { datas: " + getTsFilename(DynamicData.class) + " } = { datas: {} }; ");
-        //	fields.add(" public data : " + getTsFilename(dReference.value()) + " = {};\n");
+        fields.add(" private dataStore: { datas: " + getTsFilename(DynamicData.class) + " } = { datas: {} } ");
+        //  fields.add(" public data : any;\n");
 
 
         NgDataService dService = IGuiceContext.get(AnnotationHelper.class)
@@ -163,12 +167,12 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
     }
 
     @Override
-    default List<String> componentDecorators()
+    default List<String> decorators()
     {
-        List<String> out = IComponent.super.componentDecorators();
+        List<String> out = IComponent.super.decorators();
         out.add("@Injectable({\n" +
-                "  providedIn: '" + providedIn() + "'\n" +
-                "})");
+                        "  providedIn: '" + providedIn() + "'\n" +
+                        "})");
         return out;
     }
 
@@ -177,12 +181,6 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
     {
         StringBuilder out = new StringBuilder(IComponent.super.renderOnDestroyMethod());
         out.append("ngOnDestroy() {\n");
-        for (String s : componentOnDestroy())
-        {
-            out.append("\t")
-               .append(s)
-               .append("\n");
-        }
         for (String s : onDestroy())
         {
             out.append("\t")
@@ -214,5 +212,9 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
         return out.toString();
     }
 
-
+    @Override
+    default StringBuilder renderMethods()
+    {
+        return IComponent.super.renderMethods();
+    }
 }

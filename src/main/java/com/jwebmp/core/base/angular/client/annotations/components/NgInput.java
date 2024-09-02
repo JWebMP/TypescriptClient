@@ -1,13 +1,16 @@
 package com.jwebmp.core.base.angular.client.annotations.components;
 
 
-import com.jwebmp.core.base.angular.client.services.*;
-import com.jwebmp.core.base.angular.client.services.interfaces.*;
+import com.jwebmp.core.base.angular.client.services.any;
+import com.jwebmp.core.base.angular.client.services.interfaces.INgDataType;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Repeatable;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-import static java.lang.annotation.ElementType.*;
-import static java.lang.annotation.RetentionPolicy.*;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Target({TYPE})
 @Retention(RUNTIME)
@@ -15,15 +18,17 @@ import static java.lang.annotation.RetentionPolicy.*;
 @Inherited
 public @interface NgInput
 {
-	String value();
-	
-	Class<? extends INgDataType> type() default any.class;
-	String attributeReference() default "";
-	boolean renderAttributeReference() default true;
-	
-	boolean additionalData() default false;
-	
-	
-	
-	int sortOrder() default 100;
+    String value();
+
+    Class<? extends INgDataType> type() default any.class;
+
+    String attributeReference() default "";
+
+    boolean renderAttributeReference() default true;
+
+    boolean additionalData() default false;
+
+    boolean mandatory() default false;
+
+    int sortOrder() default 100;
 }

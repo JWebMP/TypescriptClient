@@ -29,9 +29,9 @@ public interface INgDataType<J extends INgDataType<J>>
 {
 
     @Override
-    default List<String> componentFields()
+    default List<String> fields()
     {
-        List<String> fields = IComponent.super.componentFields();
+        List<String> fields = IComponent.super.fields();
         if (fields == null)
         {
             fields = new ArrayList<>();

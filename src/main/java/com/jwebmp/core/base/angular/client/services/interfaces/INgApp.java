@@ -1,12 +1,13 @@
 package com.jwebmp.core.base.angular.client.services.interfaces;
 
-import com.jwebmp.core.base.angular.client.annotations.angular.*;
-import com.jwebmp.core.base.angular.client.annotations.typescript.*;
-import com.jwebmp.core.services.*;
+import com.jwebmp.core.base.angular.client.annotations.angular.NgApp;
+import com.jwebmp.core.base.angular.client.annotations.typescript.NgSourceDirectoryReference;
+import com.jwebmp.core.base.interfaces.IComponentHierarchyBase;
+import com.jwebmp.core.services.IPage;
 
-import java.util.*;
+import java.util.List;
 
-import static com.jwebmp.core.base.angular.client.annotations.typescript.NgSourceDirectoryReference.SourceDirectories.*;
+import static com.jwebmp.core.base.angular.client.annotations.typescript.NgSourceDirectoryReference.SourceDirectories.Main;
 
 @NgSourceDirectoryReference(Main)
 public interface INgApp<J extends INgApp<J>> extends IComponent<J>, IPage<J>
@@ -61,5 +62,7 @@ public interface INgApp<J extends INgApp<J>> extends IComponent<J>, IPage<J>
     {
         return List.of(getClass().getPackageName());
     }
+
+    List<IComponentHierarchyBase<?, ?>> getRoutes();
 
 }

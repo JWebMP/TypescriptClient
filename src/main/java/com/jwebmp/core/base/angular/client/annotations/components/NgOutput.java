@@ -1,10 +1,16 @@
 package com.jwebmp.core.base.angular.client.annotations.components;
 
 
-import java.lang.annotation.*;
+import com.jwebmp.core.base.angular.client.services.any;
+import com.jwebmp.core.base.angular.client.services.interfaces.INgDataType;
 
-import static java.lang.annotation.ElementType.*;
-import static java.lang.annotation.RetentionPolicy.*;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Repeatable;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Target({TYPE})
 @Retention(RUNTIME)
@@ -12,8 +18,12 @@ import static java.lang.annotation.RetentionPolicy.*;
 @Inherited
 public @interface NgOutput
 {
-	String value();
-	String parentMethodName() default "";
-	
-	int sortOrder() default 100;
+    String value();
+
+    String parentMethodName() default "";
+
+    Class<? extends INgDataType> type() default any.class;
+
+
+    int sortOrder() default 100;
 }

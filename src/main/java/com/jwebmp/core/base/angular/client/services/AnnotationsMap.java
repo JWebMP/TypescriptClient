@@ -93,6 +93,7 @@ public class AnnotationsMap
             NgConstructorBody.class, NgConstructorBodys.class,
             NgConstructorParameter.class, NgConstructorParameters.class,
             NgField.class, NgFields.class,
+            NgGlobalField.class, NgGlobalFields.class,
             NgInterface.class, NgInterfaces.class,
             NgMethod.class, NgMethods.class,
             NgValidator.class, NgValidators.class

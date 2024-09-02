@@ -10,7 +10,7 @@ import com.jwebmp.core.base.angular.client.services.interfaces.INgProvider;
 
 import java.util.List;
 
-@NgConstructorParameter(value = "private socketClientService : SocketClientService", onSelf = false, onParent = true)
+//@NgConstructorParameter(value = "private socketClientService : SocketClientService", onSelf = false, onParent = true)
 
 @NgImportReference(value = "Injectable", reference = "@angular/core")
 @NgImportReference(value = "Location", reference = "@angular/common")
@@ -28,6 +28,8 @@ import java.util.List;
 @NgConstructorParameter("private routeLocation: Location")
 @NgConstructorParameter("private router: Router")
 @NgConstructorParameter("private route: ActivatedRoute")
+
+@NgConstructorParameter(value = "private socketClientService : SocketClientService", onParent = true, onSelf = false)
 
 
 @NgConstructorBody(
@@ -130,7 +132,7 @@ import java.util.List;
         }
         SocketClientService.websocket.next(news);
                    }
-                   """)
+        """)
 
 @NgMethod(
         """
@@ -176,17 +178,17 @@ import java.util.List;
                                   }
                            	}
                            }
-                           """)
+                """)
 @NgProvider
 public class SocketClientService<J extends SocketClientService<J>> implements INgProvider<J>
 {
 
     @Override
-    public List<String> componentDecorators()
+    public List<String> decorators()
     {
-        List<String> out = INgProvider.super.componentDecorators();
+        List<String> out = INgProvider.super.decorators();
         out.add("@Injectable({\n" +
-                        "  providedIn: 'any'\n" +
+                        "  providedIn: 'root'\n" +
                         "})");
         return out;
     }

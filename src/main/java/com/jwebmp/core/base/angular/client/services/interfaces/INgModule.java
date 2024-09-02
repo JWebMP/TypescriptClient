@@ -53,9 +53,9 @@ public interface INgModule<J extends INgModule<J>>
     }
 
     @Override
-    default List<String> componentDecorators()
+    default List<String> decorators()
     {
-        List<String> list = IComponent.super.componentDecorators();
+        List<String> list = IComponent.super.decorators();
         StringBuilder declarations = new StringBuilder();
         StringBuilder providers = new StringBuilder();
         StringBuilder exports = new StringBuilder();
@@ -172,11 +172,6 @@ public interface INgModule<J extends INgModule<J>>
     default J setApp(INgApp<?> app)
     {
         return (J) this;
-    }
-
-    default List<String> moduleImports()
-    {
-        return new ArrayList<>();
     }
 
     default List<String> schemas()

@@ -1,4 +1,4 @@
-package com.jwebmp.core.base.angular.client.annotations.constructors;
+package com.jwebmp.core.base.angular.client.annotations.structures;
 
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Repeatable;
@@ -10,15 +10,13 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Target({TYPE})
 @Retention(RUNTIME)
-@Repeatable(NgConstructorParameters.class)
+@Repeatable(NgGlobalFields.class)
 @Inherited
-public @interface NgConstructorParameter
+public @interface NgGlobalField
 {
     String value();
 
     boolean onParent() default false;
 
     boolean onSelf() default true;
-
-    boolean isPublic() default false;
 }

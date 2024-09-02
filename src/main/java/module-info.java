@@ -19,6 +19,7 @@ module com.jwebmp.core.base.angular.client {
     requires org.apache.commons.lang3;
     requires org.apache.commons.io;
     requires jakarta.validation;
+    requires org.apache.logging.log4j.core;
 
     exports com.jwebmp.core.base.angular.client.annotations.angular;
     exports com.jwebmp.core.base.angular.client.annotations.components;
@@ -37,6 +38,7 @@ module com.jwebmp.core.base.angular.client {
     exports com.jwebmp.core.base.angular.client.services;
     exports com.jwebmp.core.base.angular.client.services.interfaces;
     exports com.jwebmp.core.base.angular.client.annotations.boot;
+
 
     provides IGuiceScanModuleInclusions with AngularTypeScriptClientModuleInclusion;
 

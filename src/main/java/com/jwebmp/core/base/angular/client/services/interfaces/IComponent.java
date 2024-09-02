@@ -5,8 +5,10 @@ import com.guicedee.client.IGuiceContext;
 import com.guicedee.guicedinjection.interfaces.IDefaultService;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgDataType;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgServiceProvider;
+import com.jwebmp.core.base.angular.client.annotations.components.NgInput;
 import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorBody;
 import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorParameter;
+import com.jwebmp.core.base.angular.client.annotations.functions.*;
 import com.jwebmp.core.base.angular.client.annotations.globals.NgGlobalConstructorParameter;
 import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
@@ -14,10 +16,9 @@ import com.jwebmp.core.base.angular.client.annotations.structures.NgField;
 import com.jwebmp.core.base.angular.client.annotations.structures.NgInterface;
 import com.jwebmp.core.base.angular.client.annotations.structures.NgMethod;
 import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
-import com.jwebmp.core.base.angular.client.services.spi.OnGetAllConstructorBodies;
-import com.jwebmp.core.base.angular.client.services.spi.OnGetAllConstructorParameters;
-import com.jwebmp.core.base.angular.client.services.spi.OnGetAllFields;
-import com.jwebmp.core.base.angular.client.services.spi.OnGetAllMethods;
+import com.jwebmp.core.base.angular.client.services.any;
+import com.jwebmp.core.base.angular.client.services.spi.*;
+import com.jwebmp.core.base.interfaces.IComponentHierarchyBase;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,6 +33,13 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
     static ThreadLocal<File> getCurrentAppFile()
     {
         return currentAppFile;
+    }
+
+    // Component Reference Location Assists
+    static String getClassDirectory(Class<?> clazz)
+    {
+        return clazz.getPackageName()
+                    .replaceAll("\\.", "/");
     }
 
     default String renderBeforeClass()
@@ -49,11 +57,6 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         return true;
     }
 
-    default boolean includeInBootModule()
-    {
-        return false;
-    }
-
     default List<NgField> getAllFields()
     {
         List<NgField> out = new ArrayList<>();
@@ -65,6 +68,7 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
                 out.add(annotation);
             }
         }
+
         for (NgComponentReference annotation : IGuiceContext.get(AnnotationHelper.class)
                                                             .getAnnotationFromClass(getClass(), NgComponentReference.class))
         {
@@ -79,10 +83,6 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
             }
         }
 
-        for (String componentField : componentFields())
-        {
-            out.add(getNgField(componentField));
-        }
         for (String field : fields())
         {
             out.add(getNgField(field));
@@ -99,6 +99,7 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
     default List<NgConstructorParameter> getAllConstructorParameters()
     {
         List<NgConstructorParameter> out = new ArrayList<>();
+
 
         for (NgConstructorParameter annotation : IGuiceContext.get(AnnotationHelper.class)
                                                               .getAnnotationFromClass(getClass(), NgConstructorParameter.class))
@@ -150,10 +151,6 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
             }
         }
 
-        for (String componentConstructorParameter : componentConstructorParameters())
-        {
-            out.add(getNgConstructorParameter(componentConstructorParameter));
-        }
         for (String constructorParameter : constructorParameters())
         {
             out.add(getNgConstructorParameter(constructorParameter));
@@ -196,10 +193,6 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
             }
         }
 
-        for (String body : componentConstructorBody())
-        {
-            out.add(getNgConstructorBody(body));
-        }
         for (String body : constructorBody())
         {
             out.add(getNgConstructorBody(body));
@@ -214,7 +207,12 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         return out;
     }
 
-    default List<NgMethod> getAllMethods()
+    //***************************************************************************************
+    //***************************************************************************************
+    // Renderers
+    //***************************************************************************************
+
+    default List<NgMethod> renderAllMethods()
     {
         List<NgMethod> out = new ArrayList<>();
         for (NgMethod annotation : IGuiceContext.get(AnnotationHelper.class)
@@ -251,12 +249,6 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         return out;
     }
 
-
-    //***************************************************************************************
-    //***************************************************************************************
-    // Renderers
-    //***************************************************************************************
-
     default StringBuilder renderImports()
     {
         StringBuilder sb = new StringBuilder();
@@ -283,6 +275,9 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
 
     default StringBuilder renderClassTs() throws IOException
     {
+        processComponentReferences();
+
+
         StringBuilder out = new StringBuilder();
         out.append(renderImports());
         @SuppressWarnings("unchecked")
@@ -299,11 +294,6 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
                .append("\n");
         }
 
-        for (String decorator : componentDecorators())
-        {
-            out.append(decorator)
-               .append("\n");
-        }
         for (String decorator : decorators())
         {
             out.append(decorator)
@@ -415,7 +405,6 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
                 ints.add(interfac.value());
             }
         }
-        ints.addAll(componentInterfaces());
 
         if (!ints.isEmpty())
         {
@@ -441,16 +430,28 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         {
             fStrings.add(ngField.value());
         }
-        for (String field : fStrings)
+        for (String field : fStrings.stream()
+                                    .distinct()
+                                    .toList())
         {
+            if (Strings.isNullOrEmpty(field))
+            {
+                continue;
+            }
+            if (field.endsWith("\n"))
+            {
+                field = field.substring(0, field.length() - 1);
+            }
+            if (!field.endsWith(";"))
+            {
+                field += ";";
+            }
             out.append("\t")
                .append(field)
                .append("\n");
         }
-
-
+        
         //ng output event emitter
-
         return out;
     }
 
@@ -530,7 +531,7 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
     default StringBuilder renderMethods()
     {
         StringBuilder out = new StringBuilder();
-        List<NgMethod> allMethods = getAllMethods();
+        List<NgMethod> allMethods = renderAllMethods();
         allMethods = new ArrayList<>(new HashSet<>(allMethods));
         Set<String> methodStrings = new LinkedHashSet<>();
         Set<OnGetAllMethods> interceptors = IGuiceContext.loaderToSet(ServiceLoader.load(OnGetAllMethods.class));
@@ -550,15 +551,10 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         return out;
     }
 
-    default List<String> componentConstructorParameters()
-    {
-        return new ArrayList<>();
-    }
-
     default List<String> constructorParameters()
     {
         List<String> parms = new ArrayList<>();
-        List<NgComponentReference> compRefs = IGuiceContext.get(AnnotationHelper.class)
+        /*List<NgComponentReference> compRefs = IGuiceContext.get(AnnotationHelper.class)
                                                            .getAnnotationFromClass(getClass(), NgComponentReference.class);
         for (NgComponentReference compRef : compRefs)
         {
@@ -573,19 +569,13 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
                     parms.add("public " + getTsVarName(compRef.value()) + " : " + getTsFilename(compRef.value()) + "");
                 }
             }
-        }
+        }*/
         return parms;
     }
 
     default List<Class<? extends NgDataType>> types()
     {
         return new ArrayList<>();
-    }
-
-    default List<String> componentConstructorBody()
-    {
-        List<String> constructorBodies = new ArrayList<>();
-        return constructorBodies;
     }
 
     default List<String> constructorBody()
@@ -598,12 +588,13 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         List<String> list = new ArrayList<>();
         list.add(renderOnInitMethod());
         list.add(renderOnDestroyMethod());
-        list.add(renderAfterViewInit());
+     /*   list.add(renderAfterViewInit());
         list.add(renderAfterViewChecked());
         list.add(renderAfterContentInit());
-        list.add(renderAfterContentChecked());
+        list.add(renderAfterContentChecked());*/
         return list;
     }
+
 
     default String renderOnInitMethod()
     {
@@ -617,66 +608,9 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         return out.toString();
     }
 
-    default String renderAfterViewInit()
-    {
-        StringBuilder out = new StringBuilder();
-
-        return out.toString();
-    }
-
-    default String renderAfterViewChecked()
-    {
-        StringBuilder out = new StringBuilder();
-
-        return out.toString();
-    }
-
-    default String renderAfterContentInit()
-    {
-        StringBuilder out = new StringBuilder();
-        return out.toString();
-    }
-
-    default String renderAfterContentChecked()
-    {
-        StringBuilder out = new StringBuilder();
-
-        return out.toString();
-    }
-
     //***********************************************************
     // The lifecycle of angular objects
     //***********************************************************
-
-    default List<String> componentOnInit()
-    {
-        return new ArrayList<>();
-    }
-
-    default List<String> componentOnDestroy()
-    {
-        return new ArrayList<>();
-    }
-
-    default List<String> componentAfterViewInit()
-    {
-        return new ArrayList<>();
-    }
-
-    default List<String> componentAfterViewChecked()
-    {
-        return new ArrayList<>();
-    }
-
-    default List<String> componentAfterContentChecked()
-    {
-        return new ArrayList<>();
-    }
-
-    default List<String> componentAfterContentInit()
-    {
-        return new ArrayList<>();
-    }
 
     default List<String> onInit()
     {
@@ -703,16 +637,15 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         return new ArrayList<>();
     }
 
-    default List<String> afterContentInit()
-    {
-        return new ArrayList<>();
-    }
-
 
     //***********************************************************
     // The default stuff
     //***********************************************************
 
+    default List<String> afterContentInit()
+    {
+        return new ArrayList<>();
+    }
 
     default List<String> methods()
     {
@@ -720,11 +653,6 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
     }
 
     default List<String> globalFields()
-    {
-        return new ArrayList<>();
-    }
-
-    default List<String> componentFields()
     {
         return new ArrayList<>();
     }
@@ -739,17 +667,7 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         return "";
     }
 
-    default List<String> componentInterfaces()
-    {
-        return new ArrayList<>();
-    }
-
     default List<String> interfaces()
-    {
-        return new ArrayList<>();
-    }
-
-    default List<String> componentDecorators()
     {
         return new ArrayList<>();
     }
@@ -759,16 +677,215 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         return new ArrayList<>();
     }
 
-    default List<String> moduleImports()
+    default Set<String> moduleImports()
     {
-        return new ArrayList<>();
+        Set<String> list = new LinkedHashSet<>();
+        ServiceLoader<OnGetAllModuleImports> load = ServiceLoader.load(OnGetAllModuleImports.class);
+        for (OnGetAllModuleImports onGetAllModuleImports : load)
+        {
+            onGetAllModuleImports.perform(list, this);
+        }
+        return list;
     }
 
-    // Component Reference Location Assists
-    public static String getClassDirectory(Class<?> clazz)
+    default void processComponentReferences()
     {
-        return clazz.getPackageName()
-                    .replaceAll("\\.", "/");
+        List<NgComponentReference> annotationFromClass = new ArrayList<>();
+
+        if (this instanceof IComponentHierarchyBase<?, ?> comp)
+        {
+            var ng = comp.getConfigurations(NgAfterViewInit.class, false);
+            if (ng != null && !ng.isEmpty())
+            {
+                comp.addConfiguration(AnnotationUtils.getNgImportReference("AfterViewInit", "@angular/core"));
+            }
+            var onInit = comp.getConfigurations(NgOnInit.class, false);
+            if (onInit != null && !onInit.isEmpty())
+            {
+                comp.addConfiguration(AnnotationUtils.getNgImportReference("OnInit", "@angular/core"));
+            }
+            var afterViewChecked = comp.getConfigurations(NgAfterViewChecked.class, false);
+            if (afterViewChecked != null && !afterViewChecked.isEmpty())
+            {
+                comp.addConfiguration(AnnotationUtils.getNgImportReference("AfterViewChecked", "@angular/core"));
+            }
+            var afterContentInit = comp.getConfigurations(NgAfterContentInit.class, false);
+            if (afterContentInit != null && !afterContentInit.isEmpty())
+            {
+                comp.addConfiguration(AnnotationUtils.getNgImportReference("AfterContentInit", "@angular/core"));
+            }
+            var afterContentChecked = comp.getConfigurations(NgAfterContentChecked.class, false);
+            if (afterContentChecked != null && !afterContentChecked.isEmpty())
+            {
+                comp.addConfiguration(AnnotationUtils.getNgImportReference("AfterContentChecked", "@angular/core"));
+            }
+            var onDestroys = comp.getConfigurations(NgOnDestroy.class, false);
+            if (onDestroys != null && !onDestroys.isEmpty())
+            {
+                comp.addConfiguration(AnnotationUtils.getNgImportReference("OnDestroy", "@angular/core"));
+            }
+
+            var ngInputs = comp.getConfigurations(NgInput.class, false);
+            if (ngInputs != null && !ngInputs.isEmpty())
+            {
+                for (NgInput a : ngInputs)
+                {
+                    comp.addConfiguration(AnnotationUtils.getNgField("@Input('" + a.value() + "') " + a.value() + (a.mandatory() ? "!" : "?") + " : " + (a.type() == null ? "any" : a.type()
+                                                                                                                                                                                     .getSimpleName())));
+                    if (a.type() != null && !a.type()
+                                              .equals(any.class))
+                    {
+                        comp.addConfiguration(AnnotationUtils.getNgComponentReference((Class<? extends IComponent<?>>) a.type()));
+                    }
+                    comp.addConfiguration(AnnotationUtils.getNgImportReference("Input", "@angular/core"));
+                }
+            }
+
+        }
+
+        if (this instanceof IComponentHierarchyBase<?, ?> comp)
+        {
+            /*if (comp.asAttributeBase()
+                    .getAttributes()
+                    .containsKey("*ngIf"))
+            {
+                comp.addConfiguration(AnnotationUtils.getNgImportReference("NgIf", "@angular/common"));
+                comp.addConfiguration(AnnotationUtils.getNgImportModule("NgIf"));
+            }
+            if (comp.asAttributeBase()
+                    .getAttributes()
+                    .containsKey("*ngFor"))
+            {
+                comp.addConfiguration(AnnotationUtils.getNgImportReference("NgForOf", "@angular/common"));
+                comp.addConfiguration(AnnotationUtils.getNgImportModule("NgForOf"));
+            }*/
+        }
+
+        /*
+
+
+        if (this instanceof IComponentHierarchyBase<?, ?> comp)
+        {
+            annotationFromClass.addAll(comp.getConfigurations(NgComponentReference.class, false));
+            annotationFromClass.addAll(AnnotationUtils.getAnnotation(comp.getClass(), NgComponentReference.class));
+            if (this.getClass()
+                    .getCanonicalName()
+                    .contains("AngularDataComponent"))
+            {
+                System.out.println("here");
+            }
+
+            for (NgComponentReference fromClass : annotationFromClass)
+            {
+                Class<?> referenceClass = fromClass.value();
+                IComponent<?> reference = (IComponent<?>) IGuiceContext.get(referenceClass);
+
+                if (reference.getClass()
+                             .isAnnotationPresent(NgComponent.class))
+                {
+                    //add an import provider lync
+                    if (reference instanceof IComponentHierarchyBase<?, ?> refComp)
+                    {
+                        comp.addConfiguration(AnnotationUtils.getNgImportModule(refComp.getClass()
+                                                                                       .getSimpleName()));
+                        List<NgImportReference> ngImportReferences = putRelativeLinkInMap(getClass(), fromClass);
+                        for (NgImportReference ngImportReference : ngImportReferences)
+                        {
+                            comp.addConfiguration(ngImportReference);
+                        }
+                    }
+                }
+                else if (reference.getClass()
+                                  .isAnnotationPresent(NgProvider.class))
+                {
+                    //add an import provider lync
+                    if (reference instanceof INgProvider<?> refComp)
+                    {
+                        comp.addConfiguration(AnnotationUtils.getNgImportProvider(refComp.getClass()
+                                                                                         .getSimpleName()));
+                        List<NgImportReference> ngImportReferences = putRelativeLinkInMap(getClass(), fromClass);
+                        for (NgImportReference ngImportReference : ngImportReferences)
+                        {
+                            comp.addConfiguration(ngImportReference);
+                        }
+                        comp.addConfiguration(AnnotationUtils.getNgConstructorParameter("public " + getTsVarName(refComp.getClass()) + " : " + getTsFilename(refComp.getClass())));
+                    }
+                }
+                else if (reference.getClass()
+                                  .isAnnotationPresent(NgDataService.class))
+                {
+                    //add an import provider lync
+                    if (reference instanceof INgDataService<?> refComp)
+                    {
+                        comp.addConfiguration(AnnotationUtils.getNgImportProvider(refComp.getClass()
+                                                                                         .getSimpleName()));
+                        List<NgImportReference> ngImportReferences = putRelativeLinkInMap(getClass(), fromClass);
+                        for (NgImportReference ngImportReference : ngImportReferences)
+                        {
+                            comp.addConfiguration(ngImportReference);
+                        }
+                        comp.addConfiguration(AnnotationUtils.getNgConstructorParameter("public " + getTsVarName(refComp.getClass()) + " : " + getTsFilename(refComp.getClass())));
+                    }
+                }
+                else if (reference.getClass()
+                                  .isAnnotationPresent(NgServiceProvider.class))
+                {
+                    //add an import provider lync
+                    if (reference instanceof INgServiceProvider<?> refComp)
+                    {
+                        comp.addConfiguration(AnnotationUtils.getNgImportProvider(refComp.getClass()
+                                                                                         .getSimpleName()));
+                        List<NgImportReference> ngImportReferences = putRelativeLinkInMap(getClass(), fromClass);
+                        for (NgImportReference ngImportReference : ngImportReferences)
+                        {
+                            comp.addConfiguration(ngImportReference);
+                        }
+                        comp.addConfiguration(AnnotationUtils.getNgConstructorParameter("public " + reference.getClass()
+                                                                                                             .getAnnotation(NgServiceProvider.class)
+                                                                                                             .referenceName() + " : " + getTsFilename(refComp.getClass())));
+                    }
+                }
+                else if (reference.getClass()
+                                  .isAnnotationPresent(NgDirective.class))
+                {
+                    //add an import provider lync
+                    if (reference instanceof INgDirective<?> refComp)
+                    {
+                        comp.addConfiguration(AnnotationUtils.getNgImportModule(refComp.getClass()
+                                                                                       .getSimpleName()));
+                        List<NgImportReference> ngImportReferences = putRelativeLinkInMap(getClass(), fromClass);
+                        for (NgImportReference ngImportReference : ngImportReferences)
+                        {
+                            comp.addConfiguration(ngImportReference);
+                        }
+                    }
+                }
+                else if (reference.getClass()
+                                  .isAnnotationPresent(NgDataType.class))
+                {
+                    //add an import provider lync
+                    if (reference instanceof INgDataType<?> refComp)
+                    {
+                        //  comp.addConfiguration(AnnotationUtils.getNgImportModule(refComp.getClass()
+                        //                                                                  .getSimpleName()));
+                        List<NgImportReference> ngImportReferences = putRelativeLinkInMap(getClass(), fromClass);
+                        for (NgImportReference ngImportReference : ngImportReferences)
+                        {
+                            comp.addConfiguration(ngImportReference);
+                        }
+                    }
+                }
+                else
+                {
+                    System.out.println("Not catered for : " + referenceClass.getName());
+                }
+            }
+        }
+
+        */
+
+
     }
+
 
 }

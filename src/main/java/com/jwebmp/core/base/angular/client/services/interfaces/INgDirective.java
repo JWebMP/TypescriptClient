@@ -2,12 +2,14 @@ package com.jwebmp.core.base.angular.client.services.interfaces;
 
 import com.guicedee.client.IGuiceContext;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgDirective;
-import com.jwebmp.core.base.angular.client.annotations.components.NgInput;
+import com.jwebmp.core.base.angular.client.annotations.angular.NgProvider;
 import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorParameter;
 import com.jwebmp.core.base.angular.client.annotations.functions.NgOnDestroy;
 import com.jwebmp.core.base.angular.client.annotations.functions.NgOnInit;
+import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
 import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
+import com.jwebmp.core.base.angular.client.services.SocketClientService;
 
 import java.util.*;
 
@@ -18,11 +20,12 @@ import java.util.*;
 
 @NgImportReference(value = "OnInit", reference = "@angular/core")
 @NgImportReference(value = "OnDestroy", reference = "@angular/core")
-
+@NgComponentReference(SocketClientService.class)
 public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
 {
     String directiveString = "@Directive({\n" +
             "\tselector:'%s',\n" +
+            "\tstandalone:%b,\n" +
             "\tproviders:[%s]\n" +
             "})";
 
@@ -33,21 +36,51 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
         return new ArrayList<>(out);
     }
 
-    @Override
-    default List<String> componentDecorators()
+ /*   @Override
+    default List<NgConstructorParameter> getAllConstructorParameters()
     {
-        List<String> list = IComponent.super.componentDecorators();
+        var s = IComponent.super.getAllConstructorParameters();
+        AnnotationHelper ah = IGuiceContext.get(AnnotationHelper.class);
+        var compRefs = ah.getAnnotationFromClass(getClass(), NgComponentReference.class);
+        for (NgComponentReference compRef : compRefs)
+        {
+            var reference = compRef.value();
+            if (reference.isAnnotationPresent(NgProvider.class))
+            {
+                s.add(AnnotationUtils.getNgConstructorParameter("public " + AnnotationUtils.getTsVarName(reference) + " : " + AnnotationUtils.getTsFilename(reference)));
+            }
+        }
+        return s;
+    }*/
+
+    @Override
+    default List<String> decorators()
+    {
+        AnnotationHelper ah = IGuiceContext.get(AnnotationHelper.class);
+
+        List<String> list = IComponent.super.decorators();
         StringBuilder selector = new StringBuilder();
         StringBuilder styles = new StringBuilder();
         StringBuilder template = new StringBuilder();
         StringBuilder styleUrls = new StringBuilder();
         StringBuilder providers = new StringBuilder();
 
-        NgDirective ngComponent = IGuiceContext.get(AnnotationHelper.class)
-                                               .getAnnotationFromClass(getClass(), NgDirective.class)
-                                               .get(0);
+        NgDirective ngComponent = ah
+                .getAnnotationFromClass(getClass(), NgDirective.class)
+                .get(0);
 
         selector.append(ngComponent.value());
+
+        var compRefs = ah.getAnnotationFromClass(getClass(), NgComponentReference.class);
+        for (NgComponentReference compRef : compRefs)
+        {
+            var reference = compRef.value();
+            if (reference.isAnnotationPresent(NgProvider.class))
+            {
+                providers.append(compRef.value()
+                                        .getSimpleName() + ",\n");
+            }
+        }
 
         providers()
                 .forEach((key) -> {
@@ -61,27 +94,9 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
             providers.deleteCharAt(providers.length() - 2);
         }
 
-        String componentString = String.format(directiveString, selector, providers);
+
+        String componentString = String.format(directiveString, selector, ngComponent.standalone(), providers);
         list.add(componentString);
-        return list;
-    }
-
-    @Override
-    default List<String> componentFields()
-    {
-        List<String> list = IComponent.super.componentFields();
-        if (list == null)
-        {
-            list = new ArrayList<>();
-        }
-        List<NgInput> ngComponent = IGuiceContext.get(AnnotationHelper.class)
-                                                 .getAnnotationFromClass(getClass(), NgInput.class);
-        ngComponent.sort(Comparator.comparingInt(NgInput::sortOrder));
-        for (NgInput ngInput : ngComponent)
-        {
-            list.add("\t@Input(\"" + ngInput.value() + "\") " + ngInput.value() + "? :" + AnnotationUtils.getTsFilename(ngInput.type()) + ";");
-        }
-
         return list;
     }
 
@@ -115,12 +130,6 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
     {
         StringBuilder out = new StringBuilder(IComponent.super.renderOnInitMethod());
         out.append("ngOnInit() {\n");
-        for (String s : componentOnInit())
-        {
-            out.append("\t")
-               .append(s)
-               .append("\n");
-        }
         for (String s : onInit())
         {
             out.append("\t")
@@ -159,12 +168,6 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
     {
         StringBuilder out = new StringBuilder(IComponent.super.renderOnDestroyMethod());
         out.append("ngOnDestroy() {\n");
-        for (String s : componentOnDestroy())
-        {
-            out.append("\t")
-               .append(s)
-               .append("\n");
-        }
         for (String s : onDestroy())
         {
             out.append("\t")
@@ -197,13 +200,12 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
     }
 
 
-    default List<String> componentInterfaces()
+    default List<String> interfaces()
     {
-        List<String> out = IComponent.super.componentInterfaces();
+        List<String> out = IComponent.super.interfaces();
         out.add("OnInit");
         out.add("OnDestroy");
         return out;
     }
-
 
 }

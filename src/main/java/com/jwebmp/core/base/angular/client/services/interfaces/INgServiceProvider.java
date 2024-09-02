@@ -1,17 +1,19 @@
 package com.jwebmp.core.base.angular.client.services.interfaces;
 
 import com.guicedee.client.IGuiceContext;
-import com.jwebmp.core.base.angular.client.annotations.angular.*;
-import com.jwebmp.core.base.angular.client.annotations.components.*;
-import com.jwebmp.core.base.angular.client.annotations.functions.*;
-import com.jwebmp.core.base.angular.client.annotations.references.*;
-import com.jwebmp.core.base.angular.client.annotations.structures.*;
+import com.jwebmp.core.base.angular.client.annotations.angular.NgServiceProvider;
+import com.jwebmp.core.base.angular.client.annotations.functions.NgOnDestroy;
+import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
+import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
+import com.jwebmp.core.base.angular.client.annotations.structures.NgField;
 import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
-import static com.jwebmp.core.base.angular.client.services.AnnotationsMap.*;
-import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.*;
+import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getNgComponentReference;
 
 @NgImportReference(value = "Subscription", reference = "rxjs")
 @NgImportReference(value = "BehaviorSubject", reference = "rxjs")
@@ -53,19 +55,19 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
     }
 
     @Override
-    default List<String> componentDecorators()
+    default List<String> decorators()
     {
-        List<String> out = IComponent.super.componentDecorators();
+        List<String> out = IComponent.super.decorators();
         out.add("@Injectable({\n" +
-                "  providedIn: '" + providedIn() + "'\n" +
-                "})");
+                        "  providedIn: '" + providedIn() + "'\n" +
+                        "})");
         return out;
     }
 
     @Override
-    default List<String> componentFields()
+    default List<String> fields()
     {
-        List<String> out = IComponent.super.componentFields();
+        List<String> out = IComponent.super.fields();
         out.add("private _onUpdate = new BehaviorSubject<boolean>(false);");
         if (!getAnnotation().dataArray())
         {
@@ -86,7 +88,7 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
     @Override
     default List<String> constructorBody()
     {
-        List<String> out = IComponent.super.componentConstructorBody();
+        List<String> out = IComponent.super.constructorBody();
         String s = "this.subscription = this.service.data\n" +
                 "" + (buffer() ? ".pipe(bufferTime(" + bufferTime() + "))" : "") +
                 "" + (takeLast() ? ".pipe(takeLast(" + takeLastCount() + "))" : "") +
@@ -126,9 +128,9 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
     }
 
     @Override
-    default List<String> componentMethods()
+    default List<String> methods()
     {
-        List<String> out = IComponent.super.componentMethods();
+        List<String> out = IComponent.super.methods();
         String sendDataString = "\tpublic sendData(datas : any){\n";
         sendDataString += "\t\tthis.service.additionalData = this.additionalData;\n" +
                 "\t\tthis.service.sendData(datas);\n" +
@@ -137,12 +139,12 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
         out.add(sendDataString);
 
         out.add("\tget onUpdate(): Observable<boolean> {\n" +
-                "\t\treturn this._onUpdate.asObservable();\n" +
-                "\t}");
+                        "\t\treturn this._onUpdate.asObservable();\n" +
+                        "\t}");
         out.add("\tcheckData()\n" +
-                "\t{\n" +
-                "\t\tthis.service.fetchData();\n" +
-                "\t}");
+                        "\t{\n" +
+                        "\t\tthis.service.fetchData();\n" +
+                        "\t}");
 
         String resetString = "\treset() {\n" +
                 "\t\tthis._onUpdate.next(false);\n" +
@@ -164,13 +166,21 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
 
     default String providedIn()
     {
+        if (getClass().isAnnotationPresent(NgServiceProvider.class))
+        {
+            var ng = getClass().getAnnotation(NgServiceProvider.class);
+            if (ng.singleton())
+            {
+                return "root";
+            }
+        }
         return "any";
     }
 
     @Override
-    default List<String> componentInterfaces()
+    default List<String> interfaces()
     {
-        List<String> out = IComponent.super.componentInterfaces();
+        List<String> out = IComponent.super.interfaces();
         out.add("OnDestroy");
         //out.add("OnInit");
         return out;
@@ -181,12 +191,6 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
     {
         StringBuilder out = new StringBuilder(IComponent.super.renderOnDestroyMethod());
         out.append("ngOnDestroy() {\n");
-        for (String s : componentOnDestroy())
-        {
-            out.append("\t")
-               .append(s)
-               .append("\n");
-        }
         for (String s : onDestroy())
         {
             out.append("\t")
