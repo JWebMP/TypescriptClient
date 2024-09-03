@@ -251,7 +251,7 @@ public interface INgComponent<J extends INgComponent<J>> extends IComponent<J>
 
         styleUrls.append("'./")
                  .append(getTsFilename(getClass()))
-                 .append(".css")
+                 .append(".scss")
                  .append("',\n");
         for (String styleUrl : styleUrls())
         {
@@ -282,7 +282,7 @@ public interface INgComponent<J extends INgComponent<J>> extends IComponent<J>
         //CSSComposer cssComposer = new CSSComposer();
         // cssComposer.addComponent(chb);
         //styles.append("\"" + cssComposer.toString() + "\"");
-        File cssFile = getFile(getClass(), ".css");
+        File cssFile = getFile(getClass(), ".scss");
         try
         {
             FileUtils.writeStringToFile(cssFile, cssString.toString(), UTF_8);
