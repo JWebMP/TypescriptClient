@@ -2,6 +2,7 @@ package com.jwebmp.core.base.angular.client.services.interfaces;
 
 import com.jwebmp.core.base.angular.client.annotations.angular.NgApp;
 import com.jwebmp.core.base.angular.client.annotations.typescript.NgSourceDirectoryReference;
+import com.jwebmp.core.base.html.interfaces.children.PageChildren;
 import com.jwebmp.core.base.interfaces.IComponentHierarchyBase;
 import com.jwebmp.core.services.IPage;
 
@@ -10,7 +11,7 @@ import java.util.List;
 import static com.jwebmp.core.base.angular.client.annotations.typescript.NgSourceDirectoryReference.SourceDirectories.Main;
 
 @NgSourceDirectoryReference(Main)
-public interface INgApp<J extends INgApp<J>> extends IComponent<J>, IPage<J>
+public interface INgApp<J extends INgApp<J> & IComponentHierarchyBase<PageChildren, J>> extends IComponent<J>, IPage<J>
 {
     default NgApp getAnnotation()
     {
