@@ -30,8 +30,18 @@ public class ClassAnnotationMapping
             this.lookup.put(key, new ArrayList<>());
         }
         List<Annotation> annotationsLists = this.lookup.get(key);
-        annotationsLists
-                .add(lookup);
+        annotationsLists.add(lookup);
+    }
+
+    public void mergeInto(ClassAnnotationMapping mapping)
+    {
+        mapping.annotations.addAll(this.annotations);
+        this.lookup.forEach((m, a) -> {
+            for (Annotation annotation : a)
+            {
+                mapping.addLookup(m, annotation);
+            }
+        });
     }
 
 }

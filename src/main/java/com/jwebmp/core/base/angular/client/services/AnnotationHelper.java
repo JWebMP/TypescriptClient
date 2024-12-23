@@ -45,7 +45,7 @@ public class AnnotationHelper
         globalAnnotations = new HashMap<>();
         ngAllGlobals.forEach((key, value) -> {
             ScanResult scanResult = GuiceContext.instance()
-                                                .getScanResult();
+                    .getScanResult();
             List<Annotation> globals = new ArrayList<>();
 
             ClassInfoList classesWithAnnotation = scanResult.getClassesWithAnnotation(key);
@@ -64,7 +64,7 @@ public class AnnotationHelper
             for (ClassInfo classInfo : classesWithAnnotation)
             {
                 Annotation annotation = classInfo.loadClass()
-                                                 .getAnnotation(key);
+                        .getAnnotation(key);
                 if (annotation != null)
                 {
                     globals.add(annotation);
@@ -90,14 +90,60 @@ public class AnnotationHelper
         mappings.put(clazz, cam);
     }
 
+    private static final Map<Class<?>, ClassAnnotationMapping> superClassMappings = new HashMap<>();
+
     private void scanClassHierarchy(ClassAnnotationMapping parentMapping, Class<?> clazz)
     {
+        ClassAnnotationMapping maps = null;
+        if (superClassMappings.containsKey(clazz))
+        {
+            maps = superClassMappings.get(clazz);
+        } else
+        {
+            maps = extractAnnotations(clazz);
+            superClassMappings.put(clazz, maps);
+        }
+        maps.mergeInto(parentMapping);
+
+        Class<?>[] clazzInterfaces = clazz.getInterfaces();
+        for (Class<?> clazzInterface : clazzInterfaces)
+        {
+            scanClassHierarchy(parentMapping, clazzInterface);
+        }
+        Class<?> superclass = clazz.getSuperclass();
+        while (superclass != null && !superclass.equals(Object.class))
+        {
+            ClassAnnotationMapping map = null;
+            if (!superClassMappings.containsKey(superclass))
+            {
+                map = extractAnnotations(superclass);
+                superClassMappings.put(superclass, map);
+            } else
+            {
+                map = superClassMappings.get(superclass);
+            }
+            map.mergeInto(parentMapping);
+
+            scanClassHierarchy(parentMapping, superclass);
+            //scanClassHierarchy(parentMapping, superclass);
+            //superClassMappings.put(superclass, mappings.get(superclass));
+            //  }
+            //superClassMappings.get(superclass).mergeInto(parentMapping);
+            superclass = superclass.getSuperclass();
+        }
+
+    }
+
+    private ClassAnnotationMapping extractAnnotations(Class<?> clazz)
+    {
+        ClassAnnotationMapping mapping = new ClassAnnotationMapping();
+        mapping.setClassKey(clazz);
         for (Class<? extends Annotation> aClass : annotationsListing)
         {
             if (clazz.isAnnotationPresent(aClass))
             {
                 Annotation a = clazz.getAnnotation(aClass);
-                parentMapping.addLookup(aClass, a);
+                mapping.addLookup(aClass, a);
             }
             if (ngAllMultiples.containsKey(aClass))
             {
@@ -107,27 +153,13 @@ public class AnnotationHelper
                     List<? extends Annotation> listOfAnnotations = getListOfAnnotations(clazz, aClass, value);
                     for (Annotation a : listOfAnnotations)
                     {
-                        parentMapping.addLookup(aClass, a);
+                        mapping.addLookup(aClass, a);
                     }
                 }
             }
-        }
 
-        Class<?>[] clazzInterfaces = clazz.getInterfaces();
-        if (clazzInterfaces != null && clazzInterfaces.length > 0)
-        {
-            for (Class<?> clazzInterface : clazzInterfaces)
-            {
-                scanClassHierarchy(parentMapping, clazzInterface);
-            }
         }
-        Class<?> superclass = clazz.getSuperclass();
-        while (superclass != null && !superclass.equals(Object.class))
-        {
-            scanClassHierarchy(parentMapping, superclass);
-            superclass = superclass.getSuperclass();
-        }
-
+        return mapping;
     }
 
     public ClassAnnotationMapping getClassMappings(Class<?> clazz)
@@ -146,8 +178,8 @@ public class AnnotationHelper
             scanClass(clazz);
         }
         List<T> ts = (List<T>) mappings.get(clazz)
-                                       .getLookup()
-                                       .get(annotation);
+                .getLookup()
+                .get(annotation);
         if (ts == null)
         {
             return new ArrayList<>();
@@ -164,14 +196,13 @@ public class AnnotationHelper
             try
             {
                 Method valueMethod = refAnnotation.annotationType()
-                                                  .getDeclaredMethod("value");
+                        .getDeclaredMethod("value");
                 Annotation[] result = (Annotation[]) valueMethod.invoke(refAnnotation);
                 for (Annotation annotation : result)
                 {
                     out.add((T) annotation);
                 }
-            }
-            catch (Exception e)
+            } catch (Exception e)
             {
                 log.log(Level.SEVERE, "Cannot read multiple annotations - " + clazz + " - " + multipleAnnotation, e);
             }
