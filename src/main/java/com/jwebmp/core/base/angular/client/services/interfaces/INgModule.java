@@ -12,6 +12,7 @@ import java.util.List;
 @TsDependency(value = "@angular/common", version = "^18.0.1")
 @TsDependency(value = "@angular/compiler", version = "^18.0.1")
 @TsDependency(value = "@angular/core", version = "^18.0.1")
+@TsDependency(value = "@angular/animations", version = "^18.0.1")
 @TsDependency(value = "@angular/forms", version = "^18.0.1")
 @TsDependency(value = "rxjs", version = "~7.8.0")
 @TsDependency(value = "tslib", version = "^2.3.0")
@@ -35,8 +36,7 @@ import java.util.List;
 
 @NgModule
 public interface INgModule<J extends INgModule<J>>
-        extends IComponent<J>
-{
+        extends IComponent<J> {
     String moduleString = "@NgModule({\n" +
             "\timports:[%s],\n" +
             "\tdeclarations:[%s],\n" +
@@ -47,14 +47,12 @@ public interface INgModule<J extends INgModule<J>>
             "})";
 
 
-    default List<String> declarations()
-    {
+    default List<String> declarations() {
         return new ArrayList<>();
     }
 
     @Override
-    default List<String> decorators()
-    {
+    default List<String> decorators() {
         List<String> list = IComponent.super.decorators();
         StringBuilder declarations = new StringBuilder();
         StringBuilder providers = new StringBuilder();
@@ -66,24 +64,22 @@ public interface INgModule<J extends INgModule<J>>
         declarations()
                 .forEach(a -> {
                     declarations.append(a)
-                                .append(",")
-                                .append("\n");
+                            .append(",")
+                            .append("\n");
                 });
 
-        if (declarations.length() > 1)
-        {
+        if (declarations.length() > 1) {
             declarations.deleteCharAt(declarations.length() - 2);
         }
 
         providers()
                 .forEach((key) -> {
                     providers.append(key)
-                             .append(",")
-                             .append("\n");
+                            .append(",")
+                            .append("\n");
                 });
 
-        if (providers.length() > 1)
-        {
+        if (providers.length() > 1) {
             providers.deleteCharAt(providers.length() - 2);
         }
 
@@ -91,11 +87,10 @@ public interface INgModule<J extends INgModule<J>>
         exports()
                 .forEach((key) -> {
                     exports.append(key)
-                           .append(",")
-                           .append("\n");
+                            .append(",")
+                            .append("\n");
                 });
-        if (exports.length() > 1)
-        {
+        if (exports.length() > 1) {
             exports.deleteCharAt(exports.length() - 2);
         }
 
@@ -104,11 +99,10 @@ public interface INgModule<J extends INgModule<J>>
         schemas()
                 .forEach((key) -> {
                     schemas.append(key)
-                           .append(",")
-                           .append("\n");
+                            .append(",")
+                            .append("\n");
                 });
-        if (schemas.length() > 1)
-        {
+        if (schemas.length() > 1) {
             schemas.deleteCharAt(schemas.length() - 2);
         }
 
@@ -116,30 +110,28 @@ public interface INgModule<J extends INgModule<J>>
         StringBuilder importNames = new StringBuilder();
 
         Arrays.stream(moduleImports()
-                              .toArray())
-              .forEach((key) -> {
+                        .toArray())
+                .forEach((key) -> {
 
-                  importNames.append(key)
-                             .append(",")
-                             .append("\n");
-              });
+                    importNames.append(key)
+                            .append(",")
+                            .append("\n");
+                });
 
-        if (importNames.length() > 1)
-        {
+        if (importNames.length() > 1) {
             importNames.deleteCharAt(importNames.length() - 2);
         }
 
         Arrays.stream(entryComponents()
-                              .toArray())
-              .forEach((key) -> {
+                        .toArray())
+                .forEach((key) -> {
 
-                  entryComponents.append(key)
-                                 .append(",")
-                                 .append("\n");
-              });
+                    entryComponents.append(key)
+                            .append(",")
+                            .append("\n");
+                });
 
-        if (entryComponents.length() > 1)
-        {
+        if (entryComponents.length() > 1) {
             entryComponents.deleteCharAt(entryComponents.length() - 2);
         }
 
@@ -148,39 +140,32 @@ public interface INgModule<J extends INgModule<J>>
         return list;
     }
 
-    default List<String> providers()
-    {
+    default List<String> providers() {
         return new ArrayList<>();
     }
 
-    default List<String> bootstrap()
-    {
+    default List<String> bootstrap() {
         return new ArrayList<>();
     }
 
-    default List<String> assets()
-    {
+    default List<String> assets() {
         return new ArrayList<>();
     }
 
-    default List<String> exports()
-    {
+    default List<String> exports() {
         return new ArrayList<>();
     }
 
     @SuppressWarnings("unchecked")
-    default J setApp(INgApp<?> app)
-    {
+    default J setApp(INgApp<?> app) {
         return (J) this;
     }
 
-    default List<String> schemas()
-    {
+    default List<String> schemas() {
         return new ArrayList<>();
     }
 
-    default List<String> entryComponents()
-    {
+    default List<String> entryComponents() {
         return new ArrayList<>();
     }
 }

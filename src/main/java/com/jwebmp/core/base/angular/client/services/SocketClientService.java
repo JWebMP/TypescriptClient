@@ -3,6 +3,7 @@ package com.jwebmp.core.base.angular.client.services;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgProvider;
 import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorBody;
 import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorParameter;
+import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
 import com.jwebmp.core.base.angular.client.annotations.structures.NgField;
 import com.jwebmp.core.base.angular.client.annotations.structures.NgMethod;
@@ -23,20 +24,21 @@ import java.util.List;
 @NgImportReference(value = "ActivatedRoute", reference = "@angular/router")
 
 @NgField("static websocket: any;")
-@NgField("static dataListenerMappings = new Map<string, Subject<any>>();")
+@NgField("public static dataListenerMappings = new Map<string, Subject<any>>();")
 
 @NgConstructorParameter("private routeLocation: Location")
 @NgConstructorParameter("private router: Router")
 @NgConstructorParameter("private route: ActivatedRoute")
 
 @NgConstructorParameter(value = "private socketClientService : SocketClientService", onParent = true, onSelf = false)
-
+@NgComponentReference(ContextIdService.class)
+@NgConstructorParameter("private contextIdService : ContextIdService")
 
 @NgConstructorBody(
         """ 
-                        if (!SocketClientService.websocket) {
-                            this.createWebSocket();
-                        }
+                if (!SocketClientService.websocket) {
+                    this.createWebSocket();
+                }
                 """)
 
 @NgMethod("""
@@ -96,100 +98,102 @@ import java.util.List;
         "    }\n" +
         "}\n")
 @NgMethod("""
-                   send(action:string,data:object, eventType :string,event? : any, component? : ElementRef<any>) : void {
-        const news : any = {
-        };
-        news.data = data;
-        news.action = action;
-        news.data.url = window.location;
-        news.data.localStorage = window.localStorage;
-        news.data.sessionStorage = window.sessionStorage;
-        news.data.parameters = this.getParametersObject();
-        news.data.hashbang = window.location.hash;
-        news.data.route = this.routeLocation.path();
-        news.data.state = this.routeLocation.getState();
-        news.data.history = history.state;
-        news.data.datetime = new Date().getUTCDate();
-        news.data.eventType = eventType;
-        news.data.headers = {};
-        news.data.headers.useragent = navigator.userAgent;
-        news.data.headers.cookieEnabled = navigator.cookieEnabled ;
-        news.data.headers.appName = navigator.appName  ;
-        news.data.headers.appVersion = navigator.appVersion   ;
-        news.data.headers.language = navigator.language ;
-        if(event)
-        {
-           news.event = JSON.stringify(event);
+        send(action:string,data:object, eventType :string,event? : any, component? : ElementRef<any>) : void {
+             const news : any = {
+             };
+             news.data = data;
+             news.action = action;
+             news.data.url = window.location;
+             news.data.localStorage = window.localStorage;
+             news.data.sessionStorage = window.sessionStorage;
+             news.data.parameters = this.getParametersObject();
+             news.data.hashbang = window.location.hash;
+             news.data.route = this.routeLocation.path();
+             news.data.state = this.routeLocation.getState();
+             news.data.history = history.state;
+             news.data.datetime = new Date().getUTCDate();
+             news.data.eventType = eventType;
+             news.data.headers = {};
+             news.data.headers.useragent = navigator.userAgent;
+             news.data.headers.cookieEnabled = navigator.cookieEnabled ;
+             news.data.headers.appName = navigator.appName  ;
+             news.data.headers.appVersion = navigator.appVersion   ;
+             news.data.headers.language = navigator.language ;
+             if(event)
+             {
+                news.event = JSON.stringify(event);
+             }
+             if(component)
+             {
+                 let ele = component.nativeElement;
+                 news.componentId = ele.getAttribute("id");
+                 news.data.attributes = {};
+                 for (const attributeName of ele.getAttributeNames()) {
+                     news.data.attributes[attributeName] = ele.getAttribute(attributeName);
+                 }
+             }
+             SocketClientService.websocket.next(news);
         }
-        if(component)
-        {
-        	let ele = component.nativeElement;
-        	news.componentId = ele.getAttribute("id");
-        	news.data.attributes = {};
-        	for (const attributeName of ele.getAttributeNames()) {
-        		news.data.attributes[attributeName] = ele.getAttribute(attributeName);
-        	}
-        }
-        SocketClientService.websocket.next(news);
-                   }
         """)
 
 @NgMethod(
         """
-                           processResult(response:any)
-                           {
-                              if(response.localStorage)
-                              {
-                                  Object.keys(response.localStorage).forEach(prop => {
-                                    window.localStorage.setItem(prop, response.localStorage[prop]);
-                                  });
-                              }
-                              if(response.sessionStorage)
-                              {
-                                  Object.keys(response.sessionStorage).forEach(prop => {
-                                    window.sessionStorage.setItem(prop, response.sessionStorage[prop]);
-                                   });
-                              }
-                if(response.features)
+                processResult(response:any)
                 {
-                }
-                if(response.reactions)
-                {
-                	for(let reaction of response.reactions)
+                   if(response.localStorage)
                    {
-                	  const react : any = reaction;
-                	  if("RedirectUrl" == react.reactionType)
-                	   {
-                			this.router.navigateByUrl(react.reactionMessage);
-                		}
+                       Object.keys(response.localStorage).forEach(prop => {
+                         window.localStorage.setItem(prop, response.localStorage[prop]);
+                       });
                    }
-                }
-                if(response.data)
-                {
-                                 const dMap : any = Object.keys(response.data);
-                                 for(let key of dMap)
-                                  {
-                                      const jsonString = response.data[key];
-                                      const subject = SocketClientService.dataListenerMappings.get(key);
-                                      if(subject)
-                                      {
-                                          subject.next(jsonString);
-                                      }
-                                  }
-                           	}
+                   if(response.sessionStorage)
+                   {
+                       Object.keys(response.sessionStorage).forEach(prop => {
+                         window.sessionStorage.setItem(prop, response.sessionStorage[prop]);
+                         if(prop === 'contextId')
+                         {
+                            this.contextIdService.setContextId(response.sessionStorage[prop]);
+                         }
+                        });
+                   }
+                     if(response.features)
+                     {
+                     }
+                     if(response.reactions)
+                     {
+                     	for(let reaction of response.reactions)
+                        {
+                     	  const react : any = reaction;
+                     	  if("RedirectUrl" == react.reactionType)
+                     	   {
+                     			this.router.navigateByUrl(react.reactionMessage);
+                     		}
+                        }
+                     }
+                     if(response.data)
+                     {
+                          const dMap : any = Object.keys(response.data);
+                          for(let key of dMap)
+                           {
+                               const jsonString = response.data[key];
+                               const subject = SocketClientService.dataListenerMappings.get(key);
+                               if(subject)
+                               {
+                                   subject.next(jsonString);
+                               }
                            }
+                     }
+                 }
                 """)
 @NgProvider
-public class SocketClientService<J extends SocketClientService<J>> implements INgProvider<J>
-{
+public class SocketClientService<J extends SocketClientService<J>> implements INgProvider<J> {
 
     @Override
-    public List<String> decorators()
-    {
+    public List<String> decorators() {
         List<String> out = INgProvider.super.decorators();
         out.add("@Injectable({\n" +
-                        "  providedIn: 'root'\n" +
-                        "})");
+                "  providedIn: 'root'\n" +
+                "})");
         return out;
     }
 }
