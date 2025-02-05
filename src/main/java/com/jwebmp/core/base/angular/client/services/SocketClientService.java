@@ -25,6 +25,8 @@ import java.util.List;
 
 @NgField("static websocket: any;")
 @NgField("public static dataListenerMappings = new Map<string, Subject<any>>();")
+@NgField("public groups : string[] = [];")
+
 
 @NgConstructorParameter("private routeLocation: Location")
 @NgConstructorParameter("private router: Router")
@@ -67,6 +69,16 @@ import java.util.List;
                                  }, 1000);
                              }
                          });
+                         if(!subject.closed)
+                         {
+                             if(this.groups.length > 0)
+                             {
+                                 for(let group of this.groups)
+                                 {
+                                     this.send('AddToWebSocketGroup',{groupName : group},'onClick',{},undefined);
+                                 }
+                             }
+                         }
                      }catch(err) {
                          console.log('Websocket error on connection');
                          setTimeout(() => {
