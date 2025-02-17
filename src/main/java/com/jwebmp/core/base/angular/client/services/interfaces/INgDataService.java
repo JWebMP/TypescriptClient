@@ -5,12 +5,16 @@ import com.jwebmp.core.base.ajax.AjaxCall;
 import com.jwebmp.core.base.ajax.AjaxResponse;
 import com.jwebmp.core.base.angular.client.DynamicData;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgDataService;
+import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorBody;
+import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorParameter;
 import com.jwebmp.core.base.angular.client.annotations.functions.NgOnDestroy;
 import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgDataTypeReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
+import com.jwebmp.core.base.angular.client.annotations.structures.NgField;
+import com.jwebmp.core.base.angular.client.annotations.structures.NgMethod;
 import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
-import com.jwebmp.core.base.angular.client.services.SocketClientService;
+import com.jwebmp.core.base.angular.client.services.EventBusService;
 import com.jwebmp.core.base.angular.client.services.any;
 
 import java.util.*;
@@ -18,15 +22,43 @@ import java.util.*;
 import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getTsFilename;
 
 @NgImportReference(value = "Injectable", reference = "@angular/core")
+@NgImportReference(value = "inject", reference = "@angular/core")
 @NgImportReference(value = "BehaviorSubject, Observable, Subject, Subscription", reference = "rxjs")
 @NgImportReference(value = "bufferTime", reference = "rxjs")
 
 @NgDataTypeReference(value = DynamicData.class, primary = false)
-@NgComponentReference(SocketClientService.class)
+@NgComponentReference(EventBusService.class)
+
+@NgOnDestroy("this.eventBusService.unregisterListener(this.listenerName);")
+
+@NgMethod("""
+        get data(): Observable<DynamicData | undefined> {
+                return this.dataListener;
+            }""")
+
+@NgConstructorBody("""
+        this.dataListener = this.eventBusService.listen(this.listenerName);
+        """)
+@NgConstructorBody("""
+        this.subscription = this.dataListener.subscribe(message => {
+                    if (message) {
+                        if (Array.isArray(message)) {
+                            for (let m of message) {
+                                if (m && m.out && m.out[0]) {
+                                  \s
+                                }
+                            }
+                        } else {
+                            if (message.out && message.out[0]) {
+                              \s
+                            }
+                        }
+                    }
+                })""")
+
+@NgField("private readonly dataListener :  Observable<DynamicData | undefined>;")
 
 @NgOnDestroy("this.subscription?.unsubscribe();")
-@NgOnDestroy("this.socketClientService.deregisterListener(this.listenerName);")
-@NgOnDestroy("this._data.unsubscribe();")
 
 @NgImportReference(value = "OnDestroy", reference = "@angular/core")
 public interface INgDataService<J extends INgDataService<J>> extends IComponent<J>
@@ -62,25 +94,26 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
 
         String dtRef = "";
         dtRef = getTsFilename(DynamicData.class);
-        methods.add("\tfetchData(){\n" +
-                            "\t\tthis.socketClientService.send('data',{...this.additionalData,className :  '" + getClass().getCanonicalName() + "'},this.listenerName);\n" +
-                            "\t}\n" +
-                            "" +
-                            "\tget data() : Observable<" + dtRef + " | undefined> {\n" +
-                            "\t\treturn this._data.asObservable();\n" +
-                            "\t}" +
-                            "" +
-                            "");
-        methods.add("\tpublic sendData(datas : any) {\n" +
-                            "\t\tthis.socketClientService.send('dataSend', {" +
-                            "\t\t\t...this.additionalData," +
-                            "\t\t\tdata :{...datas},\n" +
-                            "\t\tclassName: '" + getClass().getCanonicalName() + "'}, this.listenerName);\n" +
-                            "\t}");
 
-        methods.add("\tpublic reset(){\n" +
-                            "\t\tthis._data.next({});" +
-                            "\t}\n");
+        methods.add("""
+                fetchData() {
+                        this.eventBusService.send('data', {
+                        dataService:this.listenerName,
+                            ...this.additionalData,
+                            className: '%s'
+                        }, this.listenerName);
+                    }""".formatted(getClass().getCanonicalName()));
+
+        methods.add("""
+                public sendData(datas: any) {
+                        this.eventBusService.send('dataSend', {
+                        dataService:this.listenerName,
+                            ...this.additionalData, data: {...datas},
+                            className: '%s'
+                        }, this.listenerName);
+                    }""".formatted(getClass().getCanonicalName()));
+
+
         return methods;
     }
 
@@ -88,28 +121,6 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
     default List<String> constructorBody()
     {
         List<String> strings = IComponent.super.constructorBody();
-        strings.add("this.subscription = this.socketClientService.registerListener(this.listenerName)" + "\n" +
-                            "" + (buffer() ? ".pipe(bufferTime(" + bufferTime() + "))" : "") + "\n" +
-                            ".subscribe((message : " + getTsFilename(any.class) + ") => {\n" +
-                            "if (message)\n" +
-                            "            {\n" +
-                            "                if (Array.isArray(message)) {\n" +
-                            "                    for (let m of message) {\n" +
-                            "                        if (m && m.out && m.out[0]) {\n" +
-                            "                            this.dataStore.datas = m;\n" +
-                            "                            this._data.next(Object.assign({}, this.dataStore).datas);\n" +
-                            "                        }\n" +
-                            "                    }\n" +
-                            "                }else {\n" +
-                            "                    if (message.out && message.out[0]) {\n" +
-                            "                        this.dataStore.datas = message;\n" +
-                            "                        this._data.next(Object.assign({}, this.dataStore).datas);\n" +
-                            "                    }\n" +
-                            "                }\n" +
-                            "            }" +
-                            "" +
-                            "});\n");
-
         if (getClass().isAnnotationPresent(NgDataService.class))
         {
             NgDataService dataService = getClass().getAnnotation(NgDataService.class);
@@ -125,18 +136,25 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
     default List<String> fields()
     {
         List<String> fields = IComponent.super.fields();
-
-        fields.add(" private _data = new BehaviorSubject<" + getTsFilename(DynamicData.class) + " | undefined>(undefined);");
-        fields.add(" private dataStore: { datas: " + getTsFilename(DynamicData.class) + " } = { datas: {} } ");
-        //  fields.add(" public data : any;\n");
-
-
         NgDataService dService = IGuiceContext.get(AnnotationHelper.class)
-                                              .getAnnotationFromClass(getClass(), NgDataService.class)
-                                              .get(0);
+                .getAnnotationFromClass(getClass(), NgDataService.class)
+                .get(0);
+
+        var dtReferences = IGuiceContext.get(AnnotationHelper.class)
+                .getAnnotationFromClass(getClass(), NgDataTypeReference.class);
+        if (dtReferences.isEmpty())
+        {
+            fields.add("private dataSubject : BehaviorSubject<any> = new BehaviorSubject<any>(undefined);");
+        } else
+        {
+            var name = dtReferences.stream().filter(a -> a.primary()).findFirst().orElseThrow().value().getSimpleName();
+            fields.add("private dataSubject : BehaviorSubject<" + name + " | undefined> = new BehaviorSubject<" + name + " | undefined>(undefined);");
+        }
+
         fields.add(" private listenerName = '" + dService.value() + "';");
-        fields.add(" private subscription? : Subscription;\n");
-        fields.add(" public additionalData : any = {};\n");
+        fields.add(" private clazzName = '" + getClass().getCanonicalName() + "';");
+        fields.add(" public additionalData : any = {};");
+        fields.add("private subscription? : Subscription;");
         return fields;
     }
 
@@ -160,7 +178,6 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
         return 100;
     }
 
-
     default String providedIn()
     {
         return "any";
@@ -171,8 +188,8 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
     {
         List<String> out = IComponent.super.decorators();
         out.add("@Injectable({\n" +
-                        "  providedIn: '" + providedIn() + "'\n" +
-                        "})");
+                "  providedIn: '" + providedIn() + "'\n" +
+                "})");
         return out;
     }
 
@@ -184,11 +201,11 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
         for (String s : onDestroy())
         {
             out.append("\t")
-               .append(s)
-               .append("\n");
+                    .append(s)
+                    .append("\n");
         }
         List<NgOnDestroy> fInit = IGuiceContext.get(AnnotationHelper.class)
-                                               .getAnnotationFromClass(getClass(), NgOnDestroy.class);
+                .getAnnotationFromClass(getClass(), NgOnDestroy.class);
         fInit.sort(Comparator.comparingInt(NgOnDestroy::sortOrder));
         Set<String> outs = new LinkedHashSet<>();
         if (!fInit.isEmpty())
@@ -196,7 +213,7 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
             for (NgOnDestroy ngField : fInit)
             {
                 outs.add(ngField.value()
-                                .trim());
+                        .trim());
             }
         }
         StringBuilder fInitOut = new StringBuilder();
@@ -206,15 +223,10 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
                     .append("\n");
         }
         out.append("\t")
-           .append(fInitOut)
-           .append("\n");
+                .append(fInitOut)
+                .append("\n");
         out.append("}\n");
         return out.toString();
     }
 
-    @Override
-    default StringBuilder renderMethods()
-    {
-        return IComponent.super.renderMethods();
-    }
 }

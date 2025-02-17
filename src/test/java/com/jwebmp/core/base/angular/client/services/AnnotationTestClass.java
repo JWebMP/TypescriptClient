@@ -27,7 +27,7 @@ import com.jwebmp.core.base.angular.client.annotations.structures.NgMethod;
         "    calendarOptions.weekends = !calendarOptions.weekends;\n" +
         "  }")
 
-@NgComponentReference(SocketClientService.class)
+@NgComponentReference(EventBusService.class)
 
 public class AnnotationTestClass extends AnnotationTestClassParent implements AnnotationTestClassInterface
 {

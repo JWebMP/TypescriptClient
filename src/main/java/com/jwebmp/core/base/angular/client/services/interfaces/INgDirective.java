@@ -9,7 +9,7 @@ import com.jwebmp.core.base.angular.client.annotations.functions.NgOnInit;
 import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
 import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
-import com.jwebmp.core.base.angular.client.services.SocketClientService;
+import com.jwebmp.core.base.angular.client.services.EventBusService;
 
 import java.util.*;
 
@@ -20,7 +20,7 @@ import java.util.*;
 
 @NgImportReference(value = "OnInit", reference = "@angular/core")
 @NgImportReference(value = "OnDestroy", reference = "@angular/core")
-@NgComponentReference(SocketClientService.class)
+@NgComponentReference(EventBusService.class)
 public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
 {
     String directiveString = "@Directive({\n" +
@@ -78,15 +78,15 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
             if (reference.isAnnotationPresent(NgProvider.class))
             {
                 providers.append(compRef.value()
-                                        .getSimpleName() + ",\n");
+                        .getSimpleName() + ",\n");
             }
         }
 
         providers()
                 .forEach((key) -> {
                     providers.append(key)
-                             .append(",")
-                             .append("\n");
+                            .append(",")
+                            .append("\n");
                 });
         if (!providers()
                 .isEmpty())
@@ -133,12 +133,12 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
         for (String s : onInit())
         {
             out.append("\t")
-               .append(s)
-               .append("\n");
+                    .append(s)
+                    .append("\n");
         }
 
         List<NgOnInit> fInit = IGuiceContext.get(AnnotationHelper.class)
-                                            .getAnnotationFromClass(getClass(), NgOnInit.class);
+                .getAnnotationFromClass(getClass(), NgOnInit.class);
         fInit.sort(Comparator.comparingInt(NgOnInit::sortOrder));
         Set<String> outs = new LinkedHashSet<>();
         if (!fInit.isEmpty())
@@ -146,7 +146,7 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
             for (NgOnInit ngField : fInit)
             {
                 outs.add(ngField.value()
-                                .trim());
+                        .trim());
             }
         }
         StringBuilder fInitOut = new StringBuilder();
@@ -156,8 +156,8 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
                     .append("\n");
         }
         out.append("\t")
-           .append(fInitOut)
-           .append("\n");
+                .append(fInitOut)
+                .append("\n");
 
         out.append("}\n");
         return out.toString();
@@ -171,11 +171,11 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
         for (String s : onDestroy())
         {
             out.append("\t")
-               .append(s)
-               .append("\n");
+                    .append(s)
+                    .append("\n");
         }
         List<NgOnDestroy> fInit = IGuiceContext.get(AnnotationHelper.class)
-                                               .getAnnotationFromClass(getClass(), NgOnDestroy.class);
+                .getAnnotationFromClass(getClass(), NgOnDestroy.class);
         fInit.sort(Comparator.comparingInt(NgOnDestroy::sortOrder));
         Set<String> outs = new LinkedHashSet<>();
         if (!fInit.isEmpty())
@@ -183,7 +183,7 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
             for (NgOnDestroy ngField : fInit)
             {
                 outs.add(ngField.value()
-                                .trim());
+                        .trim());
             }
         }
         StringBuilder fInitOut = new StringBuilder();
@@ -193,8 +193,8 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
                     .append("\n");
         }
         out.append("\t")
-           .append(fInitOut)
-           .append("\n");
+                .append(fInitOut)
+                .append("\n");
         out.append("}\n");
         return out.toString();
     }
