@@ -22,53 +22,88 @@ import java.util.List;
           @Input() appEventBusListener!: string | string[]; // The EventBus address(es) to listen on.
           @Input() appEventHandler?: (message: any, address: string) => void; // Optional: Custom handler for incoming messages.
         
-          private registeredAddresses: string[] = []; // Tracks addresses managed by this directive.
+          private registeredAddresses: string[] = [] // Tracks addresses managed by this directive.
         
         """)
 
 @NgOnInit("""
-           // Validate `appEventBusListener` input.
-            if (!this.appEventBusListener) {
-              console.warn(
-                '[EventBusListenerDirective] No address provided to appEventBusListener. Please specify a single address or an array.'
-              );
-              return;
+              // ngOnInit() {
+                // Validate and normalize `appEventBusListener` input.
+                const addresses = this.parseAddresses(this.appEventBusListener);
+        
+                if (!addresses || addresses.length === 0) {
+                    console.warn(
+                        '[EventBusListenerDirective] No valid addresses provided to appEventBusListener. Please specify at least one address.'
+                    );
+                    return;
+                }
+        
+                // Register total listeners in the EventBus service.
+                this.eventBusService.waitForListeners(addresses.length);
+        
+                // Iterate through each address in the array and register listeners.
+                addresses.forEach((address) => {
+                    if (!address || address.trim() === '') {
+                        console.warn(`[EventBusListenerDirective] Skipping invalid EventBus address: "${address}"`);
+                        return;
+                    }
+        
+                    // Track the registered address for cleanup later.
+                    this.registeredAddresses.push(address);
+        
+                    // Subscribe to the EventBus for this address.
+                    this.eventBusService.listen(address).subscribe({
+                        next: (message: any) => this.processMessage(address, message),
+                        error: (error: any) =>
+                            console.error(
+                                `[EventBusListenerDirective] Error listening on address "${address}":`,
+                                error
+                            ),
+                    });
+        
+                    console.log(`[EventBusListenerDirective] Listening for messages on address: "${address}"`);
+                });
             }
         
-            // Convert input into an array of addresses.
-            const addresses = Array.isArray(this.appEventBusListener)
-              ? this.appEventBusListener
-              : [this.appEventBusListener];
+                /**
+                 * Parse and normalize the `appEventBusListener` input into an array of strings.
+                 * @param input The raw input provided to `appEventBusListener`.
+                 * @returns An array of normalized addresses.
+                 */
+                private parseAddresses(input: string | string[]): string[] {
+                    if (Array.isArray(input)) {
+                        // If input is already an array, return it (filter out empty or invalid values).
+                        return input.filter((address) => address && address.trim() !== '');
+                    }
         
-            // Register total listeners in the EventBus service.
-            this.eventBusService.waitForListeners(addresses.length);
+                    if (typeof input === 'string') {
+                        // Handle stringified array format: "['String1', 'String2']"
+                        if (input.startsWith("[") && input.endsWith("]")) {
+                            try {
+                                const parsedArray = JSON.parse(input); // Parse the stringified array.
+                                if (Array.isArray(parsedArray)) {
+                                    return parsedArray.filter((address) => address && address.trim() !== ''); // Filter empty values.
+                                }
+                            } catch (error) {
+                                console.warn(`[parseAddresses] Failed to parse stringified array: "${input}". Falling back.`);
+                            }
+                        }
         
-            // Setup subscriptions for each address.
-            addresses.forEach((address) => {
-              if (!address || address.trim() === '') {
-                console.warn(
-                  `[EventBusListenerDirective] Skipping invalid EventBus address: "${address}"`
-                );
-                return;
-              }
+                        // Handle comma-separated values: "SingleListenerAddress,SecondAddress"
+                        if (input.includes(',')) {
+                            return input
+                                .split(',')
+                                .map((address) => address.trim()) // Remove extra spaces.
+                                .filter((address) => address !== ''); // Filter empty values.
+                        }
         
-              this.registeredAddresses.push(address);
+                        // Otherwise, treat it as a single string address.
+                        return [input.trim()];
+                    }
         
-              // Subscribe to EventBus messages for this address via the service.
-              this.eventBusService.listen(address).subscribe({
-                next: (message: any) => this.processMessage(address, message),
-                error: (error: any) =>
-                  console.error(
-                    `[EventBusListenerDirective] Error listening on address "${address}":`,
-                    error
-                  ),
-              });
-        
-              console.log(
-                `[EventBusListenerDirective] Listening for messages on address: "${address}"`
-              );
-            });
-        
+                    // Unsupported input type, return an empty array.
+                    return [];
+                }
         """)
 
 @NgOnDestroy("""
@@ -90,26 +125,26 @@ import java.util.List;
         """)
 
 @NgMethod("""
-          /**
-           * Process incoming EventBus messages.
-           * @param address - The EventBus address the message came from.
-           * @param message - The message content.
-           */
-          private processMessage(address: string, message: any): void {
-            console.log(address + ' received - ' + message);
-          debugger
-          this.processResult(message);
-            if (this.appEventHandler) {
-              // If a custom handler function is provided, invoke it.
-              this.appEventHandler(message.data, address);
-            } else {
-              // Otherwise, default to simply logging the message.
-              console.warn(
-                `[EventBusListenerDirective] No handler provided for address "${address}". Message:`,
-                message
-              );
+            /**
+             * Process incoming EventBus messages.
+             * @param address - The EventBus address the message came from.
+             * @param message - The message content.
+             */
+            private processMessage(address: string, message: any): void {
+        //      console.log(address + ' received - ' + message);
+           // debugger
+            this.processResult(message);
+              if (this.appEventHandler) {
+                // If a custom handler function is provided, invoke it.
+                this.appEventHandler(message.data, address);
+              } else {
+                // Otherwise, default to simply logging the message.
+                console.warn(
+                  `[EventBusListenerDirective] No handler provided for address "${address}". Message:`,
+                  message
+                );
+              }
             }
-          }
         
         """)
 

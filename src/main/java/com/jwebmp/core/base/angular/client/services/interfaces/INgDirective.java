@@ -77,8 +77,10 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
             var reference = compRef.value();
             if (reference.isAnnotationPresent(NgProvider.class))
             {
-                providers.append(compRef.value()
-                        .getSimpleName() + ",\n");
+                var np = reference.getAnnotation(NgProvider.class);
+                if (!np.singleton())
+                    providers.append(compRef.value()
+                            .getSimpleName() + ",\n");
             }
         }
 

@@ -50,7 +50,7 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
     {
         List<String> out = IComponent.super.constructorParameters();
         out.add("private service : " + getAnnotation().value()
-                                                      .getSimpleName());
+                .getSimpleName());
         return out;
     }
 
@@ -59,8 +59,8 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
     {
         List<String> out = IComponent.super.decorators();
         out.add("@Injectable({\n" +
-                        "  providedIn: '" + providedIn() + "'\n" +
-                        "})");
+                "  providedIn: '" + providedIn() + "'\n" +
+                "})");
         return out;
     }
 
@@ -72,14 +72,13 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
         if (!getAnnotation().dataArray())
         {
             out.add(0, "public " + getAnnotation().variableName() + " : " + getAnnotation().dataType()
-                                                                                           .getSimpleName() + " = " + INgDataType.renderObjectStructure(getAnnotation().dataType()) + ";");
+                    .getSimpleName() + " = " + INgDataType.renderObjectStructure(getAnnotation().dataType()) + ";");
 
 
-        }
-        else
+        } else
         {
             out.add(0, "public " + getAnnotation().variableName() + " : " + getAnnotation().dataType()
-                                                                                           .getSimpleName() + "[] = [];");
+                    .getSimpleName() + "[] = [];");
 
         }
         return out;
@@ -95,26 +94,15 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
                 "" +
                 ".subscribe(message => {\n" +
                 "" +
-                "" +
                 "if (message) {\n" +
-                "\t\t\t\tif(Array.isArray(message))\n" +
-                "\t\t\t\t{\n" +
-                "\t\t\t\t\tfor (let m of message) {\n" +
-                "\t\t\t\t\t\tif(m.out && m.out[0]) {\n";
-        s += "                this." + getAnnotation().variableName() + " = m.out[0];\n";
-        s += "\t\t\t\t\t\t\tthis._onUpdate.next(true);\n" +
-                "\t\t\t\t\t\t}\n" +
-                "\t\t\t\t\t}\n" +
-                "\t\t\t\t}else {\n" +
-                "\t\t\t\t\tif(message.out && message.out[0]) {\n";
-        s += "                this." + getAnnotation().variableName() + " = message.out[0];\n";
-        s += "\t\t\t\t\t\tthis._onUpdate.next(true);\n" +
-                "\t\t\t\t\t}\n" +
-                "\t\t\t\t}\n" +
-                "            }" +
+                "if (typeof message === 'string')\n" +
+                "                        this." + getAnnotation().variableName() + " = JSON.parse(message as any);\n" +
+                "                    else this." + getAnnotation().variableName() + " = message as any;" +
+                "                       this._onUpdate.next(true);" +
                 "" +
-                "" +
-                "" +
+                //        "                    this." + getAnnotation().variableName() + " = JSON.parse(message as any);\n" +
+                "                }" +
+                "            " +
 /*		     "" +
 		     "" +
 		     "            if (message && observer.out) {\n";
@@ -139,12 +127,12 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
         out.add(sendDataString);
 
         out.add("\tget onUpdate(): Observable<boolean> {\n" +
-                        "\t\treturn this._onUpdate.asObservable();\n" +
-                        "\t}");
+                "\t\treturn this._onUpdate.asObservable();\n" +
+                "\t}");
         out.add("\tcheckData()\n" +
-                        "\t{\n" +
-                        "\t\tthis.service.fetchData();\n" +
-                        "\t}");
+                "\t{\n" +
+                "\t\tthis.service.fetchData();\n" +
+                "\t}");
 
         String resetString = "\treset() {\n" +
                 "\t\tthis._onUpdate.next(false);\n" +
@@ -153,8 +141,7 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
         if (!getAnnotation().dataArray())
         {
             resetString += "\t\tthis." + getAnnotation().variableName() + " = " + INgDataType.renderObjectStructure(getAnnotation().dataType()) + ";";
-        }
-        else
+        } else
         {
             resetString += "\t\tthis." + getAnnotation().variableName() + " = [];";
 
@@ -194,11 +181,11 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
         for (String s : onDestroy())
         {
             out.append("\t")
-               .append(s)
-               .append("\n");
+                    .append(s)
+                    .append("\n");
         }
         List<NgOnDestroy> fInit = IGuiceContext.get(AnnotationHelper.class)
-                                               .getAnnotationFromClass(getClass(), NgOnDestroy.class);
+                .getAnnotationFromClass(getClass(), NgOnDestroy.class);
         fInit.sort(Comparator.comparingInt(NgOnDestroy::sortOrder));
         Set<String> outs = new LinkedHashSet<>();
         if (!fInit.isEmpty())
@@ -206,7 +193,7 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
             for (NgOnDestroy ngField : fInit)
             {
                 outs.add(ngField.value()
-                                .trim());
+                        .trim());
             }
         }
         StringBuilder fInitOut = new StringBuilder();
@@ -216,8 +203,8 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
                     .append("\n");
         }
         out.append("\t")
-           .append(fInitOut)
-           .append("\n");
+                .append(fInitOut)
+                .append("\n");
         out.append("}\n");
         return out.toString();
     }

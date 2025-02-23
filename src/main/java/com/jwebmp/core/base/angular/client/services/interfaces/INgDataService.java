@@ -147,8 +147,20 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
             fields.add("private dataSubject : BehaviorSubject<any> = new BehaviorSubject<any>(undefined);");
         } else
         {
-            var name = dtReferences.stream().filter(a -> a.primary()).findFirst().orElseThrow().value().getSimpleName();
-            fields.add("private dataSubject : BehaviorSubject<" + name + " | undefined> = new BehaviorSubject<" + name + " | undefined>(undefined);");
+            var firstReference = dtReferences.stream()
+                    .filter(a -> a.primary())
+                    .findFirst()
+                    .orElse(null);
+
+            if (firstReference == null || firstReference.value() == null || firstReference.value().getSimpleName() == null)
+            {
+                fields.add("private dataSubject : BehaviorSubject<any> = new BehaviorSubject<any>(undefined);");
+            } else
+            {
+                var name = firstReference.value().getSimpleName();
+
+                fields.add("private dataSubject : BehaviorSubject<" + name + " | undefined> = new BehaviorSubject<" + name + " | undefined>(undefined);");
+            }
         }
 
         fields.add(" private listenerName = '" + dService.value() + "';");
