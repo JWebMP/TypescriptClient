@@ -49,32 +49,45 @@ import java.util.List;
           private connectionState$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
         
           private destroy$ = new Subject<void>();
-          private messageSubjects: Map<string, Subject<any>> = new Map();
+          private messageSubjects: Map<string, Map<string, Subject<any>>> = new Map();
           private messageQueue: Array<{ action: string; data: object; eventType: string; event?: any; component?: ElementRef<any> }> = [];
           private guid: string
         """)
 
 @NgConstructorBody("""
-        \tthis.connectionState$.pipe(takeUntil(this.destroy$)).subscribe((isConnected) => {
-            if (isConnected) {
-                console.log('[EventBusService] Connection is ready. Processing queued messages.');
+        \t
+          this.connectionState$.pipe(takeUntil(this.destroy$)).subscribe((isConnected) => {
+               if (isConnected) {
+                   console.log('[EventBusService] Connection is ready. Processing queued messages.');
         
-                // Process queued messages (if there are any)
-                this.processQueuedMessages();
+                   // Process queued messages (if there are any)
+                   this.processQueuedMessages();
         
-                // Re-register all existing listeners
-                this.registeredListeners.forEach((address) => {
-                    console.log(`[EventBusService] Re-registering listener for address: "${address}"`);
-                    this.listen(address); // Re-register listener
-                });
-            } else {
-                console.warn('[EventBusService] Connection lost. Waiting to reconnect...');
-            }
-        });
+                   // Re-register all existing listeners for all addresses and their handler IDs
+                   this.messageSubjects.forEach((handlers, address) => {
+                       handlers.forEach((_, handlerId) => {
+                           console.log(`[EventBusService] Re-registering listener with handler ID "${handlerId}" for address: "${address}"`);
+                           // Re-register each listener
+                           this.listen(address, handlerId);
+                       });
+                   });
+               } else {
+                   console.warn('[EventBusService] Connection lost. Waiting to reconnect...');
+               }
+           });
+        
         """)
 @NgConstructorBody("this.guid = this.generateGUID();")
 @NgConstructorBody("this.initializeEventBus();")
-@NgConstructorBody("this.listen(this.guid);")
+@NgConstructorBody("""
+        this.listen(this.guid,this.guid).subscribe(data => {
+                    this.processResult(data);
+                });
+                const everyoneId = this.generateGUID();
+                this.listen("Everyone",everyoneId).subscribe(data => {
+                    this.processResult(data);
+                });
+        """)
 
 
 @NgConstructorParameter("private routeLocation: Location")
@@ -273,48 +286,55 @@ import java.util.List;
             }
         
         
-          /**
-             * Subscribe to an address on the EventBus.
-             * @param address Address to subscribe to on EventBus.
-             * @returns Observable stream of incoming messages for this address.
-             */
-            listen(address: string): Observable<any> {
-                const normalizedAddress = this.normalizeAddress(address);
+              /**
+                  * Subscribe to an EventBus address with a unique ID.
+                  * @param address The address to listen to.
+                  * @param handlerId A unique identifier for the handler (or generated automatically).
+                  * @returns Observable for messages on the address.
+                  */
+                 listen(address: string, handlerId: string): Observable<any> {
+                     const normalizedAddress = this.normalizeAddress(address);
         
-                // Initialize the Subject if it doesn't already exist
-                if (!this.messageSubjects.has(normalizedAddress)) {
-                    this.messageSubjects.set(normalizedAddress, new Subject<any>());
-                }
+                     // Initialize the inner map for this address if it doesn't exist
+                     if (!this.messageSubjects.has(normalizedAddress)) {
+                         this.messageSubjects.set(normalizedAddress, new Map());
+                     }
         
-                // Wait for the connection state changes (including reconnects)
-                this.connectionState$.pipe(takeUntil(this.destroy$)).subscribe((isConnected) => {
-                    if (isConnected && this.eventBus) {
-                        if (!this.registeredListeners.has(normalizedAddress)) {
-                            // Register the handler for the EventBus address
-                            this.eventBus.registerHandler(normalizedAddress, (error: any, message: any) => {
-                                if (error) {
-                                    console.error(
-                                        `[EventBusService] Error while listening to address "${normalizedAddress}":`,
-                                        error
-                                    );
-                                } else {
-                                    // Emit the received message to the subject
-                                    this.messageSubjects.get(normalizedAddress)?.next(message.body);
-                                }
-                            });
+                     const listeners = this.messageSubjects.get(normalizedAddress);
         
-                            console.log(`[EventBusService] Registered handler for address: "${normalizedAddress}"`);
-                            this.registeredListeners.add(normalizedAddress); // Track registered listeners
-                        }
-                    } else if (!isConnected) {
-                        // Connection lost (optional: log or handle disconnection for this address)
-                        console.warn(`[EventBusService] Connection lost for address: "${normalizedAddress}"`);
-                    }
-                });
+                     if (listeners!.has(handlerId)) {
+                         console.warn(`[EventBusService] Handler with ID "${handlerId}" is already registered for address "${normalizedAddress}".`);
+                     } else {
+                         // Register the handler if it doesn't already exist
+                         const subject = new Subject<any>();
+                         listeners!.set(handlerId, subject);
         
-                // Return the message subject as an observable
-                return this.messageSubjects.get(normalizedAddress)!.asObservable();
-            }
+                         // Ensure the EventBus handler is registered only once for this normalized address
+                         if (!this.registeredListeners.has(normalizedAddress) && this.eventBus) {
+                             this.eventBus.registerHandler(normalizedAddress, (error: any, message: any) => {
+                                 if (error) {
+                                     console.error(`[EventBusService] Error while listening to address "${normalizedAddress}":`, error);
+                                 } else {
+                                     // Notify all listeners (subjects) under this address
+                                     const subjects = this.messageSubjects.get(normalizedAddress);
+                                     subjects?.forEach((sub) => sub.next(message.body));
+                                 }
+                             });
+                             this.registeredListeners.add(normalizedAddress);
+                             console.log(`[EventBusService] Registered handler for address: "${normalizedAddress}"`);
+                         }
+                     }
+        
+                     return listeners!.get(handlerId)!.asObservable();
+                 }
+        
+                 /**
+                  * Generate a unique identifier for handlers.
+                  * @returns A random string ID.
+                  */
+                 private generateUniqueId(): string {
+                     return Math.random().toString(36).substr(2, 9); // Example: "k39uflv7a"
+                 }
         
           /**
            * Send a message to a specific address over the EventBus.
@@ -450,6 +470,35 @@ import java.util.List;
         }
         """)
 
+@NgMethod("""
+        \t
+            processResult(response: any) {
+                    if (response.localStorage) {
+                        Object.keys(response.localStorage).forEach(prop => {
+                            window.localStorage.setItem(prop, response.localStorage[prop]);
+                        });
+                    }
+                    if (response.sessionStorage) {
+                        Object.keys(response.sessionStorage).forEach(prop => {
+                            window.sessionStorage.setItem(prop, response.sessionStorage[prop]);
+                            if (prop === 'contextId') {
+                                this.contextIdService.setContextId(response.sessionStorage[prop]);
+                            }
+                        });
+                    }
+                    if (response.features) {
+                    }
+                    if (response.reactions) {
+                        for (let reaction of response.reactions) {
+                            const react: any = reaction;
+                            if ("RedirectUrl" == react.reactionType) {
+                                this.router.navigateByUrl(react.reactionMessage);
+                            }
+                        }
+                    }
+                }
+        """)
+
 /*
 
 @NgMethod("""
@@ -493,49 +542,66 @@ import java.util.List;
 */
 
 @NgMethod("""
-        /**
-         * Unregister a single listener from the EventBus.
-         * @param address The address to unregister the handler from.
-         */
-        unregisterListener(address: string): void {
-            const normalizedAddress = this.normalizeAddress(address);
+        \t
+            /**
+               * Remove a specific handler for an EventBus address by its ID.
+               * If no listeners remain for the address, the handler is fully removed from the EventBus.
+               * @param address The address of the listeners to check.
+               * @param handlerId The specific handler ID to unregister.
+               */
+              unregisterListener(address: string, handlerId: string): void {
+                  const normalizedAddress = this.normalizeAddress(address);
         
-            if (this.eventBus && this.registeredListeners.has(normalizedAddress)) {
-                const subject = this.messageSubjects.get(normalizedAddress);
-                if (subject) {
-                    subject.complete(); // Notify all subscribers that this listener is being removed
-                }
+                  if (this.messageSubjects.has(normalizedAddress)) {
+                      const listeners = this.messageSubjects.get(normalizedAddress);
         
-                this.eventBus.unregisterHandler(normalizedAddress, (error: any) => {
-                    if (error) {
-                        console.error(
-                            `[EventBusService] Failed to unregister handler for address: "${normalizedAddress}"`,
-                            error
-                        );
-                    } else {
-                        console.log(`[EventBusService] Successfully unregistered handler for address: "${normalizedAddress}"`);
-                        this.registeredListeners.delete(normalizedAddress); // Remove from registered listeners
-                        this.messageSubjects.delete(normalizedAddress); // Remove the subject for the address
-                    }
-                });
-            } else {
-                console.warn(`[EventBusService] No active listener registered for address: "${normalizedAddress}"`);
-            }
-        }""")
+                      if (listeners!.has(handlerId)) {
+                          // Remove this specific handler
+                          listeners!.get(handlerId)!.complete(); // Notify subscribers of closure
+                          listeners!.delete(handlerId);
+                          console.log(`[EventBusService] Unregistered handler ID "${handlerId}" for address: "${normalizedAddress}"`);
+        
+                          // If no listeners remain for this address, clean up the EventBus handler
+                          if (listeners!.size === 0) {
+                              this.messageSubjects.delete(normalizedAddress);
+        
+                              if (this.eventBus && this.registeredListeners.has(normalizedAddress)) {
+                                  this.eventBus.unregisterHandler(normalizedAddress, (error: any) => {
+                                      if (error) {
+                                          console.error(`[EventBusService] Failed to unregister handler for address: "${normalizedAddress}"`, error);
+                                      } else {
+                                          console.log(`[EventBusService] All handlers removed. EventBus handler unregistered for address: "${normalizedAddress}"`);
+                                          this.registeredListeners.delete(normalizedAddress);
+                                      }
+                                  });
+                              }
+                          }
+                      } else {
+                          console.warn(`[EventBusService] No handler found with ID "${handlerId}" for address: "${normalizedAddress}"`);
+                      }
+                  } else {
+                      console.warn(`[EventBusService] No listeners found for address: "${normalizedAddress}"`);
+                  }
+              }""")
 
 @NgMethod("""
-        /**
-         * Utility to unregister all listeners. Useful for cleanup operations.
-         */
-        unregisterAllListeners(): void {
-            if (this.eventBus && this.registeredListeners.size > 0) {
-                Array.from(this.registeredListeners).forEach((address) => {
-                    this.unregisterListener(address); // Unregister each listener
-                });
-            } else {
-                console.warn("[EventBusService] No active listeners to unregister.");
+        \t
+            /**
+             * Utility to unregister all listeners. Useful for cleanup operations.
+             */
+            unregisterAllListeners(): void {
+                if (this.eventBus && this.messageSubjects.size > 0) {
+                    this.messageSubjects.forEach((handlers, address) => {
+                        // Unregister each handler for the address
+                        handlers.forEach((_, handlerId) => {
+                            this.unregisterListener(address, handlerId);
+                        });
+                    });
+                    console.log("[EventBusService] Unregistered all listeners.");
+                } else {
+                    console.warn("[EventBusService] No active listeners to unregister.");
+                }
             }
-        }
         """)
 
 @NgMethod("""

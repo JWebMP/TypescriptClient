@@ -29,36 +29,88 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
 @NgDataTypeReference(value = DynamicData.class, primary = false)
 @NgComponentReference(EventBusService.class)
 
-@NgOnDestroy("this.eventBusService.unregisterListener(this.listenerName);")
+@NgOnDestroy("""
+        \t
+                console.log(`Cleaning up listener for: ${this.listenerName} with handler ID: ${this.handlerId}`);
+        
+                // Unregister the listener with the given handler ID
+                this.eventBusService.unregisterListener(this.listenerName, this.handlerId);
+        
+                // Unsubscribe from the Observable to prevent memory leaks
+                if (this.subscription) {
+                    this.subscription.unsubscribe();
+                }
+        
+        """)
 
 @NgMethod("""
         get data(): Observable<DynamicData | undefined> {
                 return this.dataListener;
             }""")
 
-@NgConstructorBody("""
-        this.dataListener = this.eventBusService.listen(this.listenerName);
+@NgMethod("""
+        \t
+            /**
+             * Generates a unique handler ID for this service's listener
+             */
+            private generateHandlerId(): string {
+                return `${this.listenerName}-${new Date().getTime()}-${Math.random().toString(36).substring(2, 15)}`;
+            }
+        
         """)
 @NgConstructorBody("""
-        this.subscription = this.dataListener.subscribe(message => {
-                    if (message) {
-                        if (Array.isArray(message)) {
-                            for (let m of message) {
-                                if (m && m.out && m.out[0]) {
-                                  \s
-                                }
-                            }
-                        } else {
-                            if (message.out && message.out[0]) {
-                              \s
-                            }
-                        }
-                    }
-                })""")
+        \t
+                // Generate a unique handler ID
+                this.handlerId = this.generateHandlerId();
+        
+        """)
+
+@NgConstructorBody("""
+        this.dataListener = this.eventBusService.listen(this.listenerName, this.handlerId);
+        """)
 
 @NgField("private readonly dataListener :  Observable<DynamicData | undefined>;")
+@NgField("private readonly handlerId: string; // A unique handler ID for this listener")
 
-@NgOnDestroy("this.subscription?.unsubscribe();")
+@NgConstructorBody("""
+        \t
+                this.subscription = this.dataListener.subscribe(
+                    (data) => this.handleIncomingData(data),
+                    (error) => console.error(` Error listening on ${this.listenerName}:`, error)
+                );
+        """)
+
+@NgMethod("""
+        \t
+            /**
+             * Handles incoming data from the EventBus
+             */
+            private handleIncomingData(data: DynamicData | undefined): void {
+                if (data) {
+                    console.log(`Received data for ${this.listenerName}:`, data);
+                    // Perform processing or state updates with the incoming data
+                } else {
+                    console.warn(`Received empty data for ${this.listenerName}`);
+                }
+            }
+        
+        """)
+
+@NgMethod("""
+        \t
+            /**
+             * Handles incoming data from the EventBus
+             */
+            private handleIncomingData(data: DynamicData | undefined): void {
+                if (data) {
+                    console.log(`Received data for ${this.listenerName}:`, data);
+                    // Perform processing or state updates with the incoming data
+                } else {
+                    console.warn(`Received empty data for ${this.listenerName}`);
+                }
+            }
+        
+        """)
 
 @NgImportReference(value = "OnDestroy", reference = "@angular/core")
 public interface INgDataService<J extends INgDataService<J>> extends IComponent<J>
@@ -96,22 +148,42 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
         dtRef = getTsFilename(DynamicData.class);
 
         methods.add("""
-                fetchData() {
-                        this.eventBusService.send('data', {
-                        dataService:this.listenerName,
-                            ...this.additionalData,
-                            className: '%s'
-                        }, this.listenerName);
-                    }""".formatted(getClass().getCanonicalName()));
+                \t
+                    /**
+                      * Fetches data by sending a request on the EventBus
+                      */
+                     fetchData() {
+                         this.eventBusService.send(
+                             'data',
+                             {
+                                 dataService: this.listenerName,
+                                 ...this.additionalData,
+                                 className: this.clazzName,
+                             },
+                             this.listenerName
+                         );
+                     }
+                """);
 
         methods.add("""
-                public sendData(datas: any) {
-                        this.eventBusService.send('dataSend', {
-                        dataService:this.listenerName,
-                            ...this.additionalData, data: {...datas},
-                            className: '%s'
-                        }, this.listenerName);
-                    }""".formatted(getClass().getCanonicalName()));
+                \t
+                    /**
+                      * Sends data to the EventBus
+                      * @param datas Any data to send
+                      */
+                     public sendData(datas: any) {
+                         this.eventBusService.send(
+                             'dataSend',
+                             {
+                                 dataService: this.listenerName,
+                                 ...this.additionalData,
+                                 data: { ...datas },
+                                 className: this.clazzName,
+                             },
+                             this.listenerName
+                         );
+                     }
+                """);
 
 
         return methods;
@@ -166,7 +238,7 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
         fields.add(" private listenerName = '" + dService.value() + "';");
         fields.add(" private clazzName = '" + getClass().getCanonicalName() + "';");
         fields.add(" public additionalData : any = {};");
-        fields.add("private subscription? : Subscription;");
+        fields.add(" private subscription? : Subscription;");
         return fields;
     }
 

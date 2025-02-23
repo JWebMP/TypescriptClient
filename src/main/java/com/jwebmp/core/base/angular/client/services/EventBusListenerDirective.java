@@ -24,47 +24,33 @@ import java.util.List;
         
           private registeredAddresses: string[] = [] // Tracks addresses managed by this directive.
         
+          private registeredHandlers: { address: string; handlerId: string }[] = []; // Tracks registered handler IDs
+        
         """)
 
 @NgOnInit("""
-              // ngOnInit() {
-                // Validate and normalize `appEventBusListener` input.
-                const addresses = this.parseAddresses(this.appEventBusListener);
+              // Validate and normalize `appEventBusListener` input.
+              const addresses = this.parseAddresses(this.appEventBusListener);
+              if (!addresses || addresses.length === 0) {
+                  console.warn('[EventBusListenerDirective] No valid addresses provided to appEventBusListener.');
+                  return;
+              }
         
-                if (!addresses || addresses.length === 0) {
-                    console.warn(
-                        '[EventBusListenerDirective] No valid addresses provided to appEventBusListener. Please specify at least one address.'
-                    );
-                    return;
-                }
+              // Register listeners for all addresses
+              addresses.forEach((address) => {
+                  // Generate a unique handler ID for the current address
+                  const handlerId = Math.random().toString(36).substr(2, 9);
         
-                // Register total listeners in the EventBus service.
-                this.eventBusService.waitForListeners(addresses.length);
+                  // Register the listener on the EventBus and handle messages
+                  this.eventBusService.listen(address, handlerId).subscribe((message) => {
+                      this.processMessage(address, message);
+                  });
         
-                // Iterate through each address in the array and register listeners.
-                addresses.forEach((address) => {
-                    if (!address || address.trim() === '') {
-                        console.warn(`[EventBusListenerDirective] Skipping invalid EventBus address: "${address}"`);
-                        return;
-                    }
-        
-                    // Track the registered address for cleanup later.
-                    this.registeredAddresses.push(address);
-        
-                    // Subscribe to the EventBus for this address.
-                    this.eventBusService.listen(address).subscribe({
-                        next: (message: any) => this.processMessage(address, message),
-                        error: (error: any) =>
-                            console.error(
-                                `[EventBusListenerDirective] Error listening on address "${address}":`,
-                                error
-                            ),
-                    });
-        
-                    console.log(`[EventBusListenerDirective] Listening for messages on address: "${address}"`);
-                });
-            }
-        
+                  // Keep track of the address and handler ID for cleanup
+                  this.registeredHandlers.push({ address, handlerId });
+              });
+        """)
+@NgMethod("""
                 /**
                  * Parse and normalize the `appEventBusListener` input into an array of strings.
                  * @param input The raw input provided to `appEventBusListener`.
@@ -107,20 +93,12 @@ import java.util.List;
         """)
 
 @NgOnDestroy("""
-        
-              // Cleanup logic when the directive is destroyed.
-              if (this.registeredAddresses.length > 0) {
-                  this.registeredAddresses.forEach((address) => {
-                      console.log(
-                          `[EventBusListenerDirective] Unsubscribing from address: "${address}"`
-                      );
-                      // Properly unregister each address from the Event Bus
-                      this.eventBusService.unregisterListener(address);
-                  });
-              }
-        
-              // Reset the registration tracking list.
-              this.registeredAddresses = [];
+        // Unregister all handlers tracked by this directive
+            this.registeredHandlers.forEach(({ address, handlerId }) => {
+                console.log(`[EventBusListenerDirective] Unsubscribing handler "${handlerId}" from address: "${address}"`);
+                this.eventBusService.unregisterListener(address, handlerId);
+            });
+            this.registeredHandlers = [];
         
         """)
 
