@@ -30,6 +30,8 @@ import java.util.List;
 @NgImportReference(value = "Injectable", reference = "@angular/core")
 @NgImportReference(value = "inject", reference = "@angular/core", onSelf = false, onParent = true)
 @NgImportReference(value = "BehaviorSubject", reference = "rxjs")
+@NgImportReference(value = "take", reference = "rxjs")
+@NgImportReference(value = "filter", reference = "rxjs")
 @NgImportReference(value = "Subject", reference = "rxjs")
 @NgImportReference(value = "Observable", reference = "rxjs")
 @NgImportReference(value = "timer", reference = "rxjs")
@@ -48,6 +50,9 @@ import java.util.List;
           private listenerReady$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
           private connectionState$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
         
+          private pendingListeners: Array<{ address: string; handlerId: string }> = [];
+        
+        
           private destroy$ = new Subject<void>();
           private messageSubjects: Map<string, Map<string, Subject<any>>> = new Map();
           private messageQueue: Array<{ action: string; data: object; eventType: string; event?: any; component?: ElementRef<any> }> = [];
@@ -56,25 +61,22 @@ import java.util.List;
 
 @NgConstructorBody("""
         \t
-          this.connectionState$.pipe(takeUntil(this.destroy$)).subscribe((isConnected) => {
-               if (isConnected) {
-                   console.log('[EventBusService] Connection is ready. Processing queued messages.');
-        
-                   // Process queued messages (if there are any)
-                   this.processQueuedMessages();
-        
-                   // Re-register all existing listeners for all addresses and their handler IDs
-                   this.messageSubjects.forEach((handlers, address) => {
-                       handlers.forEach((_, handlerId) => {
-                           console.log(`[EventBusService] Re-registering listener with handler ID "${handlerId}" for address: "${address}"`);
-                           // Re-register each listener
-                           this.listen(address, handlerId);
-                       });
-                   });
-               } else {
-                   console.warn('[EventBusService] Connection lost. Waiting to reconnect...');
-               }
-           });
+          this.connectionState$
+              .pipe(takeUntil(this.destroy$))
+              .subscribe((isConnected) => {
+                  if (isConnected) {
+                      console.log('[EventBusService] Connection restored. Re-registering all listeners...');
+                      // Requeue all existing listeners
+                      this.messageSubjects.forEach((handlers, address) => {
+                          handlers.forEach((_, handlerId) => {
+                              this.queueListener(address, handlerId);
+                          });
+                      });
+                      this.processQueuedMessages();
+                  } else {
+                      console.warn('[EventBusService] Connection lost. Waiting for reconnection...');
+                  }
+              });
         
         """)
 @NgConstructorBody("this.guid = this.generateGUID();")
@@ -109,6 +111,59 @@ import java.util.List;
                  this.unregisterListener(address);
              });
          //}
+        """)
+
+@NgMethod("""
+        \tprivate processPendingListeners(): void {
+                  if (!this.eventBus) {
+                      console.warn('[EventBusService] EventBus not initialized yet!');
+                      return;
+                  }
+        
+                  console.log('[EventBusService] Processing queued listeners...');
+                  while (this.pendingListeners.length > 0) {
+                      const { address, handlerId } = this.pendingListeners.shift()!;
+        
+                      // Register the listener
+                      this.eventBus.registerHandler(address, {}, (error, message) => {
+                          if (error) {
+                              console.error(`[EventBusService] Error in listener for address "${address}":`, error);
+                          } else {
+                              console.log(`[EventBusService] Message received on address "${address}":`, message);
+        
+                              // Emit the message to the relevant Subject
+                              const handlers = this.messageSubjects.get(address);
+                              const subject = handlers?.get(handlerId);
+                              subject?.next(message.body);
+                          }
+                      });
+        
+                      console.log(`[EventBusService] Listener registered for address: "${address}", handler ID: "${handlerId}"`);
+                  }
+              }
+        """)
+
+@NgMethod("""
+        \tprivate queueListener(address: string, handlerId: string): void {
+                  // Check if the listener is already queued
+                  const isAlreadyQueued = this.pendingListeners.some(
+                      listener => listener.address === address && listener.handlerId === handlerId
+                  );
+        
+                  if (!isAlreadyQueued) {
+                      console.log(`[EventBusService] Queuing listener for address: "${address}", handler ID: "${handlerId}"`);
+                      this.pendingListeners.push({ address, handlerId });
+                  }
+        
+                  // Process all queued listeners when the connection becomes ready
+                  this.connectionState$
+                      .pipe(
+                          takeUntil(this.destroy$),
+                          filter(isConnected => isConnected), // Wait for a true (connected) state
+                          take(1) // Process the queue on the first successful connection
+                      )
+                      .subscribe(() => this.processPendingListeners());
+              }
         """)
 
 @NgMethod("""
@@ -293,40 +348,24 @@ import java.util.List;
                   * @returns Observable for messages on the address.
                   */
                  listen(address: string, handlerId: string): Observable<any> {
-                     const normalizedAddress = this.normalizeAddress(address);
-        
-                     // Initialize the inner map for this address if it doesn't exist
-                     if (!this.messageSubjects.has(normalizedAddress)) {
-                         this.messageSubjects.set(normalizedAddress, new Map());
+                     // Ensure a Subject exists for the given address and handler ID
+                     if (!this.messageSubjects.has(address)) {
+                         this.messageSubjects.set(address, new Map());
                      }
         
-                     const listeners = this.messageSubjects.get(normalizedAddress);
-        
-                     if (listeners!.has(handlerId)) {
-                         console.warn(`[EventBusService] Handler with ID "${handlerId}" is already registered for address "${normalizedAddress}".`);
-                     } else {
-                         // Register the handler if it doesn't already exist
-                         const subject = new Subject<any>();
-                         listeners!.set(handlerId, subject);
-        
-                         // Ensure the EventBus handler is registered only once for this normalized address
-                         if (!this.registeredListeners.has(normalizedAddress) && this.eventBus) {
-                             this.eventBus.registerHandler(normalizedAddress, (error: any, message: any) => {
-                                 if (error) {
-                                     console.error(`[EventBusService] Error while listening to address "${normalizedAddress}":`, error);
-                                 } else {
-                                     // Notify all listeners (subjects) under this address
-                                     const subjects = this.messageSubjects.get(normalizedAddress);
-                                     subjects?.forEach((sub) => sub.next(message.body));
-                                 }
-                             });
-                             this.registeredListeners.add(normalizedAddress);
-                             console.log(`[EventBusService] Registered handler for address: "${normalizedAddress}"`);
-                         }
+                     const handlers = this.messageSubjects.get(address)!;
+                     if (!handlers.has(handlerId)) {
+                         handlers.set(handlerId, new Subject<any>());
                      }
         
-                     return listeners!.get(handlerId)!.asObservable();
+                     const listenerSubject = handlers.get(handlerId)!;
+        
+                     // Add the listener to the pending queue
+                     this.queueListener(address, handlerId);
+        
+                     return listenerSubject.asObservable();
                  }
+        
         
                  /**
                   * Generate a unique identifier for handlers.
