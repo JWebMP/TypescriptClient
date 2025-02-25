@@ -82,21 +82,29 @@ import java.util.List;
 @NgConstructorBody("this.guid = this.generateGUID();")
 @NgConstructorBody("this.initializeEventBus();")
 @NgConstructorBody("""
-        this.listen(this.guid,this.guid).subscribe(data => {
+        \t
+            this.listen(this.guid,this.guid).subscribe(data => {
+                    this.processResult(data);
+                });
+            const everyoneId = this.generateGUID();
+            this.listen("Everyone",everyoneId).subscribe(data => {
                 this.processResult(data);
             });
-        const everyoneId = this.generateGUID();
-        this.listen("Everyone",everyoneId).subscribe(data => {
-            this.processResult(data);
-        });
-        const sessionStorage = this.generateGUID();
-        this.listen("SessionStorage",everyoneId).subscribe(data => {
-            this.processResult(data);
-        });
-        const localStorage = this.generateGUID();
-        this.listen("LocalStorage",everyoneId).subscribe(data => {
-            this.processResult(data);
-        });
+            const sessionStorage = this.generateGUID();
+            this.listen("SessionStorage",everyoneId).subscribe(data => {
+                Object.keys(data).forEach(prop => {
+                        window.sessionStorage.setItem(prop, data[prop]);
+                        if (prop === 'contextId') {
+                            this.contextIdService.setContextId(data[prop]);
+                        }
+                    });
+            });
+            const localStorage = this.generateGUID();
+            this.listen("LocalStorage",everyoneId).subscribe(data => {
+                Object.keys(data).forEach(prop => {
+                        window.localStorage.setItem(prop, data[prop]);
+                    });
+            });
         """)
 
 
@@ -507,14 +515,15 @@ import java.util.List;
         """)
 
 @NgMethod("""
-        getParametersObject() : object {
-            try {
-                var search = location.search.substring(1);
-                return JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}');
-            } catch (err) {
-                return {};
+        \t
+            getParametersObject() : object {
+                try {
+                    var search = location.search.substring(1);
+                    return JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}');
+                } catch (err) {
+                    return {};
+                }
             }
-        }
         """)
 
 @NgMethod("""
