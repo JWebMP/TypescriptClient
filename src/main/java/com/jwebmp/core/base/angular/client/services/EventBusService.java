@@ -83,12 +83,20 @@ import java.util.List;
 @NgConstructorBody("this.initializeEventBus();")
 @NgConstructorBody("""
         this.listen(this.guid,this.guid).subscribe(data => {
-                    this.processResult(data);
-                });
-                const everyoneId = this.generateGUID();
-                this.listen("Everyone",everyoneId).subscribe(data => {
-                    this.processResult(data);
-                });
+                this.processResult(data);
+            });
+        const everyoneId = this.generateGUID();
+        this.listen("Everyone",everyoneId).subscribe(data => {
+            this.processResult(data);
+        });
+        const sessionStorage = this.generateGUID();
+        this.listen("SessionStorage",everyoneId).subscribe(data => {
+            this.processResult(data);
+        });
+        const localStorage = this.generateGUID();
+        this.listen("LocalStorage",everyoneId).subscribe(data => {
+            this.processResult(data);
+        });
         """)
 
 

@@ -87,23 +87,7 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
              */
             private handleIncomingData(data: DynamicData | undefined): void {
                 if (data) {
-                    console.log(`Received data for ${this.listenerName}:`, data);
-                    // Perform processing or state updates with the incoming data
-                } else {
-                    console.warn(`Received empty data for ${this.listenerName}`);
-                }
-            }
-        
-        """)
-
-@NgMethod("""
-        \t
-            /**
-             * Handles incoming data from the EventBus
-             */
-            private handleIncomingData(data: DynamicData | undefined): void {
-                if (data) {
-                    console.log(`Received data for ${this.listenerName}:`, data);
+                 //   console.log(`Received data for ${this.listenerName}:`, data);
                     // Perform processing or state updates with the incoming data
                 } else {
                     console.warn(`Received empty data for ${this.listenerName}`);

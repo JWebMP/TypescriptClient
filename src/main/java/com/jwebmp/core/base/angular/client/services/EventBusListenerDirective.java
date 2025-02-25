@@ -117,10 +117,10 @@ import java.util.List;
                 this.appEventHandler(message.data, address);
               } else {
                 // Otherwise, default to simply logging the message.
-                console.warn(
+               /* console.warn(
                   `[EventBusListenerDirective] No handler provided for address "${address}". Message:`,
                   message
-                );
+                );*/
               }
             }
         
