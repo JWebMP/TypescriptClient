@@ -16,6 +16,7 @@ import java.util.List;
 @NgImportReference(value = "Injectable", reference = "@angular/core")
 @NgField("private readonly storageKey = 'contextId';")
 @NgField("private contextIdSubject: BehaviorSubject<string | null>;")
+
 @NgOnDestroy("")
 @NgConstructorBody("""
         // Initialize the subject with the current sessionStorage value
@@ -57,10 +58,17 @@ import java.util.List;
         
         
         """)
+@NgMethod("""
+             contextId() : string | null {
+                return sessionStorage.getItem(this.storageKey);
+             }
+        """)
 @NgConstructorParameter(value = "private contextIdService : ContextIdService", onParent = true, onSelf = false)
-public class ContextIdService implements INgProvider<ContextIdService> {
+public class ContextIdService implements INgProvider<ContextIdService>
+{
     @Override
-    public List<String> decorators() {
+    public List<String> decorators()
+    {
         List<String> out = INgProvider.super.decorators();
         out.add("@Injectable({\n" +
                 "  providedIn: 'root'\n" +

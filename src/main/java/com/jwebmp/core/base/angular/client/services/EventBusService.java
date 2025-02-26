@@ -79,7 +79,8 @@ import java.util.List;
               });
         
         """)
-@NgConstructorBody("this.guid = this.generateGUID();")
+@NgConstructorBody("this.guid = this.generateGUID();\n" +
+        "    this.contextIdService.setContextId(this.guid)")
 @NgConstructorBody("this.initializeEventBus();")
 @NgConstructorBody("""
         \t
@@ -153,6 +154,21 @@ import java.util.List;
                               subject?.next(message.body);
                           }
                       });
+                      if(this.guid) {
+                           this.eventBus.registerHandler(this.guid + "." + address, {}, (error, message) => {
+                               if (error) {
+                                   console.error(`[EventBusService] Error in listener for address "${this.guid + "." + address}":`, error);
+                               } else {
+                                   console.log(`[EventBusService] Message received on address "${this.guid + "." + address}":`, message);
+        
+                                   // Emit the message to the relevant Subject
+                                   const handlers = this.messageSubjects.get(address);
+                                   const subject = handlers?.get(handlerId);
+                                   subject?.next(message.body);
+                               }
+                           });
+                           console.log(`[EventBusService] Private Listener registered for address: "${this.guid + "." + address}", handler ID: "${handlerId}"`);
+                       }
         
                       console.log(`[EventBusService] Listener registered for address: "${address}", handler ID: "${handlerId}"`);
                   }
@@ -628,6 +644,13 @@ import java.util.List;
                                       } else {
                                           console.log(`[EventBusService] All handlers removed. EventBus handler unregistered for address: "${normalizedAddress}"`);
                                           this.registeredListeners.delete(normalizedAddress);
+                                      }
+                                  });
+                                  this.eventBus.unregisterHandler(this.guid + "." + normalizedAddress, (error: any) => {
+                                      if (error) {
+                                          console.error(`[EventBusService] Failed to unregister handler for address: "${normalizedAddress}"`, error);
+                                      } else {
+                                          console.log(`[EventBusService] All handlers removed. EventBus handler unregistered for address: "${normalizedAddress}"`);
                                       }
                                   });
                               }
