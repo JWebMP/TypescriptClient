@@ -21,10 +21,13 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.apache.logging.log4j.LogManager;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -33,65 +36,86 @@ public interface AnnotationUtils
 
     static boolean hasAnnotation(Class<?> object, Class<? extends Annotation> annotation)
     {
-        var oRepeat = object;
-        while (oRepeat != null && !Object.class.equals(oRepeat))
+        return checkAnnotation(object, annotation, new HashSet<>());
+    }
+
+    private static boolean checkAnnotation(Class<?> clazz, Class<? extends Annotation> annotation, Set<Class<?>> visited)
+    {
+        if (clazz == null || Object.class.equals(clazz) || visited.contains(clazz))
         {
-            if (oRepeat.isAnnotationPresent(annotation))
+            return false;
+        }
+
+        // Mark this class as visited
+        visited.add(clazz);
+
+        // Check if the current class has the annotation
+        if (clazz.isAnnotationPresent(annotation))
+        {
+            return true;
+        }
+
+        // Check all implemented interfaces recursively
+        for (Class<?> iface : clazz.getInterfaces())
+        {
+            if (checkAnnotation(iface, annotation, visited))
             {
                 return true;
             }
-            var inters = oRepeat.getInterfaces();
-            while (inters.length > 0)
-            {
-                for (Class<?> anInterface : inters)
-                {
-                    if (anInterface.isAnnotationPresent(annotation))
-                    {
-                        return true;
-                    }
-                    inters = anInterface.getInterfaces();
-                }
-            }
-            oRepeat = oRepeat.getSuperclass();
         }
-        return false;
+        // Check the superclass recursively
+        return checkAnnotation(clazz.getSuperclass(), annotation, visited);
     }
 
-    static <T extends Annotation> List<T> getAnnotation(Class<?> object, Class<T> annotation)
+    static <T extends Annotation> List<T> getAnnotation(Class<?> clazz, Class<T> annotation)
     {
-        List<T> out = new ArrayList<>();
-        var oRepeat = object;
-        while (oRepeat != null && !Object.class.equals(oRepeat))
-        {
-            if (oRepeat.isAnnotationPresent(annotation))
-            {
-                out.addAll(List.of(oRepeat.getAnnotationsByType(annotation)));
-            }
-            var inters = oRepeat.getInterfaces();
-            while (inters.length > 0)
-            {
-                for (Class<?> anInterface : inters)
-                {
-                    if (anInterface.isAnnotationPresent(annotation))
-                    {
-                        out.addAll(List.of(anInterface.getAnnotationsByType(annotation)));
-                    }
-                    inters = anInterface.getInterfaces();
-                }
-            }
-            oRepeat = oRepeat.getSuperclass();
-        }
-        return out;
+        List<T> annotations = new ArrayList<>();
+        Set<Class<?>> visited = new HashSet<>();
+        // Process class hierarchy and interfaces recursively
+        collectAnnotations(clazz, annotation, annotations, visited);
+        return annotations;
     }
+
+    static <T extends Annotation> void collectAnnotations(
+            Class<?> clazz,
+            Class<T> annotation,
+            List<T> annotations,
+            Set<Class<?>> visited
+    )
+    {
+        if (clazz == null || clazz.equals(Object.class) || visited.contains(clazz))
+        {
+            return;
+        }
+
+        // Mark this class as visited to avoid re-processing
+        visited.add(clazz);
+
+        // Check if the current class has the annotation
+        if (clazz.isAnnotationPresent(annotation))
+        {
+            annotations.addAll(List.of(clazz.getAnnotationsByType(annotation)));
+        }
+
+        // Recursively process interfaces
+        for (Class<?> iface : clazz.getInterfaces())
+        {
+            collectAnnotations(iface, annotation, annotations, visited);
+        }
+
+        // Recursively process the superclass
+        collectAnnotations(clazz.getSuperclass(), annotation, annotations, visited);
+    }
+
 
     static String getTsFilename(INgApp<?> clazz)
     {
         NgApp app;
         if (!clazz.getClass()
-                  .isAnnotationPresent(NgApp.class))
+                .isAnnotationPresent(NgApp.class))
         {
-            System.out.println("Ng App Interface without NgApp Annotation? - " + clazz.getClass()
-                                                                                      .getCanonicalName());
+            LogManager.getLogger("AnnotationUtils").error("Ng App Interface without NgApp Annotation? - " + clazz.getClass()
+                    .getCanonicalName());
             throw new RuntimeException("Unable to build application without base metadata");
         }
         return clazz.name();
@@ -109,11 +133,10 @@ public interface AnnotationUtils
                     return ref.name();
                 }
             }
-        }
-        catch (Exception e)
+        } catch (Exception e)
         {
-            Logger.getLogger("AnnotationUtils")
-                  .log(Level.SEVERE, "Unable to render a ts file name for " + clazz.getCanonicalName(), e);
+            LogManager.getLogger("AnnotationUtils")
+                    .error("Unable to render a ts file name for " + clazz.getCanonicalName(), e);
         }
         return clazz.getSimpleName();
     }
@@ -122,7 +145,7 @@ public interface AnnotationUtils
     {
         String tsName = getTsFilename(clazz);
         tsName = tsName.substring(0, 1)
-                       .toLowerCase() + tsName.substring(1);
+                .toLowerCase() + tsName.substring(1);
         return tsName;
     }
 
@@ -241,7 +264,7 @@ public interface AnnotationUtils
     static MyNgComponentTagAttribute getNgComponentTagAttribute(String key, String value)
     {
         var ref = new MyNgComponentTagAttribute().setKey(key)
-                                                 .setValue(value);
+                .setValue(value);
         return ref;
     }
 

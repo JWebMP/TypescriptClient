@@ -85,7 +85,7 @@ public interface INgComponent<J extends INgComponent<J>> extends IComponent<J>
     @Override
     default List<NgConstructorBody> getAllConstructorBodies()
     {
-        List<NgConstructorBody> out = new ArrayList<>();
+        List<NgConstructorBody> out = IComponent.super.getAllConstructorBodies();
         if (this instanceof IComponentHierarchyBase<?, ?> comp)
         {
             out.addAll(comp.getConfigurations(NgConstructorBody.class, false));
@@ -97,9 +97,13 @@ public interface INgComponent<J extends INgComponent<J>> extends IComponent<J>
     @Override
     default List<NgConstructorParameter> getAllConstructorParameters()
     {
-        List<NgConstructorParameter> out = new ArrayList<>();
+        List<NgConstructorParameter> out = IComponent.super.getAllConstructorParameters();
         if (this instanceof IComponentHierarchyBase<?, ?> comp)
         {
+            if (getClass().getCanonicalName().contains("TasksCreateModal"))
+            {
+                System.out.println("here");
+            }
             out.addAll(comp.getConfigurations(NgConstructorParameter.class, false));
         }
         return out;
@@ -112,12 +116,18 @@ public interface INgComponent<J extends INgComponent<J>> extends IComponent<J>
         List<NgImportReference> refs = IComponent.super.getAllImportAnnotations();
         List<NgGlobalComponentImportReference> annos = IGuiceContext.get(AnnotationHelper.class)
                 .getAnnotationFromClass(getClass(), NgGlobalComponentImportReference.class);
+        if (this instanceof IComponentHierarchyBase<?, ?> comp)
+        {
+            var configs = comp.getConfigurations(NgImportReference.class, false);
+            refs.addAll(configs);
+        }
         for (NgGlobalComponentImportReference anno : annos)
         {
             refs.add(AnnotationUtils.getNgImportReference(anno.value(), anno.reference()));
         }
         return refs;
     }
+
 
     @Override
     default List<String> interfaces()
@@ -170,7 +180,7 @@ public interface INgComponent<J extends INgComponent<J>> extends IComponent<J>
     @Override
     default List<NgField> getAllFields()
     {
-        List<NgField> list = new ArrayList<>();
+        List<NgField> list = IComponent.super.getAllFields();
         if (this instanceof IComponentHierarchyBase<?, ?> comp)
         {
             list.addAll(comp.getConfigurations(NgField.class, false));

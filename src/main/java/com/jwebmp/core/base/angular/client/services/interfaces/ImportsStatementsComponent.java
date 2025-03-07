@@ -32,7 +32,7 @@ public interface ImportsStatementsComponent<J extends ImportsStatementsComponent
         List<NgImportReference> refs = new ArrayList<>();
 
         List<NgComponentReference> moduleRefs = IGuiceContext.get(AnnotationHelper.class)
-                                                             .getAnnotationFromClass(getClass(), NgComponentReference.class);
+                .getAnnotationFromClass(getClass(), NgComponentReference.class);
         if (this instanceof IComponentHierarchyBase<?, ?> comp)
         {
             moduleRefs.addAll(comp.getConfigurations(NgComponentReference.class, false));
@@ -43,18 +43,18 @@ public interface ImportsStatementsComponent<J extends ImportsStatementsComponent
             refs.addAll(putRelativeLinkInMap(getClass(), moduleRef));
         }
         List<NgDataTypeReference> dataTypeReferences = IGuiceContext.get(AnnotationHelper.class)
-                                                                    .getAnnotationFromClass(getClass(), NgDataTypeReference.class);
+                .getAnnotationFromClass(getClass(), NgDataTypeReference.class);
         for (NgDataTypeReference moduleRef : dataTypeReferences)
         {
             refs.addAll(putRelativeLinkInMap(getClass(), getNgComponentReference(moduleRef.value())));
         }
         refs.addAll(IGuiceContext.get(AnnotationHelper.class)
-                                 .getAnnotationFromClass(getClass(), NgImportReference.class));
+                .getAnnotationFromClass(getClass(), NgImportReference.class));
         if (this instanceof IComponentHierarchyBase<?, ?> comp)
         {
             refs.addAll(comp.getConfigurations(NgImportReference.class, false));
         }
-        
+
         Set<OnGetAllImports> interceptors = IGuiceContext.loaderToSet(ServiceLoader.load(OnGetAllImports.class));
         for (OnGetAllImports interceptor : interceptors)
         {
@@ -67,42 +67,33 @@ public interface ImportsStatementsComponent<J extends ImportsStatementsComponent
     default List<NgImportReference> clean(List<NgImportReference> refs)
     {
         List<NgImportReference> workable = new ArrayList<>();
-        Set<String> names = new HashSet<>();
+        Set<String> uniqueEntries = new HashSet<>();
+
+        // Process all NgImportReferences, splitting values and ensuring uniqueness
         for (NgImportReference ref : refs)
         {
-            if (ref.value()
-                   .contains(","))
+            // Split by commas in `value` and process each individual value
+            String[] values = ref.value().split(",");
+            for (String value : values)
             {
-                for (String name : ref.value()
-                                      .split(","))
-                {
-                    NgImportReference importReference = AnnotationUtils.getNgImportReference(name.trim(), ref.reference()
-                                                                                                             .trim());
-                    workable.add(importReference);
-                }
+                String trimmedValue = value.trim();
 
-            }
-            else
-            {
-                workable.add(ref);
+                // Create a new NgImportReference for the split value
+                NgImportReference importReference = AnnotationUtils.getNgImportReference(trimmedValue, ref.reference().trim());
+
+                // Apply constraints (e.g., onSelf) and ensure filename exclusion
+                if (!importReference.value().equals(getTsFilename(getClass())))
+                {
+                    // Ensure uniqueness by combining both `value` and `reference`
+                    String uniqueKey = trimmedValue + "|" + importReference.reference();
+                    if (uniqueEntries.add(uniqueKey))
+                    {
+                        workable.add(importReference);
+                    }
+                }
             }
         }
-        workable.removeIf(a -> !a.onSelf());
-        workable.removeIf(a -> a.value()
-                                .equals(getTsFilename(getClass())));
-        List<NgImportReference> cleanedRefs = new ArrayList<>();
-        for (NgImportReference importReference : workable)
-        {
-            if (names.contains(importReference.value()
-                                              .trim()))
-            {
-                continue;
-            }
-            names.add(importReference.value()
-                                     .trim());
-            cleanedRefs.add(importReference);
-        }
-        return cleanedRefs;
+        return workable;
     }
 
     default Map<String, String> imports()
@@ -122,7 +113,7 @@ public interface ImportsStatementsComponent<J extends ImportsStatementsComponent
         //	for (File file : srcRelative)
         //{
         out.putAll(Map.of(getTsFilename(getClass()),
-                          getClassLocationDirectory(getClass()) + getTsFilename(getClass()))
+                getClassLocationDirectory(getClass()) + getTsFilename(getClass()))
         );
         //}
         return out;
@@ -135,22 +126,21 @@ public interface ImportsStatementsComponent<J extends ImportsStatementsComponent
         try
         {
             File me = new File(getFileReference(baseDir.get()
-                                                       .getCanonicalPath(), clazz));
+                    .getCanonicalPath(), clazz));
             File destination = new File(getFileReference(baseDir.get()
-                                                                .getCanonicalPath(), moduleRef.value()));
+                    .getCanonicalPath(), moduleRef.value()));
             String importName = getTsFilename(moduleRef.value());
             String reference = getRelativePath(me, destination, null);
             if (moduleRef.value()
-                         .getSimpleName()
-                         .contains("PackInstructionsListProvider"))
+                    .getSimpleName()
+                    .contains("PackInstructionsListProvider"))
             {
                 //   System.out.println("SOMETHING HERE");
             }
             NgImportReference importReference = AnnotationUtils.getNgImportReference(importName, reference);
             refs.add(importReference);
             //out.putIfAbsent(getTsFilename(moduleRef.value()), getRelativePath(me, destination, null));
-        }
-        catch (IOException e)
+        } catch (IOException e)
         {
             e.printStackTrace();
         }
@@ -191,11 +181,11 @@ public interface ImportsStatementsComponent<J extends ImportsStatementsComponent
             //    requestedForPath = requestedForPath.getParentFile();
         }
         if (absolutePath2.toString()
-                         .contains("!"))
+                .contains("!"))
         {
             String result = absolutePath2.toString()
-                                         .substring(absolutePath2.toString()
-                                                                 .indexOf('!') + 1);
+                    .substring(absolutePath2.toString()
+                            .indexOf('!') + 1);
             return result.replace('\\', '/');
         }
 
@@ -206,16 +196,15 @@ public interface ImportsStatementsComponent<J extends ImportsStatementsComponent
                 original = original.getParentFile();
             }
             String path = original.toPath()
-                                  .relativize(requestedForPath.toPath())
-                                  .toString()
-                                  .replaceAll("\\\\", "/");
+                    .relativize(requestedForPath.toPath())
+                    .toString()
+                    .replaceAll("\\\\", "/");
             if (!path.startsWith("..") && !path.startsWith("./") && !path.startsWith("/"))
             {
                 path = "./" + path;
             }
             return path;
-        }
-        catch (Exception e)
+        } catch (Exception e)
         {
             e.getStackTrace();
         }
@@ -223,8 +212,7 @@ public interface ImportsStatementsComponent<J extends ImportsStatementsComponent
         {
             requestedForPath = absolutePath2.toFile();
             return requestedForPath.getCanonicalPath();
-        }
-        catch (IOException e)
+        } catch (IOException e)
         {
             e.printStackTrace();
         }
