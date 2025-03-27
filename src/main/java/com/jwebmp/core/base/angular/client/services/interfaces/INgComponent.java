@@ -13,8 +13,10 @@ import com.jwebmp.core.base.angular.client.annotations.references.NgImportRefere
 import com.jwebmp.core.base.angular.client.annotations.structures.NgField;
 import com.jwebmp.core.base.angular.client.annotations.structures.NgMethod;
 import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
+import com.jwebmp.core.base.angular.client.services.ComponentConfiguration;
 import com.jwebmp.core.base.interfaces.IComponentHierarchyBase;
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,6 +28,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 @NgImportReference(value = "Component", reference = "@angular/core")
 @NgImportReference(value = "CUSTOM_ELEMENTS_SCHEMA", reference = "@angular/core")
+//@NgImportReference(value = "Injectable", reference = "@angular/core")
 //@NgImportReference(value = "AfterViewInit", reference = "@angular/core")
 //@NgImportReference(value = "AfterViewChecked", reference = "@angular/core")
 //@NgImportReference(value = "AfterContentInit", reference = "@angular/core")
@@ -51,7 +54,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 //@NgConstructorParameter("private router: Router")
 
 
-public interface INgComponent<J extends INgComponent<J>> extends IComponent<J>
+public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBase<?, J>> extends IComponent<J>
 {
     String componentString = """
             @Component({
@@ -82,112 +85,6 @@ public interface INgComponent<J extends INgComponent<J>> extends IComponent<J>
             \tstandalone:%b
             })""";
 
-    @Override
-    default List<NgConstructorBody> getAllConstructorBodies()
-    {
-        List<NgConstructorBody> out = IComponent.super.getAllConstructorBodies();
-        if (this instanceof IComponentHierarchyBase<?, ?> comp)
-        {
-            out.addAll(comp.getConfigurations(NgConstructorBody.class, false));
-        }
-        return out;
-        //return IComponent.super.getAllConstructorBodies();
-    }
-
-    @Override
-    default List<NgConstructorParameter> getAllConstructorParameters()
-    {
-        List<NgConstructorParameter> out = IComponent.super.getAllConstructorParameters();
-        if (this instanceof IComponentHierarchyBase<?, ?> comp)
-        {
-            if (getClass().getCanonicalName().contains("TasksCreateModal"))
-            {
-                System.out.println("here");
-            }
-            out.addAll(comp.getConfigurations(NgConstructorParameter.class, false));
-        }
-        return out;
-        //return IComponent.super.getAllConstructorParameters();
-    }
-
-    @Override
-    default List<NgImportReference> getAllImportAnnotations()
-    {
-        List<NgImportReference> refs = IComponent.super.getAllImportAnnotations();
-        List<NgGlobalComponentImportReference> annos = IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgGlobalComponentImportReference.class);
-        if (this instanceof IComponentHierarchyBase<?, ?> comp)
-        {
-            var configs = comp.getConfigurations(NgImportReference.class, false);
-            refs.addAll(configs);
-        }
-        for (NgGlobalComponentImportReference anno : annos)
-        {
-            refs.add(AnnotationUtils.getNgImportReference(anno.value(), anno.reference()));
-        }
-        return refs;
-    }
-
-
-    @Override
-    default List<String> interfaces()
-    {
-        List<String> out = IComponent.super.interfaces();
-
-        List<NgAfterContentInit> fAfterContentInit = IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgAfterContentInit.class);
-        if (!(fAfterContentInit.isEmpty() && afterContentInit().isEmpty()))
-        {
-            out.add("AfterContentInit");
-        }
-        List<NgAfterContentChecked> ngComponent = IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgAfterContentChecked.class);
-        if (!(ngComponent.isEmpty() && afterContentChecked().isEmpty()))
-        {
-            out.add("AfterContentChecked");
-        }
-
-        List<NgAfterViewInit> fViewInit = IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgAfterViewInit.class);
-        if (!(fViewInit.isEmpty() && afterViewInit().isEmpty()))
-        {
-            out.add("AfterViewInit");
-        }
-
-        List<NgAfterViewChecked> fAfterViewVhecked = IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgAfterViewChecked.class);
-        if (!(fAfterViewVhecked.isEmpty() && afterViewChecked().isEmpty()))
-        {
-            out.add("AfterViewChecked");
-        }
-
-        List<NgOnInit> fInit = IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgOnInit.class);
-        if (!(fInit.isEmpty() && onInit().isEmpty()))
-        {
-            out.add("OnInit");
-        }
-        List<NgOnDestroy> fDestroy = IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgOnDestroy.class);
-        if (!(fDestroy.isEmpty() && onDestroy().isEmpty()))
-        {
-            out.add("OnDestroy");
-        }
-        return out;
-    }
-
-
-    @Override
-    default List<NgField> getAllFields()
-    {
-        List<NgField> list = IComponent.super.getAllFields();
-        if (this instanceof IComponentHierarchyBase<?, ?> comp)
-        {
-            list.addAll(comp.getConfigurations(NgField.class, false));
-        }
-        return list;
-    }
-
     default List<String> decorators()
     {
         List<String> list = IComponent.super.decorators();
@@ -197,7 +94,7 @@ public interface INgComponent<J extends INgComponent<J>> extends IComponent<J>
         }
         if (!getClass().isAnnotationPresent(NgComponent.class))
         {
-            System.out.println("This one doesn't have a ng component");
+            LogManager.getLogger("INgComponent").warn("This one doesn't have a ng component");
             return list;
         }
         NgComponent ngComponent = IGuiceContext.get(AnnotationHelper.class)
@@ -209,10 +106,8 @@ public interface INgComponent<J extends INgComponent<J>> extends IComponent<J>
             list.add("@Injectable ({" + "  providedIn:" + (ngComponent.providedIn()
                     .startsWith("!") ? "" : "'") + ngComponent.providedIn() + (ngComponent.providedIn()
                     .startsWith("!") ? "" : "'") + "})");
-            if (this instanceof IComponentHierarchyBase<?, ?> componentHierarchyBase)
-            {
-                componentHierarchyBase.addConfiguration(AnnotationUtils.getNgImportReference("Injectable", "@angular/core"));
-            }
+            me().addConfiguration(AnnotationUtils.getNgImportReference("Injectable", "@angular/core"));
+
         }
 
         StringBuilder selector = new StringBuilder();
@@ -233,24 +128,9 @@ public interface INgComponent<J extends INgComponent<J>> extends IComponent<J>
         selector.append(ngComponent.value());
 
         StringBuilder templateUrls = new StringBuilder();
-        String templateHtml = chb.toString(0);
-        if (Strings.isNullOrEmpty(templateHtml))
-        {
-            Logger.getLogger("INgComponent")
-                    .severe("Empty Template HTML Generated - " + getClass().getCanonicalName());
-        }
-
         templateUrls.append("./")
                 .append(getTsFilename(getClass()))
                 .append(".html");
-        File htmlFile = getFile(getClass(), ".html");
-        try
-        {
-            FileUtils.writeStringToFile(htmlFile, templateHtml, UTF_8);
-        } catch (Exception e)
-        {
-            e.printStackTrace();
-        }
 
         styleUrls.append("'./")
                 .append(getTsFilename(getClass()))
@@ -278,21 +158,23 @@ public interface INgComponent<J extends INgComponent<J>> extends IComponent<J>
             styles.deleteCharAt(styles.length() - 2);
         }
 
+/*
         StringBuilder cssString = chb.cast()
                 .asStyleBase()
                 .renderCss(1);
+*/
 
         //CSSComposer cssComposer = new CSSComposer();
         // cssComposer.addComponent(chb);
         //styles.append("\"" + cssComposer.toString() + "\"");
-        File cssFile = getFile(getClass(), ".scss");
+      /*  File cssFile = getFile(getClass(), ".scss");
         try
         {
             FileUtils.writeStringToFile(cssFile, cssString.toString(), UTF_8);
         } catch (IOException e)
         {
             e.printStackTrace();
-        }
+        }*/
 /*
 
         providers().forEach((key) -> {
@@ -339,7 +221,8 @@ public interface INgComponent<J extends INgComponent<J>> extends IComponent<J>
             {
                 hosts.append(s);
             }
-        } else
+        }
+        else
         {
             hosts.append("{}");
         }
@@ -352,7 +235,8 @@ public interface INgComponent<J extends INgComponent<J>> extends IComponent<J>
 
         if (standalone)
         {
-            List<NgImportModule> importModules = new ArrayList<>();// IGuiceContext.get(AnnotationHelper.class)
+            importsModules = renderImportModules();
+            /*List<NgImportModule> importModules = new ArrayList<>();// IGuiceContext.get(AnnotationHelper.class)
             //             .getAnnotationFromClass(getClass(), NgImportModule.class);
             if (this instanceof IComponentHierarchyBase<?, ?> comp)
             {
@@ -368,17 +252,17 @@ public interface INgComponent<J extends INgComponent<J>> extends IComponent<J>
                         .append(",\n");
             }
 
-            /*
+            *//*
             for (String customImportModule : moduleImports())
             {
                 importsModules.append(customImportModule)
                               .append(",\n");
-            }*/
+            }*//*
 
             if (importsModules.length() > 1)
             {
                 importsModules.deleteCharAt(importsModules.length() - 2);
-            }
+            }*/
         }
 
         String componentString;
@@ -389,7 +273,8 @@ public interface INgComponent<J extends INgComponent<J>> extends IComponent<J>
                     providers, //Directive Providers,
                     hosts //hosts entry
             );
-        } else
+        }
+        else
         {
 
             componentString = String.format(INgComponent.componentStandaloneString, selector, templateUrls, styles, styleUrls, "", //viewProviders
@@ -478,149 +363,122 @@ public interface INgComponent<J extends INgComponent<J>> extends IComponent<J>
     default List<NgMethod> renderAllMethods()
     {
         List<NgMethod> out = new ArrayList<>();
-        if (this instanceof IComponentHierarchyBase<?, ?> comp && getClass().isAnnotationPresent(NgComponent.class))
-        {
-            Set<NgAfterViewInit> ngAfterViewInits = comp.getConfigurations(NgAfterViewInit.class, false);
-            if (!ngAfterViewInits.isEmpty())
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.append("\tngAfterViewInit(){\n");
-                for (var s : ngAfterViewInits.stream()
-                        .sorted(Comparator.comparingInt(NgAfterViewInit::sortOrder))
-                        .map(NgAfterViewInit::value)
-                        .distinct()
-                        .toList())
-                {
-                    sb.append("\t\t")
-                            .append(s)
-                            .append("\n");
-                }
-                sb.append("\t}\n");
-                out.add(AnnotationUtils.getNgMethod(sb.toString()));
-            }
-            var ngAfterViewChecked = comp.getConfigurations(NgAfterViewChecked.class, false);
-            if (!ngAfterViewChecked.isEmpty())
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.append("\tngAfterViewChecked(){\n");
-                for (var s : ngAfterViewChecked.stream()
-                        .map(NgAfterViewChecked::value)
-                        .distinct()
-                        .toList())
-                {
-                    sb.append("\t\t")
-                            .append(s)
-                            .append("\n");
-                }
-                sb.append("\t}\n");
-                out.add(AnnotationUtils.getNgMethod(sb.toString()));
-            }
-            var ngAfterContentInit = comp.getConfigurations(NgAfterContentInit.class, false);
-            if (!ngAfterContentInit.isEmpty())
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.append("\tngAfterContentInit(){\n");
-                for (var s : comp.getConfigurations(NgAfterContentInit.class, false)
-                        .stream()
-                        .map(NgAfterContentInit::value)
-                        .distinct()
-                        .toList())
-                {
-                    sb.append("\t\t")
-                            .append(s)
-                            .append("\n");
-                }
-                sb.append("\t}\n");
-                out.add(AnnotationUtils.getNgMethod(sb.toString()));
-            }
-            var ngAfterContentChecked = comp.getConfigurations(NgAfterContentInit.class, false);
-            if (!ngAfterContentChecked.isEmpty())
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.append("\tngAfterContentChecked(){\n");
-                for (var s : comp.getConfigurations(NgAfterContentChecked.class, false)
-                        .stream()
-                        .map(NgAfterContentChecked::value)
-                        .distinct()
-                        .toList())
-                {
-                    sb.append("\t\t")
-                            .append(s)
-                            .append("\n");
-                }
-                sb.append("\t}\n");
-                out.add(AnnotationUtils.getNgMethod(sb.toString()));
-            }
-
-            var ngOnInit = comp.getConfigurations(NgOnInit.class, false);
-            if (!ngOnInit.isEmpty())
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.append("\tngOnInit(){\n");
-                for (var s : comp.getConfigurations(NgOnInit.class, false)
-                        .stream()
-                        .map(NgOnInit::value)
-                        .distinct()
-                        .toList())
-                {
-                    sb.append("\t\t")
-                            .append(s)
-                            .append("\n");
-                }
-                sb.append("\t}\n");
-                out.add(AnnotationUtils.getNgMethod(sb.toString()));
-            }
-
-            var ngOnDestroy = comp.getConfigurations(NgOnDestroy.class, false);
-            if (!ngOnDestroy.isEmpty())
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.append("\tngOnDestroy(){\n");
-                for (var s : comp.getConfigurations(NgOnDestroy.class, false)
-                        .stream()
-                        .map(NgOnDestroy::value)
-                        .distinct()
-                        .toList())
-                {
-                    sb.append("\t\t")
-                            .append(s)
-                            .append("\n");
-                }
-                sb.append("\t}\n");
-                out.add(AnnotationUtils.getNgMethod(sb.toString()));
-            }
-
-            for (var s : comp.getConfigurations(NgMethod.class, false)
-                    .stream()
-                    .map(NgMethod::value)
-                    .distinct()
-                    .toList())
-            {
-                var ss = s;
-                StringBuilder sb = new StringBuilder();
-                ss.lines()
-                        .forEach(a -> {
-                            sb.append("\t")
-                                    .append(a)
-                                    .append("\n");
-                        });
-                out.add(AnnotationUtils.getNgMethod(sb.toString()));
-            }
-            //   out.addAll(comp.getConfigurations(NgMethod.class, false));
-        }
         return out;
     }
 
     @Override
     default StringBuilder renderMethods()
     {
-        StringBuilder sb = new StringBuilder();
-        renderAllMethods().stream()
-                .distinct()
-                .map(NgMethod::value)
-                .distinct()
-                .forEach(sb::append);
-        return sb;
+        J me = (J) this;
+        if (getClass().getCanonicalName().contains("ComponentRenderingTest"))
+        {
+            System.out.println("....");
+        }
+        if (me.asBase().getProperties().containsKey("AngularConfiguration"))
+        {
+            StringBuilder sb = new StringBuilder();
+            ComponentConfiguration config = (ComponentConfiguration) me.asBase().getProperties().get("AngularConfiguration");
+            sb.append(config.renderOnInit());
+            sb.append(config.renderAfterViewInit());
+            sb.append(config.renderAfterContentInit());
+            sb.append(config.renderAfterViewChecked());
+            sb.append(config.renderAfterContentChecked());
+            sb.append(config.renderMethods());
+            sb.append(config.renderOnDestroy());
+            return sb;
+        }
+        return new StringBuilder();
     }
+
+    @Override
+    default List<String> componentMethods()
+    {
+        return new ArrayList<>();
+    }
+
+    @Override
+    default StringBuilder renderFields()
+    {
+        J me = (J) this;
+        if (getClass().getCanonicalName().contains("ComponentRenderingTest"))
+        {
+            System.out.println("....");
+        }
+        if (me.asBase().getProperties().containsKey("AngularConfiguration"))
+        {
+            ComponentConfiguration config = (ComponentConfiguration) me.asBase().getProperties().get("AngularConfiguration");
+            StringBuilder sb = new StringBuilder();
+            sb.append(config.renderInjects());
+            sb.append(config.renderModals());
+            sb.append(config.renderSignals());
+            sb.append(config.renderFields());
+            return sb;
+        }
+        return new StringBuilder();
+    }
+
+    @Override
+    default StringBuilder renderConstructorParameters()
+    {
+        J me = (J) this;
+        if (getClass().getCanonicalName().contains("ComponentRenderingTest"))
+        {
+            System.out.println("....");
+        }
+        if (me.asBase().getProperties().containsKey("AngularConfiguration"))
+        {
+            ComponentConfiguration config = (ComponentConfiguration) me.asBase().getProperties().get("AngularConfiguration");
+            return config.renderConstructorParameters();
+        }
+        return new StringBuilder();
+    }
+
+    @Override
+    default StringBuilder renderInterfaces()
+    {
+        J me = (J) this;
+        if (getClass().getCanonicalName().contains("ComponentRenderingTest"))
+        {
+            System.out.println("....");
+        }
+        if (me.asBase().getProperties().containsKey("AngularConfiguration"))
+        {
+            ComponentConfiguration config = (ComponentConfiguration) me.asBase().getProperties().get("AngularConfiguration");
+            return config.renderInterfaces();
+        }
+        return new StringBuilder();
+    }
+
+    @Override
+    default StringBuilder renderImports()
+    {
+        J me = (J) this;
+        if (getClass().getCanonicalName().contains("ComponentRenderingTest"))
+        {
+            System.out.println("....");
+        }
+        if (me.asBase().getProperties().containsKey("AngularConfiguration"))
+        {
+            ComponentConfiguration config = (ComponentConfiguration) me.asBase().getProperties().get("AngularConfiguration");
+            return config.renderImportStatements();
+        }
+        return new StringBuilder();
+    }
+
+    default StringBuilder renderImportModules()
+    {
+        J me = (J) this;
+        if (getClass().getCanonicalName().contains("ComponentRenderingTest"))
+        {
+            System.out.println("....");
+        }
+        if (me.asBase().getProperties().containsKey("AngularConfiguration"))
+        {
+            ComponentConfiguration config = (ComponentConfiguration) me.asBase().getProperties().get("AngularConfiguration");
+            return config.renderImportModules();
+        }
+        return new StringBuilder();
+    }
+
 
 }

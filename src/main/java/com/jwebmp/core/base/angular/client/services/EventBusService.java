@@ -23,12 +23,13 @@ import java.util.List;
 @NgImportReference(value = "Location", reference = "@angular/common")
 @NgBootEntryComponent()
 
-@NgField(value = "private readonly eventBusService = inject(EventBusService); // Injected EventBus service.", onSelf = false, onParent = true)
+@NgField(value = "private readonly eventBusService = inject(EventBusService);", onSelf = false, onParent = true)
+@NgImportReference(value = "inject", reference = "@angular/core", onSelf = false, onParent = true)
+
 //@NgConstructorParameter(value = "private eventBusService : EventBusService", onParent = true, onSelf = false)
 
 
 @NgImportReference(value = "Injectable", reference = "@angular/core")
-@NgImportReference(value = "inject", reference = "@angular/core", onSelf = false, onParent = true)
 @NgImportReference(value = "BehaviorSubject", reference = "rxjs")
 @NgImportReference(value = "take", reference = "rxjs")
 @NgImportReference(value = "filter", reference = "rxjs")

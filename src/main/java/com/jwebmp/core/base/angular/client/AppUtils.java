@@ -610,7 +610,7 @@ public class AppUtils
         {
             try
             {
-                File appBaseDirectory = new File(baseUserDirectory.getCanonicalPath() + "/" + appName + "/src/assets/");
+                File appBaseDirectory = new File(baseUserDirectory.getCanonicalPath() + "/" + appName + "/public/");
                 if (!appBaseDirectory.exists())
                 {
                     FileUtils.forceMkdirParent(appBaseDirectory);
@@ -629,7 +629,7 @@ public class AppUtils
     public static String getFileReferenceSrcAppFile(Class<? extends INgApp<?>> app, Class<?> clazz, String... extension)
     {
         String classLocationDirectory = getClassLocationDirectory(clazz);
-        classLocationDirectory = classLocationDirectory.replaceAll("\\\\", "/");
+        classLocationDirectory = classLocationDirectory.replaceAll("\\\\", "/").replace('.', '/');
 
         String baseLocation = null;
         try
@@ -645,6 +645,7 @@ public class AppUtils
         baseLocation += "/src/app/";
 
         classLocationDirectory = baseLocation + classLocationDirectory + getTsFilename(clazz) + (extension.length > 0 ? extension[0] : "");
+        //classLocationDirectory = classLocationDirectory.replace('.', '/');
         return classLocationDirectory;
     }
 
@@ -754,7 +755,7 @@ public class AppUtils
             appAssets.put(app, new ArrayList<>());
         }
         appAssets.get(app)
-                 .add("src/assets/" + fileName);
+                .add("public/" + fileName);
 
         if (includeDist)
         {
@@ -785,19 +786,6 @@ public class AppUtils
                 throw new UnsupportedOperationException(e);
             }
         }
-        if (assetFile.exists())
-        {
-            assetFile.delete();
-        }
-        try
-        {
-            assetFile.createNewFile();
-        }
-        catch (IOException e)
-        {
-            throw new UnsupportedOperationException(e);
-        }
-
         try (FileOutputStream fos = new FileOutputStream(assetFile))
         {
             byte[] fileBytes = IOUtils.toByteArray(inputStream);
@@ -815,7 +803,7 @@ public class AppUtils
             }
             catch (IOException e)
             {
-                throw new RuntimeException(e);
+                log.fine("Failed to close input stream for file: " + assetFilePath);
             }
         }
     }
@@ -856,7 +844,7 @@ public class AppUtils
     public static Set<Class<?>> getAllValidClasses(ClassInfo a)
     {
         ScanResult scan = IGuiceContext.instance()
-                                       .getScanResult();
+                .getScanResult();
         Set<Class<?>> classes = new HashSet<>();
         if (a.isInterface() || a.isAbstract())
         {

@@ -42,6 +42,10 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
         out.addAll(putRelativeLinkInMap(getClass(), reference));
         NgComponentReference reference2 = getNgComponentReference(getAnnotation().dataType());
         out.addAll(putRelativeLinkInMap(getClass(), reference2));
+
+        var reference3 = AnnotationUtils.getNgImportReference("inject", "@angular/core");
+        out.add(reference3);
+
         return out;
     }
 
@@ -49,8 +53,8 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
     default List<String> constructorParameters()
     {
         List<String> out = IComponent.super.constructorParameters();
-        out.add("private service : " + getAnnotation().value()
-                .getSimpleName());
+        //  out.add("private service : " + getAnnotation().value()
+        //          .getSimpleName());
         return out;
     }
 
@@ -69,6 +73,8 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
     {
         List<String> out = IComponent.super.fields();
         out.add("private _onUpdate = new BehaviorSubject<boolean>(false);");
+        out.add("private readonly service = inject(" + getAnnotation().value().getSimpleName() + ");");
+
         if (!getAnnotation().dataArray())
         {
             out.add(0, "public " + getAnnotation().variableName() + " : " + getAnnotation().dataType()
@@ -88,28 +94,26 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
     default List<String> constructorBody()
     {
         List<String> out = IComponent.super.constructorBody();
-        String s = "this.subscription = this.service.data\n" +
-                "" + (buffer() ? ".pipe(bufferTime(" + bufferTime() + "))" : "") +
-                "" + (takeLast() ? ".pipe(takeLast(" + takeLastCount() + "))" : "") +
-                "" +
-                ".subscribe(message => {\n" +
-                "" +
-                "if (message) {\n" +
-                "if (typeof message === 'string')\n" +
-                "                        this." + getAnnotation().variableName() + " = JSON.parse(message as any);\n" +
-                "                    else this." + getAnnotation().variableName() + " = message as any;" +
-                "                       this._onUpdate.next(true);" +
-                "" +
-                //        "                    this." + getAnnotation().variableName() + " = JSON.parse(message as any);\n" +
-                "                }" +
-                "            " +
-/*		     "" +
+        //        "                    this." + getAnnotation().variableName() + " = JSON.parse(message as any);\n" +
+        /*		     "" +
 		     "" +
 		     "            if (message && observer.out) {\n";
 		s += "                this." + getAnnotation().variableName() + " = message.out[0];\n";
 		s += "                this._onUpdate.next(true);\n" +
 		     "            }\n" +*/
-                "        });\n";
+        String s = """
+                \tthis.subscription = this.service.data
+                        %s%s.subscribe(message => {
+                            if (message) {
+                                if (typeof message === 'string')
+                                        this.%s = JSON.parse(message as any);
+                                    else this.%s = message as any;
+                                this._onUpdate.next(true);
+                            }
+                        });
+                """.formatted(buffer() ? ".pipe(bufferTime(" + bufferTime() + "))" : "",
+                takeLast() ? ".pipe(takeLast(" + takeLastCount() + "))" : "",
+                getAnnotation().variableName(), getAnnotation().variableName());
         out.add(s);
         //out.add("this.checkData();");
         return out;

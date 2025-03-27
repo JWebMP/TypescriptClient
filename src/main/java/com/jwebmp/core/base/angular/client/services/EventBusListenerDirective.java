@@ -16,7 +16,7 @@ import java.util.List;
 
 @NgImportReference(value = "Injectable", reference = "@angular/core")
 @NgImportReference(value = "Input", reference = "@angular/core")
-@NgImportReference(value = "inject", reference = "@angular/core")
+@NgImportReference(value = "inject", reference = "@angular/core", onParent = true)
 
 @NgField("""
           @Input() appEventBusListener!: string | string[]; // The EventBus address(es) to listen on.

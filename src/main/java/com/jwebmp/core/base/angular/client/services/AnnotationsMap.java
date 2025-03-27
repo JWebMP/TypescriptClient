@@ -86,7 +86,10 @@ public class AnnotationsMap
             NgImportProvider.class, NgImportProviders.class,
             NgImportModule.class, NgImportModules.class,
             NgImportReference.class, NgImportReferences.class,
-            NgDataTypeReference.class, NgDataTypeReferences.class
+            NgDataTypeReference.class, NgDataTypeReferences.class,
+
+            NgSignalComputed.class, NgSignalComputeds.class,
+            NgSignalEffect.class, NgSignalEffects.class
     );
     private static final Map<Class<? extends Annotation>, Class<? extends Annotation>> ngClassStructures
             = Map.of(
@@ -96,7 +99,10 @@ public class AnnotationsMap
             NgGlobalField.class, NgGlobalFields.class,
             NgInterface.class, NgInterfaces.class,
             NgMethod.class, NgMethods.class,
-            NgValidator.class, NgValidators.class
+            NgValidator.class, NgValidators.class,
+            NgInject.class, NgInjects.class,
+            NgModal.class, NgModals.class,
+            NgSignal.class, NgSignals.class
     );
 
     public static final Map<Class<? extends Annotation>, Class<? extends Annotation>> ngAllMultiples = new HashMap<>();
@@ -164,7 +170,14 @@ public class AnnotationsMap
             NgGlobalComponentConstructorParameter.class,
             NgGlobalComponentImportReference.class,
 
-            NgValidator.class
+            NgValidator.class,
+
+            NgInject.class,
+            NgModal.class,
+
+            NgSignal.class,
+            NgSignalComputed.class,
+            NgSignalEffect.class
     );
 
 
@@ -172,7 +185,7 @@ public class AnnotationsMap
     {
         Set<Class<?>> allAffectedClasses = new HashSet<>();
         ScanResult scanResult = IGuiceContext.instance()
-                                             .getScanResult();
+                .getScanResult();
         for (Class<? extends Annotation> annotation : annotations)
         {
             for (ClassInfo allClass : scanResult

@@ -20,7 +20,7 @@ public @interface NgInput
 {
     String value();
 
-    Class<? extends INgDataType> type() default any.class;
+    Class<? extends INgDataType<?>> type() default any.class;
 
     String attributeReference() default "";
 
@@ -29,6 +29,10 @@ public @interface NgInput
     boolean additionalData() default false;
 
     boolean mandatory() default false;
+
+    boolean onParent() default false;
+
+    boolean onSelf() default true;
 
     int sortOrder() default 100;
 }

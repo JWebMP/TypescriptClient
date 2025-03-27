@@ -1,8 +1,4 @@
-package com.jwebmp.core.base.angular.client.annotations.components;
-
-
-import com.jwebmp.core.base.angular.client.services.any;
-import com.jwebmp.core.base.angular.client.services.interfaces.INgDataType;
+package com.jwebmp.core.base.angular.client.annotations.structures;
 
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Repeatable;
@@ -14,19 +10,15 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Target({TYPE})
 @Retention(RUNTIME)
-@Repeatable(NgOutputs.class)
+@Repeatable(NgModals.class)
 @Inherited
-public @interface NgOutput
+public @interface NgModal
 {
     String value();
 
-    String parentMethodName() default "";
-
-    Class<? extends INgDataType> type() default any.class;
+    String referenceName();
 
     boolean onParent() default false;
 
     boolean onSelf() default true;
-
-    int sortOrder() default 100;
 }

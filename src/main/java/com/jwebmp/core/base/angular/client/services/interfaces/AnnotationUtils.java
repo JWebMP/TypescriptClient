@@ -1,6 +1,7 @@
 package com.jwebmp.core.base.angular.client.services.interfaces;
 
 import com.google.common.base.Strings;
+import com.guicedee.client.IGuiceContext;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgApp;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgComponent;
 import com.jwebmp.core.base.angular.client.annotations.components.NgComponentTagAttribute;
@@ -10,11 +11,10 @@ import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructo
 import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorParameter;
 import com.jwebmp.core.base.angular.client.annotations.functions.*;
 import com.jwebmp.core.base.angular.client.annotations.references.*;
-import com.jwebmp.core.base.angular.client.annotations.structures.NgField;
-import com.jwebmp.core.base.angular.client.annotations.structures.NgGlobalField;
-import com.jwebmp.core.base.angular.client.annotations.structures.NgInterface;
-import com.jwebmp.core.base.angular.client.annotations.structures.NgMethod;
+import com.jwebmp.core.base.angular.client.annotations.structures.*;
 import com.jwebmp.core.base.angular.client.annotations.typescript.NgSourceDirectoryReference;
+import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
+import com.jwebmp.core.base.angular.client.services.AnnotationsMap;
 import com.jwebmp.core.base.angular.client.services.any;
 import com.jwebmp.core.databind.IConfiguration;
 import lombok.EqualsAndHashCode;
@@ -24,12 +24,11 @@ import lombok.ToString;
 import org.apache.logging.log4j.LogManager;
 
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static com.jwebmp.core.base.angular.client.services.AnnotationsMap.ngAllMultiples;
 
 public interface AnnotationUtils
 {
@@ -48,6 +47,13 @@ public interface AnnotationUtils
 
         // Mark this class as visited
         visited.add(clazz);
+
+        //find both single and repeatables
+        var annotations = IGuiceContext.get(AnnotationHelper.class).getAnnotationFromClass(clazz, annotation);
+        if (!annotations.isEmpty())
+        {
+            return true;
+        }
 
         // Check if the current class has the annotation
         if (clazz.isAnnotationPresent(annotation))
@@ -96,6 +102,11 @@ public interface AnnotationUtils
         {
             annotations.addAll(List.of(clazz.getAnnotationsByType(annotation)));
         }
+        var annos = IGuiceContext.get(AnnotationHelper.class).getAnnotationFromClass(clazz, annotation);
+        for (T anno : annos)
+        {
+            annotations.add(anno);
+        }
 
         // Recursively process interfaces
         for (Class<?> iface : clazz.getInterfaces())
@@ -133,7 +144,8 @@ public interface AnnotationUtils
                     return ref.name();
                 }
             }
-        } catch (Exception e)
+        }
+        catch (Exception e)
         {
             LogManager.getLogger("AnnotationUtils")
                     .error("Unable to render a ts file name for " + clazz.getCanonicalName(), e);
@@ -237,6 +249,31 @@ public interface AnnotationUtils
         return ref;
     }
 
+
+    static MyNgInput getNgInput(String value, boolean mandatory)
+    {
+        var ref = new MyNgInput(value).setMandatory(mandatory);
+        return ref;
+    }
+
+    static MyNgInput getNgInput(String value, boolean mandatory, Class<? extends INgDataType<?>> type)
+    {
+        var ref = new MyNgInput(value).setMandatory(mandatory).setType(type);
+        return ref;
+    }
+
+    static MyNgInput getNgInput(String value, boolean mandatory, Class<? extends INgDataType<?>> type, String attributeReference, boolean renderAttributeReference)
+    {
+        var ref = new MyNgInput(value).setMandatory(mandatory).setType(type).setAttributeReference(attributeReference).setRenderAttributeReference(renderAttributeReference);
+        return ref;
+    }
+
+    static MyNgInput getNgInput(String value, boolean mandatory, Class<? extends INgDataType<?>> type, String attributeReference, boolean renderAttributeReference, boolean additionalData)
+    {
+        var ref = new MyNgInput(value).setMandatory(mandatory).setType(type).setAttributeReference(attributeReference).setRenderAttributeReference(renderAttributeReference).setAdditionalData(additionalData);
+        return ref;
+    }
+
     static MyNgOutput getNgOutput(String value, String parentMethodName)
     {
         var ref = new MyNgOutput(value, parentMethodName);
@@ -252,6 +289,24 @@ public interface AnnotationUtils
     static MyNgMethod getNgComponentMethod(String importName)
     {
         var ref = new MyNgMethod(importName);
+        return ref;
+    }
+
+    static MyNgInject getNgInject(String referenceName, String type)
+    {
+        var ref = new MyNgInject().setReferenceName(referenceName).setValue(type);
+        return ref;
+    }
+
+    static MyNgModal getNgModal(String value, String referenceName)
+    {
+        var ref = new MyNgModal().setValue(value).setReferenceName(referenceName);
+        return ref;
+    }
+
+    static MyNgSignal getNgSignal(String referenceName, String value)
+    {
+        var ref = new MyNgSignal().setReferenceName(referenceName).setValue(value);
         return ref;
     }
 
@@ -312,12 +367,28 @@ public interface AnnotationUtils
         {
             return NgComponent.class;
         }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgComponent that = (MyNgComponent) o;
+            return isStandalone() == that.isStandalone() && Objects.equals(getValue(), that.getValue()) && Objects.equals(getProvidedIn(), that.getProvidedIn());
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(getValue(), getProvidedIn(), isStandalone());
+        }
     }
 
     @Getter
     @Setter
     @ToString
-    @EqualsAndHashCode
     class MyNgDataTypeReference implements NgDataTypeReference, IConfiguration
     {
         private Class<? extends INgDataType<?>> dataTypeClass;
@@ -347,12 +418,28 @@ public interface AnnotationUtils
         {
             return NgDataTypeReference.class;
         }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgDataTypeReference that = (MyNgDataTypeReference) o;
+            return isPrimary() == that.isPrimary() && Objects.equals(getDataTypeClass(), that.getDataTypeClass()) && Objects.equals(getSignalName(), that.getSignalName());
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(getDataTypeClass(), isPrimary(), getSignalName());
+        }
     }
 
     @Getter
     @Setter
     @ToString
-    @EqualsAndHashCode
     class MyNgComponentTagAttribute implements NgComponentTagAttribute, IConfiguration
     {
         private String key;
@@ -381,12 +468,28 @@ public interface AnnotationUtils
         {
             return NgComponentTagAttribute.class;
         }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgComponentTagAttribute that = (MyNgComponentTagAttribute) o;
+            return Objects.equals(getKey(), that.getKey()) && Objects.equals(getValue(), that.getValue());
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(getKey(), getValue());
+        }
     }
 
     @Getter
     @Setter
     @ToString
-    @EqualsAndHashCode
     class MyNgConstructorParameter implements NgConstructorParameter, IConfiguration
     {
         private final String value;
@@ -429,12 +532,27 @@ public interface AnnotationUtils
             return NgConstructorParameter.class;
         }
 
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgConstructorParameter that = (MyNgConstructorParameter) o;
+            return isOnParent() == that.isOnParent() && isOnSelf() == that.isOnSelf() && isPublic() == that.isPublic() && Objects.equals(getValue(), that.getValue());
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(getValue(), isOnParent(), isOnSelf(), isPublic());
+        }
     }
 
     @Getter
     @Setter
     @ToString
-    @EqualsAndHashCode
     class MyNgField implements NgField, IConfiguration
     {
         private String value;
@@ -470,12 +588,27 @@ public interface AnnotationUtils
             return onSelf;
         }
 
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgField myNgField = (MyNgField) o;
+            return isOnParent() == myNgField.isOnParent() && isOnSelf() == myNgField.isOnSelf() && Objects.equals(getValue(), myNgField.getValue());
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(getValue(), isOnParent(), isOnSelf());
+        }
     }
 
     @Getter
     @Setter
     @ToString
-    @EqualsAndHashCode
     class MyNgConstructorBody implements NgConstructorBody, IConfiguration
     {
         private final String value;
@@ -510,12 +643,28 @@ public interface AnnotationUtils
         {
             return onSelf;
         }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgConstructorBody that = (MyNgConstructorBody) o;
+            return isOnParent() == that.isOnParent() && isOnSelf() == that.isOnSelf() && Objects.equals(getValue(), that.getValue());
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(getValue(), isOnParent(), isOnSelf());
+        }
     }
 
     @Getter
     @Setter
     @ToString
-    @EqualsAndHashCode
     class MyNgMethod implements NgMethod, IConfiguration
     {
         private final String value;
@@ -550,12 +699,28 @@ public interface AnnotationUtils
         {
             return onSelf;
         }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgMethod that = (MyNgMethod) o;
+            return isOnParent() == that.isOnParent() && isOnSelf() == that.isOnSelf() && Objects.equals(getValue(), that.getValue());
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(getValue(), isOnParent(), isOnSelf());
+        }
     }
 
     @Getter
     @Setter
     @ToString
-    @EqualsAndHashCode
     class MyNgGlobalField implements NgGlobalField, IConfiguration
     {
         private final String value;
@@ -590,12 +755,28 @@ public interface AnnotationUtils
         {
             return onSelf;
         }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgGlobalField that = (MyNgGlobalField) o;
+            return isOnParent() == that.isOnParent() && isOnSelf() == that.isOnSelf() && Objects.equals(getValue(), that.getValue());
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(getValue(), isOnParent(), isOnSelf());
+        }
     }
 
     @Getter
     @Setter
     @ToString
-    @EqualsAndHashCode
     class MyNgImportReference implements NgImportReference, IConfiguration
     {
         private final String reference;
@@ -646,12 +827,28 @@ public interface AnnotationUtils
         {
             return NgImportReference.class;
         }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgImportReference that = (MyNgImportReference) o;
+            return isOnParent() == that.isOnParent() && isOnSelf() == that.isOnSelf() && isDirect() == that.isDirect() && Objects.equals(getReference(), that.getReference()) && Objects.equals(getImportName(), that.getImportName());
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(getReference(), getImportName(), isOnParent(), isOnSelf(), isDirect());
+        }
     }
 
     @Getter
     @Setter
     @ToString
-    @EqualsAndHashCode
     class MyNgImportProvider implements NgImportProvider, IConfiguration
     {
         private final String importName;
@@ -686,12 +883,28 @@ public interface AnnotationUtils
         {
             return NgImportProvider.class;
         }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgImportProvider that = (MyNgImportProvider) o;
+            return isOnParent() == that.isOnParent() && isOnSelf() == that.isOnSelf() && Objects.equals(getImportName(), that.getImportName());
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(getImportName(), isOnParent(), isOnSelf());
+        }
     }
 
     @Getter
     @Setter
     @ToString
-    @EqualsAndHashCode
     class MyNgImportModule implements NgImportModule, IConfiguration
     {
         private final String importName;
@@ -726,10 +939,26 @@ public interface AnnotationUtils
         {
             return NgImportModule.class;
         }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgImportModule that = (MyNgImportModule) o;
+            return isOnParent() == that.isOnParent() && isOnSelf() == that.isOnSelf() && Objects.equals(getImportName(), that.getImportName());
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(getImportName(), isOnParent(), isOnSelf());
+        }
     }
 
     @ToString
-    @EqualsAndHashCode
     class MyNgAfterViewInit implements NgAfterViewInit, IConfiguration
     {
         private final String value;
@@ -757,10 +986,25 @@ public interface AnnotationUtils
             return NgAfterViewInit.class;
         }
 
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgAfterViewInit that = (MyNgAfterViewInit) o;
+            return Objects.equals(value, that.value);
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hashCode(value);
+        }
     }
 
     @ToString
-    @EqualsAndHashCode
     class MyNgAfterViewChecked implements NgAfterViewChecked, IConfiguration
     {
         private final String value;
@@ -787,10 +1031,26 @@ public interface AnnotationUtils
         {
             return NgAfterViewChecked.class;
         }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgAfterViewChecked that = (MyNgAfterViewChecked) o;
+            return Objects.equals(value, that.value);
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hashCode(value);
+        }
     }
 
     @ToString
-    @EqualsAndHashCode
     class MyNgAfterContentChecked implements NgAfterContentChecked, IConfiguration
     {
         private final String value;
@@ -817,12 +1077,28 @@ public interface AnnotationUtils
         {
             return NgAfterContentChecked.class;
         }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgAfterContentChecked that = (MyNgAfterContentChecked) o;
+            return Objects.equals(value, that.value);
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hashCode(value);
+        }
     }
 
     @Getter
     @Setter
     @ToString
-    @EqualsAndHashCode
     class MyNgInterface implements NgInterface, IConfiguration
     {
         private final String value;
@@ -857,12 +1133,28 @@ public interface AnnotationUtils
         {
             return NgInterface.class;
         }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgInterface that = (MyNgInterface) o;
+            return isOnParent() == that.isOnParent() && isOnSelf() == that.isOnSelf() && Objects.equals(getValue(), that.getValue());
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(getValue(), isOnParent(), isOnSelf());
+        }
     }
 
     @Getter
     @Setter
     @ToString
-    @EqualsAndHashCode
     class MyNgInput implements NgInput, IConfiguration
     {
         private String value;
@@ -871,6 +1163,9 @@ public interface AnnotationUtils
         private boolean renderAttributeReference = true;
         private boolean additionalData = true;
         private boolean mandatory = false;
+
+        private boolean onSelf = true;
+        private boolean onParent = false;
 
         public MyNgInput(String value)
         {
@@ -920,21 +1215,51 @@ public interface AnnotationUtils
         }
 
         @Override
+        public boolean onSelf()
+        {
+            return false;
+        }
+
+        @Override
+        public boolean onParent()
+        {
+            return false;
+        }
+
+        @Override
         public Class<? extends Annotation> annotationType()
         {
             return NgInput.class;
+        }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgInput myNgInput = (MyNgInput) o;
+            return isRenderAttributeReference() == myNgInput.isRenderAttributeReference() && isAdditionalData() == myNgInput.isAdditionalData() && isMandatory() == myNgInput.isMandatory() && isOnSelf() == myNgInput.isOnSelf() && isOnParent() == myNgInput.isOnParent() && Objects.equals(getValue(), myNgInput.getValue()) && Objects.equals(getType(), myNgInput.getType()) && Objects.equals(getAttributeReference(), myNgInput.getAttributeReference());
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(getValue(), getType(), getAttributeReference(), isRenderAttributeReference(), isAdditionalData(), isMandatory(), isOnSelf(), isOnParent());
         }
     }
 
     @Getter
     @Setter
     @ToString
-    @EqualsAndHashCode
     class MyNgOutput implements NgOutput, IConfiguration
     {
         private String value;
         private String parentMethodName;
         private Class<? extends INgDataType<?>> type = any.class;
+        private boolean onSelf = true;
+        private boolean onParent = false;
 
         public MyNgOutput(String value, String parentMethodName)
         {
@@ -971,10 +1296,38 @@ public interface AnnotationUtils
         {
             return NgOutput.class;
         }
+
+        @Override
+        public boolean onSelf()
+        {
+            return false;
+        }
+
+        @Override
+        public boolean onParent()
+        {
+            return false;
+        }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgOutput that = (MyNgOutput) o;
+            return isOnSelf() == that.isOnSelf() && isOnParent() == that.isOnParent() && Objects.equals(getValue(), that.getValue()) && Objects.equals(getParentMethodName(), that.getParentMethodName()) && Objects.equals(getType(), that.getType());
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(getValue(), getParentMethodName(), getType(), isOnSelf(), isOnParent());
+        }
     }
 
     @ToString
-    @EqualsAndHashCode
     class MyNgOnInit implements NgOnInit, IConfiguration
     {
         private final String value;
@@ -1001,10 +1354,26 @@ public interface AnnotationUtils
         {
             return NgOnInit.class;
         }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgOnInit that = (MyNgOnInit) o;
+            return Objects.equals(value, that.value);
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hashCode(value);
+        }
     }
 
     @ToString
-    @EqualsAndHashCode
     class MyNgOnDestroy implements NgOnDestroy, IConfiguration
     {
         private final String value;
@@ -1031,10 +1400,26 @@ public interface AnnotationUtils
         {
             return NgOnDestroy.class;
         }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgOnDestroy that = (MyNgOnDestroy) o;
+            return Objects.equals(value, that.value);
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hashCode(value);
+        }
     }
 
     @ToString
-    @EqualsAndHashCode
     class MyNgAfterContentInit implements NgAfterContentInit, IConfiguration
     {
         private final String value;
@@ -1061,12 +1446,28 @@ public interface AnnotationUtils
         {
             return NgAfterContentInit.class;
         }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgAfterContentInit that = (MyNgAfterContentInit) o;
+            return Objects.equals(value, that.value);
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hashCode(value);
+        }
     }
 
     @Getter
     @Setter
     @ToString
-    @EqualsAndHashCode
     class MyNgComponentReference implements NgComponentReference, IConfiguration
     {
         private final Class<? extends IComponent<?>> aClass;
@@ -1107,6 +1508,200 @@ public interface AnnotationUtils
         public boolean onSelf()
         {
             return onSelf;
+        }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgComponentReference that = (MyNgComponentReference) o;
+            return isProvides() == that.isProvides() && isOnParent() == that.isOnParent() && isOnSelf() == that.isOnSelf() && Objects.equals(aClass, that.aClass);
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(aClass, isProvides(), isOnParent(), isOnSelf());
+        }
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    class MyNgInject implements NgInject, IConfiguration
+    {
+        private String value;
+        private String referenceName;
+
+        private boolean onParent = false;
+        private boolean onSelf = true;
+
+        @Override
+        public String value()
+        {
+            return value;
+        }
+
+        @Override
+        public boolean onParent()
+        {
+            return onParent;
+        }
+
+        @Override
+        public boolean onSelf()
+        {
+            return onSelf;
+        }
+
+        @Override
+        public Class<? extends Annotation> annotationType()
+        {
+            return NgInject.class;
+        }
+
+        @Override
+        public String referenceName()
+        {
+            return referenceName;
+        }
+
+        @Override
+        public boolean equals(Object o)
+        {
+
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgInject that = (MyNgInject) o;
+            return isOnParent() == that.isOnParent() && isOnSelf() == that.isOnSelf() && Objects.equals(getValue(), that.getValue()) && Objects.equals(getReferenceName(), that.getReferenceName());
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(getValue(), getReferenceName(), isOnParent(), isOnSelf());
+        }
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    class MyNgModal implements NgModal, IConfiguration
+    {
+        private String value;
+        private String referenceName;
+        private boolean onParent = false;
+        private boolean onSelf = true;
+
+        @Override
+        public String value()
+        {
+            return value;
+        }
+
+        @Override
+        public boolean onParent()
+        {
+            return onParent;
+        }
+
+        @Override
+        public boolean onSelf()
+        {
+            return onSelf;
+        }
+
+        @Override
+        public Class<? extends Annotation> annotationType()
+        {
+            return NgModal.class;
+        }
+
+        @Override
+        public String referenceName()
+        {
+            return referenceName;
+        }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgModal myNgModal = (MyNgModal) o;
+            return isOnParent() == myNgModal.isOnParent() && isOnSelf() == myNgModal.isOnSelf() && Objects.equals(getValue(), myNgModal.getValue()) && Objects.equals(getReferenceName(), myNgModal.getReferenceName());
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(getValue(), getReferenceName(), isOnParent(), isOnSelf());
+        }
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    class MyNgSignal implements NgSignal, IConfiguration
+    {
+        private String value;
+
+        private String referenceName;
+        private boolean onParent = false;
+        private boolean onSelf = true;
+
+        @Override
+        public String value()
+        {
+            return value;
+        }
+
+        @Override
+        public boolean onParent()
+        {
+            return onParent;
+        }
+
+        @Override
+        public boolean onSelf()
+        {
+            return onSelf;
+        }
+
+        @Override
+        public Class<? extends Annotation> annotationType()
+        {
+            return NgModal.class;
+        }
+
+        @Override
+        public String referenceName()
+        {
+            return referenceName;
+        }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgSignal that = (MyNgSignal) o;
+            return isOnParent() == that.isOnParent() && isOnSelf() == that.isOnSelf() && Objects.equals(getValue(), that.getValue()) && Objects.equals(getReferenceName(), that.getReferenceName());
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(getValue(), getReferenceName(), isOnParent(), isOnSelf());
         }
     }
 }

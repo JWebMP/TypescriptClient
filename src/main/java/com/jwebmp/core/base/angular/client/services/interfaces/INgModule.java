@@ -1,6 +1,7 @@
 package com.jwebmp.core.base.angular.client.services.interfaces;
 
 import com.jwebmp.core.base.angular.client.annotations.angular.NgModule;
+import com.jwebmp.core.base.angular.client.annotations.angularconfig.NgPolyfill;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
 import com.jwebmp.core.base.angular.client.annotations.typescript.TsDependency;
 import com.jwebmp.core.base.angular.client.annotations.typescript.TsDevDependency;
@@ -9,34 +10,48 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@TsDependency(value = "@angular/common", version = "^18.0.1")
-@TsDependency(value = "@angular/compiler", version = "^18.0.1")
-@TsDependency(value = "@angular/core", version = "^18.0.1")
-@TsDependency(value = "@angular/animations", version = "^18.0.1")
-@TsDependency(value = "@angular/forms", version = "^18.0.1")
+@TsDependency(value = "@angular/common", version = "^19.2.0")
+@TsDependency(value = "@angular/compiler", version = "^19.2.0")
+@TsDependency(value = "@angular/core", version = "^19.2.0")
+@TsDependency(value = "@angular/animations", version = "^19.2.0")
+@TsDependency(value = "@angular/forms", version = "^19.2.0")
 @TsDependency(value = "rxjs", version = "~7.8.0")
 @TsDependency(value = "tslib", version = "^2.3.0")
-@TsDependency(value = "zone.js", version = "~0.14.3")
+@TsDependency(value = "zone.js", version = "~0.15.0")
 
-@TsDevDependency(value = "@angular-devkit/build-angular", version = "^18.0.1")
-@TsDevDependency(value = "@angular/cli", version = "^18.0.1")
-@TsDevDependency(value = "@angular/compiler-cli", version = "^18.0.1")
-@TsDevDependency(value = "@types/node", version = "^18.18.0")
-@TsDevDependency(value = "@types/express", version = "~4.17.17")
-@TsDevDependency(value = "@types/jasmine", version = "~5.1.0")
-@TsDevDependency(value = "typescript", version = "~5.4.5")
-@TsDevDependency(value = "jasmine-core", version = "~5.1.0")
+
+@TsDependency(value = "@angular/platform-browser", version = "^19.2.0")
+@TsDependency(value = "@angular/platform-browser-dynamic", version = "^19.2.0")
+
+
+@TsDevDependency(value = "@angular-devkit/build-angular", version = "^19.2.5")
+@TsDevDependency(value = "@angular/cli", version = "^19.2.5")
+@TsDevDependency(value = "@angular/compiler-cli", version = "^19.2.0")
+//@TsDevDependency(value = "@types/node", version = "^18.18.0")
+//@TsDevDependency(value = "@types/express", version = "~4.17.17")
+//@TsDevDependency(value = "@types/jasmine", version = "~5.6.0")
+@TsDevDependency(value = "typescript", version = "~5.7.2")
+@TsDevDependency(value = "jasmine-core", version = "~5.6.0")
+
 @TsDevDependency(value = "karma", version = "~6.4.0")
 @TsDevDependency(value = "karma-chrome-launcher", version = "~3.2.0")
 @TsDevDependency(value = "karma-coverage", version = "~2.2.0")
 @TsDevDependency(value = "karma-jasmine", version = "~5.1.0")
 @TsDevDependency(value = "karma-jasmine-html-reporter", version = "~2.1.0")
 
+
+@TsDependency(value = "@vertx/eventbus-bridge-client.js", version = "^1.0.0-3-SNAPSHOT")
+@TsDevDependency(value = "@types/vertx__eventbus-bridge-client.js", version = "^1.0.3")
+
+
 @NgImportReference(value = "NgModule", reference = "@angular/core")
+
+@NgPolyfill("zone.js")
 
 @NgModule
 public interface INgModule<J extends INgModule<J>>
-        extends IComponent<J> {
+        extends IComponent<J>
+{
     String moduleString = "@NgModule({\n" +
             "\timports:[%s],\n" +
             "\tdeclarations:[%s],\n" +
@@ -47,12 +62,14 @@ public interface INgModule<J extends INgModule<J>>
             "})";
 
 
-    default List<String> declarations() {
+    default List<String> declarations()
+    {
         return new ArrayList<>();
     }
 
     @Override
-    default List<String> decorators() {
+    default List<String> decorators()
+    {
         List<String> list = IComponent.super.decorators();
         StringBuilder declarations = new StringBuilder();
         StringBuilder providers = new StringBuilder();
@@ -68,7 +85,8 @@ public interface INgModule<J extends INgModule<J>>
                             .append("\n");
                 });
 
-        if (declarations.length() > 1) {
+        if (declarations.length() > 1)
+        {
             declarations.deleteCharAt(declarations.length() - 2);
         }
 
@@ -79,7 +97,8 @@ public interface INgModule<J extends INgModule<J>>
                             .append("\n");
                 });
 
-        if (providers.length() > 1) {
+        if (providers.length() > 1)
+        {
             providers.deleteCharAt(providers.length() - 2);
         }
 
@@ -90,7 +109,8 @@ public interface INgModule<J extends INgModule<J>>
                             .append(",")
                             .append("\n");
                 });
-        if (exports.length() > 1) {
+        if (exports.length() > 1)
+        {
             exports.deleteCharAt(exports.length() - 2);
         }
 
@@ -102,7 +122,8 @@ public interface INgModule<J extends INgModule<J>>
                             .append(",")
                             .append("\n");
                 });
-        if (schemas.length() > 1) {
+        if (schemas.length() > 1)
+        {
             schemas.deleteCharAt(schemas.length() - 2);
         }
 
@@ -118,7 +139,8 @@ public interface INgModule<J extends INgModule<J>>
                             .append("\n");
                 });
 
-        if (importNames.length() > 1) {
+        if (importNames.length() > 1)
+        {
             importNames.deleteCharAt(importNames.length() - 2);
         }
 
@@ -131,7 +153,8 @@ public interface INgModule<J extends INgModule<J>>
                             .append("\n");
                 });
 
-        if (entryComponents.length() > 1) {
+        if (entryComponents.length() > 1)
+        {
             entryComponents.deleteCharAt(entryComponents.length() - 2);
         }
 
@@ -140,32 +163,39 @@ public interface INgModule<J extends INgModule<J>>
         return list;
     }
 
-    default List<String> providers() {
+    default List<String> providers()
+    {
         return new ArrayList<>();
     }
 
-    default List<String> bootstrap() {
+    default List<String> bootstrap()
+    {
         return new ArrayList<>();
     }
 
-    default List<String> assets() {
+    default List<String> assets()
+    {
         return new ArrayList<>();
     }
 
-    default List<String> exports() {
+    default List<String> exports()
+    {
         return new ArrayList<>();
     }
 
     @SuppressWarnings("unchecked")
-    default J setApp(INgApp<?> app) {
+    default J setApp(INgApp<?> app)
+    {
         return (J) this;
     }
 
-    default List<String> schemas() {
+    default List<String> schemas()
+    {
         return new ArrayList<>();
     }
 
-    default List<String> entryComponents() {
+    default List<String> entryComponents()
+    {
         return new ArrayList<>();
     }
 }

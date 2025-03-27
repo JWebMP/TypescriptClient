@@ -3,6 +3,7 @@ package com.jwebmp.core.base.angular.client.services.interfaces;
 import com.google.common.base.Strings;
 import com.guicedee.client.IGuiceContext;
 import com.guicedee.guicedinjection.interfaces.IDefaultService;
+import com.jwebmp.core.base.angular.client.AppUtils;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgDataType;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgServiceProvider;
 import com.jwebmp.core.base.angular.client.annotations.components.NgInput;
@@ -19,6 +20,8 @@ import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
 import com.jwebmp.core.base.angular.client.services.any;
 import com.jwebmp.core.base.angular.client.services.spi.*;
 import com.jwebmp.core.base.interfaces.IComponentHierarchyBase;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,6 +31,8 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
 
 public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>, ImportsStatementsComponent<J>
 {
+    ThreadLocal<INgApp<?>> app = ThreadLocal.withInitial(() -> null);
+
     ThreadLocal<File> currentAppFile = ThreadLocal.withInitial(() -> null);
 
     static ThreadLocal<File> getCurrentAppFile()
@@ -35,11 +40,17 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         return currentAppFile;
     }
 
+
+    default J me()
+    {
+        return (J) this;
+    }
+
     // Component Reference Location Assists
     static String getClassDirectory(Class<?> clazz)
     {
         return clazz.getPackageName()
-                .replaceAll("\\.", "/");
+                .replace('\\', '/');
     }
 
     default String renderBeforeClass()
@@ -117,7 +128,7 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         }
 
         //check references for constructors needed
-        for (NgComponentReference annotation : IGuiceContext.get(AnnotationHelper.class)
+       /* for (NgComponentReference annotation : IGuiceContext.get(AnnotationHelper.class)
                 .getAnnotationFromClass(getClass(), NgComponentReference.class))
         {
             if (annotation.provides() && !INgServiceProvider.class.isAssignableFrom(annotation.value()))
@@ -146,7 +157,7 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
                     out.add(ngConstructorParameter);
                 }
             }
-        }
+        }*/
 
         for (String constructorParameter : constructorParameters())
         {
@@ -251,17 +262,19 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         List<NgImportReference> refs = getAllImportAnnotations();
         refs = clean(refs);
         refs.forEach((ref) -> {
+            String refString = ref.reference();
+            //refString = ImportsStatementsComponent.removeFirstParentDirectoryAsString(refString.replace('\\', '/'));
             if (ref.direct())
             {
                 sb.append(String.format(importDirectString, ref.value()));
             } else if (!ref.value()
                     .startsWith("!"))
             {
-                sb.append(String.format(importString, ref.value(), ref.reference()));
+                sb.append(String.format(importString, ref.value(), refString));
             } else
             {
                 sb.append(String.format(importPlainString, ref.value()
-                        .substring(1), ref.reference()));
+                        .substring(1), refString));
             }
         });
         return sb;
@@ -270,10 +283,6 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
     default StringBuilder renderClassTs()
     {
         StringBuilder out = new StringBuilder();
-        if (getClass().getCanonicalName().contains("TasksCreateModal"))
-        {
-            System.out.println("here");
-        }
         out.append(renderImports());
         @SuppressWarnings("unchecked")
         J component = (J) this;
@@ -315,13 +324,13 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
                 .getAnnotationFromClass(getClass(), NgDataType.class);
         if (!cType.isEmpty())
         {
-            out.append(cType.get(0)
+            out.append(cType.getFirst()
                             .value()
                             .description())
                     .append(" ");
-            String functionName = cType.get(0)
+            String functionName = cType.getFirst()
                     .name();
-            if (!Strings.isNullOrEmpty(cType.get(0)
+            if (!Strings.isNullOrEmpty(cType.getFirst()
                     .returnType()))
             {
                 if (!Strings.isNullOrEmpty(functionName))
@@ -332,7 +341,7 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
                     out.append(" " + getTsFilename(getClass()) + " ");
                 }
                 out.append("() :  ")
-                        .append(cType.get(0)
+                        .append(cType.getFirst()
                                 .returnType());
             }
         } else
@@ -547,22 +556,6 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
     default List<String> constructorParameters()
     {
         List<String> parms = new ArrayList<>();
-        /*List<NgComponentReference> compRefs = IGuiceContext.get(AnnotationHelper.class)
-                                                           .getAnnotationFromClass(getClass(), NgComponentReference.class);
-        for (NgComponentReference compRef : compRefs)
-        {
-            if (compRef.provides() && compRef.onSelf())
-            {
-                if (INgServiceProvider.class.isAssignableFrom(compRef.value()))
-                {
-                    parms.add("public " + getTsVarName(compRef.value()) + " : " + getTsFilename(compRef.value()) + "");
-                }
-                else
-                {
-                    parms.add("public " + getTsVarName(compRef.value()) + " : " + getTsFilename(compRef.value()) + "");
-                }
-            }
-        }*/
         return parms;
     }
 
