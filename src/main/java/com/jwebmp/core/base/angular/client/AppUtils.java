@@ -32,6 +32,7 @@ public class AppUtils
 
     private static final Map<String, File> baseAppTSConfigAppFiles = new HashMap<>();
     private static final Map<String, File> baseAppTSConfigFiles = new HashMap<>();
+    private static final Map<String, File> baseGitIgnoreFile = new HashMap<>();
     private static final Map<String, File> basePolyfillsJsonFiles = new HashMap<>();
     private static final Map<String, File> baseAngularJsonFiles = new HashMap<>();
     private static final Map<String, File> baseIndexHtmlFiles = new HashMap<>();
@@ -413,6 +414,38 @@ public class AppUtils
             }
         }
         return baseAppTSConfigFiles.get(appName);
+    }
+
+    public static File getGitIgnorePath(Class<? extends INgApp<?>> app, boolean createNew)
+    {
+        String appName = getAppName(app);
+        if (!hasTSConfigFile(app))
+        {
+            try
+            {
+                File appBaseDirectory = new File(getAppPath(app) + "/.gitignore");
+                if (!appBaseDirectory.exists())
+                {
+                    FileUtils.forceMkdirParent(appBaseDirectory);
+                }
+                if (createNew && appBaseDirectory.exists())
+                {
+                    appBaseDirectory.delete();
+                    appBaseDirectory.createNewFile();
+                }
+                else if (!appBaseDirectory.exists())
+                {
+                    appBaseDirectory.createNewFile();
+                }
+
+                baseGitIgnoreFile.put(appName, appBaseDirectory);
+            }
+            catch (IOException e)
+            {
+                throw new RuntimeException(e);
+            }
+        }
+        return baseGitIgnoreFile.get(appName);
     }
 
     public static File getAppPolyfillsPath(Class<? extends INgApp<?>> app, boolean createNew)
