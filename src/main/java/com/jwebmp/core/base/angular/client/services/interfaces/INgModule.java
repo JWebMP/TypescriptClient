@@ -20,6 +20,10 @@ import java.util.List;
 @TsDependency(value = "zone.js", version = "~0.15.0")
 
 
+@TsDependency(value = "zone.js", version = "~0.15.0")
+@TsDependency(value = "uuid", version = "^11.1.0")
+
+
 @TsDependency(value = "@angular/platform-browser", version = "^19.2.0")
 @TsDependency(value = "@angular/platform-browser-dynamic", version = "^19.2.0")
 

@@ -23,6 +23,7 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
 @NgImportReference(value = "inject", reference = "@angular/core")
 @NgImportReference(value = "BehaviorSubject, Observable, Subject, Subscription", reference = "rxjs")
 @NgImportReference(value = "bufferTime", reference = "rxjs")
+@NgImportReference(value = "v4 as uuidv4", reference = "uuid")
 
 @NgDataTypeReference(value = DynamicData.class, primary = false)
 @NgComponentReference(EventBusService.class)
@@ -30,17 +31,11 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
 @NgOnDestroy("""
         \t
                 console.log(`Cleaning up listener for: ${this.listenerName} with handler ID: ${this.handlerId}`);
-        
-                // Unregister the listener with the given handler ID
                 this.eventBusService.unregisterListener(this.listenerName, this.handlerId);
-        
-                // Unsubscribe from the Observable to prevent memory leaks
                 if (this.subscription) {
                     this.subscription.unsubscribe();
                 }
-        
         """)
-
 @NgMethod("""
         get data(): Observable<DynamicData | undefined> {
                 return this.dataListener;
@@ -48,13 +43,9 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
 
 @NgMethod("""
         \t
-            /**
-             * Generates a unique handler ID for this service's listener
-             */
             private generateHandlerId(): string {
-                return `${this.listenerName}-${new Date().getTime()}-${Math.random().toString(36).substring(2, 15)}`;
-            }
-        
+                    return `${this.listenerName}-${uuidv4()}`;
+                }
         """)
 @NgConstructorBody("""
         \t
@@ -80,11 +71,9 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
 
 @NgMethod("""
         \t
-            /**
-             * Handles incoming data from the EventBus
-             */
             private handleIncomingData(data: DynamicData | undefined): void {
                 if (data) {
+                    this.dataSubject.next(data as any);
                  //   console.log(`Received data for ${this.listenerName}:`, data);
                     // Perform processing or state updates with the incoming data
                 } else {
@@ -131,9 +120,6 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
 
         methods.add("""
                 \t
-                    /**
-                      * Fetches data by sending a request on the EventBus
-                      */
                      fetchData() {
                          this.eventBusService.send(
                              'data',
@@ -149,10 +135,6 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
 
         methods.add("""
                 \t
-                    /**
-                      * Sends data to the EventBus
-                      * @param datas Any data to send
-                      */
                      public sendData(datas: any) {
                          this.eventBusService.send(
                              'dataSend',
@@ -198,7 +180,7 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
                 .getAnnotationFromClass(getClass(), NgDataTypeReference.class);
         if (dtReferences.isEmpty())
         {
-            fields.add("private dataSubject : BehaviorSubject<any> = new BehaviorSubject<any>(undefined);");
+            fields.add("readonly dataSubject : BehaviorSubject<any> = new BehaviorSubject<any>(undefined);");
         }
         else
         {
@@ -209,20 +191,20 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
 
             if (firstReference == null || firstReference.value() == null || firstReference.value().getSimpleName() == null)
             {
-                fields.add("private dataSubject : BehaviorSubject<any> = new BehaviorSubject<any>(undefined);");
+                fields.add("readonly dataSubject : BehaviorSubject<any> = new BehaviorSubject<any>(undefined);");
             }
             else
             {
                 var name = firstReference.value().getSimpleName();
 
-                fields.add("private dataSubject : BehaviorSubject<" + name + " | undefined> = new BehaviorSubject<" + name + " | undefined>(undefined);");
+                fields.add("readonly dataSubject : BehaviorSubject<" + name + " | undefined> = new BehaviorSubject<" + name + " | undefined>(undefined);");
             }
         }
 
-        fields.add(" private listenerName = '" + dService.value() + "';");
-        fields.add(" private clazzName = '" + getClass().getCanonicalName() + "';");
-        fields.add(" public additionalData : any = {};");
-        fields.add(" private subscription? : Subscription;");
+        fields.add("readonly listenerName = '" + dService.value() + "';");
+        fields.add("readonly clazzName = '" + getClass().getCanonicalName() + "';");
+        fields.add("public additionalData : any = {};");
+        fields.add("readonly subscription? : Subscription;");
         return fields;
     }
 

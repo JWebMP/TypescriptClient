@@ -71,23 +71,15 @@ public interface ImportsStatementsComponent<J extends ImportsStatementsComponent
     {
         List<NgImportReference> workable = new ArrayList<>();
         Set<String> uniqueEntries = new HashSet<>();
-
-        // Process all NgImportReferences, splitting values and ensuring uniqueness
         for (NgImportReference ref : refs)
         {
-            // Split by commas in `value` and process each individual value
             String[] values = ref.value().split(",");
             for (String value : values)
             {
                 String trimmedValue = value.trim();
-
-                // Create a new NgImportReference for the split value
                 NgImportReference importReference = AnnotationUtils.getNgImportReference(trimmedValue, ref.reference().trim());
-
-                // Apply constraints (e.g., onSelf) and ensure filename exclusion
                 if (!importReference.value().equals(getTsFilename(getClass())))
                 {
-                    // Ensure uniqueness by combining both `value` and `reference`
                     String uniqueKey = trimmedValue;// + "|" + importReference.reference();
                     if (uniqueEntries.add(uniqueKey))
                     {
@@ -121,8 +113,6 @@ public interface ImportsStatementsComponent<J extends ImportsStatementsComponent
         //}
         return out;
     }
-
-    ThreadLocal<Map<Class<?>, File>> componentFileReference = ThreadLocal.withInitial(HashMap::new);
 
     default List<NgImportReference> putRelativeLinkInMap(Class<?> clazz, NgComponentReference moduleRef)
     {

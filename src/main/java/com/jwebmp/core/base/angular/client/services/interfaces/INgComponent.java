@@ -412,6 +412,18 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
     }
 
     @Override
+    default StringBuilder renderConstructorBody()
+    {
+        J me = (J) this;
+        if (me.asBase().getProperties().containsKey("AngularConfiguration"))
+        {
+            ComponentConfiguration config = (ComponentConfiguration) me.asBase().getProperties().get("AngularConfiguration");
+            return config.renderConstructorBodies();
+        }
+        return new StringBuilder();
+    }
+
+    @Override
     default StringBuilder renderConstructorParameters()
     {
         J me = (J) this;
