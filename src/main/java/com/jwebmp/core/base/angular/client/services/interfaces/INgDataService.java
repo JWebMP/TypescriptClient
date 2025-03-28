@@ -6,7 +6,6 @@ import com.jwebmp.core.base.ajax.AjaxResponse;
 import com.jwebmp.core.base.angular.client.DynamicData;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgDataService;
 import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorBody;
-import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorParameter;
 import com.jwebmp.core.base.angular.client.annotations.functions.NgOnDestroy;
 import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgDataTypeReference;
@@ -15,7 +14,6 @@ import com.jwebmp.core.base.angular.client.annotations.structures.NgField;
 import com.jwebmp.core.base.angular.client.annotations.structures.NgMethod;
 import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
 import com.jwebmp.core.base.angular.client.services.EventBusService;
-import com.jwebmp.core.base.angular.client.services.any;
 
 import java.util.*;
 
@@ -201,7 +199,8 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
         if (dtReferences.isEmpty())
         {
             fields.add("private dataSubject : BehaviorSubject<any> = new BehaviorSubject<any>(undefined);");
-        } else
+        }
+        else
         {
             var firstReference = dtReferences.stream()
                     .filter(a -> a.primary())
@@ -211,7 +210,8 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
             if (firstReference == null || firstReference.value() == null || firstReference.value().getSimpleName() == null)
             {
                 fields.add("private dataSubject : BehaviorSubject<any> = new BehaviorSubject<any>(undefined);");
-            } else
+            }
+            else
             {
                 var name = firstReference.value().getSimpleName();
 

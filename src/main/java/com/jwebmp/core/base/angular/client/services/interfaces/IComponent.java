@@ -3,13 +3,9 @@ package com.jwebmp.core.base.angular.client.services.interfaces;
 import com.google.common.base.Strings;
 import com.guicedee.client.IGuiceContext;
 import com.guicedee.guicedinjection.interfaces.IDefaultService;
-import com.jwebmp.core.base.angular.client.AppUtils;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgDataType;
-import com.jwebmp.core.base.angular.client.annotations.angular.NgServiceProvider;
-import com.jwebmp.core.base.angular.client.annotations.components.NgInput;
 import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorBody;
 import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorParameter;
-import com.jwebmp.core.base.angular.client.annotations.functions.*;
 import com.jwebmp.core.base.angular.client.annotations.globals.NgGlobalConstructorParameter;
 import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
@@ -17,14 +13,9 @@ import com.jwebmp.core.base.angular.client.annotations.structures.NgField;
 import com.jwebmp.core.base.angular.client.annotations.structures.NgInterface;
 import com.jwebmp.core.base.angular.client.annotations.structures.NgMethod;
 import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
-import com.jwebmp.core.base.angular.client.services.any;
 import com.jwebmp.core.base.angular.client.services.spi.*;
-import com.jwebmp.core.base.interfaces.IComponentHierarchyBase;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.*;
@@ -267,11 +258,13 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
             if (ref.direct())
             {
                 sb.append(String.format(importDirectString, ref.value()));
-            } else if (!ref.value()
+            }
+            else if (!ref.value()
                     .startsWith("!"))
             {
                 sb.append(String.format(importString, ref.value(), refString));
-            } else
+            }
+            else
             {
                 sb.append(String.format(importPlainString, ref.value()
                         .substring(1), refString));
@@ -336,7 +329,8 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
                 if (!Strings.isNullOrEmpty(functionName))
                 {
                     out.append(" " + functionName + " ");
-                } else
+                }
+                else
                 {
                     out.append(" " + getTsFilename(getClass()) + " ");
                 }
@@ -344,7 +338,8 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
                         .append(cType.getFirst()
                                 .returnType());
             }
-        } else
+        }
+        else
         {
             out.append("class ");
         }

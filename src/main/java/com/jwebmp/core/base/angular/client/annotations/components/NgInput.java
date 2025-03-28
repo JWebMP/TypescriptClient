@@ -1,7 +1,7 @@
 package com.jwebmp.core.base.angular.client.annotations.components;
 
 
-import com.jwebmp.core.base.angular.client.services.any;
+import com.jwebmp.core.base.angular.client.services.tstypes.any;
 import com.jwebmp.core.base.angular.client.services.interfaces.INgDataType;
 
 import java.lang.annotation.Inherited;

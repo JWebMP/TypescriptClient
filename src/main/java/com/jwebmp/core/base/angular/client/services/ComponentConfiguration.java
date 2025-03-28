@@ -1,5 +1,6 @@
 package com.jwebmp.core.base.angular.client.services;
 
+import com.jwebmp.core.base.angular.client.AppUtils;
 import com.jwebmp.core.base.angular.client.annotations.components.NgInput;
 import com.jwebmp.core.base.angular.client.annotations.components.NgOutput;
 import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorBody;
@@ -9,6 +10,7 @@ import com.jwebmp.core.base.angular.client.annotations.references.NgImportModule
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportProvider;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
 import com.jwebmp.core.base.angular.client.annotations.structures.*;
+import com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils;
 import com.jwebmp.core.base.angular.client.services.interfaces.INgComponent;
 import com.jwebmp.core.base.html.interfaces.GlobalChildren;
 import com.jwebmp.core.base.interfaces.IComponentHierarchyBase;
@@ -374,7 +376,7 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
                 sb.append(".required");
             }
 
-            sb.append("<").append(input.type()).append(">();\n");
+            sb.append("<").append(AnnotationUtils.getTsFilename(input.type())).append(">();\n");
 
         }
         return sb;
@@ -389,7 +391,9 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         StringBuilder sb = new StringBuilder();
         for (NgOutput output : outputs)
         {
-            sb.append("\t").append(output.value().trim()).append(" = output<").append(output.type()).append(">();\n");
+            sb.append("\t").append(output.value().trim()).append(" = output<")
+                    .append(AnnotationUtils.getTsFilename(output.type()))
+                    .append(">();\n");
         }
         return sb;
     }

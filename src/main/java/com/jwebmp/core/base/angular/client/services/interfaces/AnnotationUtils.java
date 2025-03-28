@@ -14,10 +14,8 @@ import com.jwebmp.core.base.angular.client.annotations.references.*;
 import com.jwebmp.core.base.angular.client.annotations.structures.*;
 import com.jwebmp.core.base.angular.client.annotations.typescript.NgSourceDirectoryReference;
 import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
-import com.jwebmp.core.base.angular.client.services.AnnotationsMap;
-import com.jwebmp.core.base.angular.client.services.any;
+import com.jwebmp.core.base.angular.client.services.tstypes.any;
 import com.jwebmp.core.databind.IConfiguration;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -25,10 +23,6 @@ import org.apache.logging.log4j.LogManager;
 
 import java.lang.annotation.Annotation;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import static com.jwebmp.core.base.angular.client.services.AnnotationsMap.ngAllMultiples;
 
 public interface AnnotationUtils
 {

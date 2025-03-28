@@ -370,10 +370,6 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
     default StringBuilder renderMethods()
     {
         J me = (J) this;
-        if (getClass().getCanonicalName().contains("ComponentRenderingTest"))
-        {
-            System.out.println("....");
-        }
         if (me.asBase().getProperties().containsKey("AngularConfiguration"))
         {
             StringBuilder sb = new StringBuilder();
@@ -400,10 +396,6 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
     default StringBuilder renderFields()
     {
         J me = (J) this;
-        if (getClass().getCanonicalName().contains("ComponentRenderingTest"))
-        {
-            System.out.println("....");
-        }
         if (me.asBase().getProperties().containsKey("AngularConfiguration"))
         {
             ComponentConfiguration config = (ComponentConfiguration) me.asBase().getProperties().get("AngularConfiguration");
@@ -411,6 +403,8 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
             sb.append(config.renderInjects());
             sb.append(config.renderModals());
             sb.append(config.renderSignals());
+            sb.append(config.renderInputs());
+            sb.append(config.renderOutputs());
             sb.append(config.renderFields());
             return sb;
         }
@@ -421,10 +415,6 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
     default StringBuilder renderConstructorParameters()
     {
         J me = (J) this;
-        if (getClass().getCanonicalName().contains("ComponentRenderingTest"))
-        {
-            System.out.println("....");
-        }
         if (me.asBase().getProperties().containsKey("AngularConfiguration"))
         {
             ComponentConfiguration config = (ComponentConfiguration) me.asBase().getProperties().get("AngularConfiguration");
@@ -437,10 +427,6 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
     default StringBuilder renderInterfaces()
     {
         J me = (J) this;
-        if (getClass().getCanonicalName().contains("ComponentRenderingTest"))
-        {
-            System.out.println("....");
-        }
         if (me.asBase().getProperties().containsKey("AngularConfiguration"))
         {
             ComponentConfiguration config = (ComponentConfiguration) me.asBase().getProperties().get("AngularConfiguration");
@@ -453,10 +439,6 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
     default StringBuilder renderImports()
     {
         J me = (J) this;
-        if (getClass().getCanonicalName().contains("ComponentRenderingTest"))
-        {
-            System.out.println("....");
-        }
         if (me.asBase().getProperties().containsKey("AngularConfiguration"))
         {
             ComponentConfiguration config = (ComponentConfiguration) me.asBase().getProperties().get("AngularConfiguration");
@@ -468,10 +450,6 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
     default StringBuilder renderImportModules()
     {
         J me = (J) this;
-        if (getClass().getCanonicalName().contains("ComponentRenderingTest"))
-        {
-            System.out.println("....");
-        }
         if (me.asBase().getProperties().containsKey("AngularConfiguration"))
         {
             ComponentConfiguration config = (ComponentConfiguration) me.asBase().getProperties().get("AngularConfiguration");

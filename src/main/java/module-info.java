@@ -56,4 +56,6 @@ module com.jwebmp.core.base.angular.client {
     opens com.jwebmp.core.base.angular.client to com.google.guice, com.fasterxml.jackson.databind;
     opens com.jwebmp.core.base.angular.client.implementations to com.google.guice, com.fasterxml.jackson.databind;
     opens com.jwebmp.core.base.angular.client.services to com.google.guice, com.fasterxml.jackson.databind;
+    exports com.jwebmp.core.base.angular.client.services.tstypes;
+    opens com.jwebmp.core.base.angular.client.services.tstypes to com.fasterxml.jackson.databind, com.google.guice;
 }
