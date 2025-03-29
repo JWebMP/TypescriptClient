@@ -15,7 +15,9 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface NgSignal
 {
     String value();
-    
+
+    String type() default "";
+
     String referenceName();
 
     boolean onParent() default false;

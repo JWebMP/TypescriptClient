@@ -71,6 +71,7 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
             }
         }
 
+
         for (NgComponentReference annotation : IGuiceContext.get(AnnotationHelper.class)
                 .getAnnotationFromClass(getClass(), NgComponentReference.class))
         {
@@ -117,38 +118,6 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
             NgConstructorParameter param = getNgConstructorParameter(global.value());
             out.add(param);
         }
-
-        //check references for constructors needed
-       /* for (NgComponentReference annotation : IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgComponentReference.class))
-        {
-            if (annotation.provides() && !INgServiceProvider.class.isAssignableFrom(annotation.value()))
-            {
-                Class<?> referencedClass = annotation.value();
-                NgConstructorParameter serviceProviderParameter = getNgConstructorParameter("public " + getTsVarName(referencedClass) + " : " + getTsFilename(referencedClass));
-                out.add(serviceProviderParameter);
-            }
-            if (INgServiceProvider.class.isAssignableFrom(annotation.value()))
-            {
-                Class<?> referencedClass = annotation.value();
-                if (referencedClass.isAnnotationPresent(NgServiceProvider.class))
-                {
-                    NgServiceProvider provider = referencedClass.getAnnotation(NgServiceProvider.class);
-                    NgConstructorParameter serviceProviderParameter = getNgConstructorParameter("public " + provider.referenceName() + " : " + getTsFilename(referencedClass));
-                    out.add(serviceProviderParameter);
-                }
-            }
-            //get component referenced constructor parameters that say on parem
-            Class<?> referencedClass = annotation.value();
-            for (NgConstructorParameter ngConstructorParameter : IGuiceContext.get(AnnotationHelper.class)
-                    .getAnnotationFromClass(referencedClass, NgConstructorParameter.class))
-            {
-                if (ngConstructorParameter.onParent())
-                {
-                    out.add(ngConstructorParameter);
-                }
-            }
-        }*/
 
         for (String constructorParameter : constructorParameters())
         {
@@ -448,6 +417,31 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
                     .append("\n");
         }
 
+        //check for any fields on the component references
+        var refs = AnnotationUtils.getAnnotation(getClass(), NgComponentReference.class);
+        if (refs != null)
+        {
+            for (NgComponentReference ref : refs)
+            {
+                Class<?> refClass = ref.value();
+                if (INgProvider.class.isAssignableFrom(refClass))
+                {
+                    var fields = AnnotationUtils.getAnnotation(refClass, NgField.class);
+                    for (NgField field : fields)
+                    {
+                        if (field.onParent())
+                        {
+
+                        }
+                    }
+
+                    //check for fields with onParent
+
+                }
+            }
+
+        }
+
         //ng output event emitter
         return out;
     }
@@ -569,10 +563,6 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         List<String> list = new ArrayList<>();
         list.add(renderOnInitMethod());
         list.add(renderOnDestroyMethod());
-     /*   list.add(renderAfterViewInit());
-        list.add(renderAfterViewChecked());
-        list.add(renderAfterContentInit());
-        list.add(renderAfterContentChecked());*/
         return list;
     }
 
@@ -599,31 +589,6 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
     }
 
     default List<String> onDestroy()
-    {
-        return new ArrayList<>();
-    }
-
-    default List<String> afterViewInit()
-    {
-        return new ArrayList<>();
-    }
-
-    default List<String> afterViewChecked()
-    {
-        return new ArrayList<>();
-    }
-
-    default List<String> afterContentChecked()
-    {
-        return new ArrayList<>();
-    }
-
-
-    //***********************************************************
-    // The default stuff
-    //***********************************************************
-
-    default List<String> afterContentInit()
     {
         return new ArrayList<>();
     }

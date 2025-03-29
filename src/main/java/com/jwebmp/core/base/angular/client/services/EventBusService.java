@@ -8,6 +8,7 @@ import com.jwebmp.core.base.angular.client.annotations.functions.NgOnDestroy;
 import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
 import com.jwebmp.core.base.angular.client.annotations.structures.NgField;
+import com.jwebmp.core.base.angular.client.annotations.structures.NgInject;
 import com.jwebmp.core.base.angular.client.annotations.structures.NgMethod;
 import com.jwebmp.core.base.angular.client.services.interfaces.INgProvider;
 
@@ -23,8 +24,8 @@ import java.util.List;
 @NgImportReference(value = "Location", reference = "@angular/common")
 @NgBootEntryComponent()
 
-@NgField(value = "private readonly eventBusService = inject(EventBusService);", onSelf = false, onParent = true)
-@NgImportReference(value = "inject", reference = "@angular/core", onSelf = false, onParent = true)
+//@NgField(value = "private readonly eventBusService = inject(EventBusService);", onSelf = false, onParent = true)
+//@NgImportReference(value = "inject", reference = "@angular/core", onSelf = false, onParent = true)
 
 //@NgConstructorParameter(value = "private eventBusService : EventBusService", onParent = true, onSelf = false)
 
@@ -699,6 +700,7 @@ import java.util.List;
         """)
 
 @NgProvider(singleton = true)
+@NgInject(value = "EventBusService", referenceName = "eventBusService", onParent = true, onSelf = false)
 public class EventBusService<J extends EventBusService<J>> implements INgProvider<J>
 {
 

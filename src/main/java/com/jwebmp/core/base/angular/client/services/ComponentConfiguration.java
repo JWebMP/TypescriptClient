@@ -1,5 +1,6 @@
 package com.jwebmp.core.base.angular.client.services;
 
+import com.google.common.base.Strings;
 import com.jwebmp.core.base.angular.client.AppUtils;
 import com.jwebmp.core.base.angular.client.annotations.components.NgInput;
 import com.jwebmp.core.base.angular.client.annotations.components.NgOutput;
@@ -209,11 +210,12 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         StringBuilder sb = new StringBuilder();
         for (var inject : signals)
         {
-            sb.append("\tconst ")
-                    .append(inject.referenceName())
-                    .append(" = signal(")
+            sb.append("\treadonly ")
+                    .append(inject.referenceName()).append(" = signal")
+                    .append(!Strings.isNullOrEmpty(inject.type()) ? "<" + inject.type() + ">" : "")
+                    .append("(")
                     .append(inject.value())
-                    .append(");");
+                    .append(");\n");
         }
         return sb;
     }
@@ -348,10 +350,10 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
             var lines = constructorBody.value().split("\n");
             for (String line : lines)
             {
-                String value = line.trim();
+                String value = line;
                 if (!value.startsWith("\t"))
                 {
-                    value = "\t" + value;
+                    value = "\t\t" + value;
                 }
                 sb.append(value).append("\n");
             }

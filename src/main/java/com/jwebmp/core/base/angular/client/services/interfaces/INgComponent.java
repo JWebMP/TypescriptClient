@@ -471,4 +471,29 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
     }
 
 
+    default List<String> afterViewInit()
+    {
+        return new ArrayList<>();
+    }
+
+    default List<String> afterViewChecked()
+    {
+        return new ArrayList<>();
+    }
+
+    default List<String> afterContentChecked()
+    {
+        return new ArrayList<>();
+    }
+
+    //***********************************************************
+    // The default stuff
+    //***********************************************************
+
+    default List<String> afterContentInit()
+    {
+        return new ArrayList<>();
+    }
+
+
 }

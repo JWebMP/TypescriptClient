@@ -11,7 +11,11 @@ import static java.lang.annotation.RetentionPolicy.*;
 @Inherited
 public @interface NgAfterViewInit
 {
-	String value();
-	
-	int sortOrder() default 100;
+    String value();
+
+    int sortOrder() default 100;
+
+    boolean onParent() default false;
+
+    boolean onSelf() default true;
 }

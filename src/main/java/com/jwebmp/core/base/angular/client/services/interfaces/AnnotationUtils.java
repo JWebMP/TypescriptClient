@@ -298,9 +298,9 @@ public interface AnnotationUtils
         return ref;
     }
 
-    static MyNgSignal getNgSignal(String referenceName, String value)
+    static MyNgSignal getNgSignal(String referenceName, String value, String type)
     {
-        var ref = new MyNgSignal().setReferenceName(referenceName).setValue(value);
+        var ref = new MyNgSignal().setReferenceName(referenceName).setValue(value).setType(type);
         return ref;
     }
 
@@ -956,6 +956,8 @@ public interface AnnotationUtils
     class MyNgAfterViewInit implements NgAfterViewInit, IConfiguration
     {
         private final String value;
+        private boolean onParent = false;
+        private boolean onSelf = true;
 
         public MyNgAfterViewInit(String value)
         {
@@ -975,6 +977,18 @@ public interface AnnotationUtils
         }
 
         @Override
+        public boolean onParent()
+        {
+            return onParent;
+        }
+
+        @Override
+        public boolean onSelf()
+        {
+            return onSelf;
+        }
+
+        @Override
         public Class<? extends Annotation> annotationType()
         {
             return NgAfterViewInit.class;
@@ -988,13 +1002,13 @@ public interface AnnotationUtils
                 return false;
             }
             MyNgAfterViewInit that = (MyNgAfterViewInit) o;
-            return Objects.equals(value, that.value);
+            return onParent == that.onParent && onSelf == that.onSelf && Objects.equals(value, that.value);
         }
 
         @Override
         public int hashCode()
         {
-            return Objects.hashCode(value);
+            return Objects.hash(value, onParent, onSelf);
         }
     }
 
@@ -1002,6 +1016,8 @@ public interface AnnotationUtils
     class MyNgAfterViewChecked implements NgAfterViewChecked, IConfiguration
     {
         private final String value;
+        private boolean onParent = false;
+        private boolean onSelf = true;
 
         public MyNgAfterViewChecked(String value)
         {
@@ -1021,6 +1037,18 @@ public interface AnnotationUtils
         }
 
         @Override
+        public boolean onParent()
+        {
+            return onParent;
+        }
+
+        @Override
+        public boolean onSelf()
+        {
+            return onSelf;
+        }
+
+        @Override
         public Class<? extends Annotation> annotationType()
         {
             return NgAfterViewChecked.class;
@@ -1034,13 +1062,13 @@ public interface AnnotationUtils
                 return false;
             }
             MyNgAfterViewChecked that = (MyNgAfterViewChecked) o;
-            return Objects.equals(value, that.value);
+            return onParent == that.onParent && onSelf == that.onSelf && Objects.equals(value, that.value);
         }
 
         @Override
         public int hashCode()
         {
-            return Objects.hashCode(value);
+            return Objects.hash(value, onParent, onSelf);
         }
     }
 
@@ -1048,6 +1076,8 @@ public interface AnnotationUtils
     class MyNgAfterContentChecked implements NgAfterContentChecked, IConfiguration
     {
         private final String value;
+        private boolean onParent = false;
+        private boolean onSelf = true;
 
         public MyNgAfterContentChecked(String value)
         {
@@ -1067,6 +1097,18 @@ public interface AnnotationUtils
         }
 
         @Override
+        public boolean onParent()
+        {
+            return onParent;
+        }
+
+        @Override
+        public boolean onSelf()
+        {
+            return onSelf;
+        }
+
+        @Override
         public Class<? extends Annotation> annotationType()
         {
             return NgAfterContentChecked.class;
@@ -1080,13 +1122,13 @@ public interface AnnotationUtils
                 return false;
             }
             MyNgAfterContentChecked that = (MyNgAfterContentChecked) o;
-            return Objects.equals(value, that.value);
+            return onParent == that.onParent && onSelf == that.onSelf && Objects.equals(value, that.value);
         }
 
         @Override
         public int hashCode()
         {
-            return Objects.hashCode(value);
+            return Objects.hash(value, onParent, onSelf);
         }
     }
 
@@ -1325,6 +1367,8 @@ public interface AnnotationUtils
     class MyNgOnInit implements NgOnInit, IConfiguration
     {
         private final String value;
+        private boolean onParent = false;
+        private boolean onSelf = true;
 
         public MyNgOnInit(String value)
         {
@@ -1344,6 +1388,18 @@ public interface AnnotationUtils
         }
 
         @Override
+        public boolean onParent()
+        {
+            return onParent;
+        }
+
+        @Override
+        public boolean onSelf()
+        {
+            return onSelf;
+        }
+
+        @Override
         public Class<? extends Annotation> annotationType()
         {
             return NgOnInit.class;
@@ -1357,13 +1413,13 @@ public interface AnnotationUtils
                 return false;
             }
             MyNgOnInit that = (MyNgOnInit) o;
-            return Objects.equals(value, that.value);
+            return onParent == that.onParent && onSelf == that.onSelf && Objects.equals(value, that.value);
         }
 
         @Override
         public int hashCode()
         {
-            return Objects.hashCode(value);
+            return Objects.hash(value, onParent, onSelf);
         }
     }
 
@@ -1371,6 +1427,8 @@ public interface AnnotationUtils
     class MyNgOnDestroy implements NgOnDestroy, IConfiguration
     {
         private final String value;
+        private boolean onParent = false;
+        private boolean onSelf = true;
 
         public MyNgOnDestroy(String value)
         {
@@ -1390,6 +1448,18 @@ public interface AnnotationUtils
         }
 
         @Override
+        public boolean onParent()
+        {
+            return onParent;
+        }
+
+        @Override
+        public boolean onSelf()
+        {
+            return onSelf;
+        }
+
+        @Override
         public Class<? extends Annotation> annotationType()
         {
             return NgOnDestroy.class;
@@ -1403,13 +1473,13 @@ public interface AnnotationUtils
                 return false;
             }
             MyNgOnDestroy that = (MyNgOnDestroy) o;
-            return Objects.equals(value, that.value);
+            return onParent == that.onParent && onSelf == that.onSelf && Objects.equals(value, that.value);
         }
 
         @Override
         public int hashCode()
         {
-            return Objects.hashCode(value);
+            return Objects.hash(value, onParent, onSelf);
         }
     }
 
@@ -1417,6 +1487,8 @@ public interface AnnotationUtils
     class MyNgAfterContentInit implements NgAfterContentInit, IConfiguration
     {
         private final String value;
+        private boolean onParent = false;
+        private boolean onSelf = true;
 
         public MyNgAfterContentInit(String value)
         {
@@ -1436,6 +1508,18 @@ public interface AnnotationUtils
         }
 
         @Override
+        public boolean onParent()
+        {
+            return onParent;
+        }
+
+        @Override
+        public boolean onSelf()
+        {
+            return onSelf;
+        }
+
+        @Override
         public Class<? extends Annotation> annotationType()
         {
             return NgAfterContentInit.class;
@@ -1449,13 +1533,13 @@ public interface AnnotationUtils
                 return false;
             }
             MyNgAfterContentInit that = (MyNgAfterContentInit) o;
-            return Objects.equals(value, that.value);
+            return onParent == that.onParent && onSelf == that.onSelf && Objects.equals(value, that.value);
         }
 
         @Override
         public int hashCode()
         {
-            return Objects.hashCode(value);
+            return Objects.hash(value, onParent, onSelf);
         }
     }
 
@@ -1646,6 +1730,7 @@ public interface AnnotationUtils
     class MyNgSignal implements NgSignal, IConfiguration
     {
         private String value;
+        private String type;
 
         private String referenceName;
         private boolean onParent = false;
@@ -1682,6 +1767,12 @@ public interface AnnotationUtils
         }
 
         @Override
+        public String type()
+        {
+            return type;
+        }
+
+        @Override
         public boolean equals(Object o)
         {
             if (o == null || getClass() != o.getClass())
@@ -1689,13 +1780,13 @@ public interface AnnotationUtils
                 return false;
             }
             MyNgSignal that = (MyNgSignal) o;
-            return isOnParent() == that.isOnParent() && isOnSelf() == that.isOnSelf() && Objects.equals(getValue(), that.getValue()) && Objects.equals(getReferenceName(), that.getReferenceName());
+            return isOnParent() == that.isOnParent() && isOnSelf() == that.isOnSelf() && Objects.equals(getValue(), that.getValue()) && Objects.equals(getType(), that.getType()) && Objects.equals(getReferenceName(), that.getReferenceName());
         }
 
         @Override
         public int hashCode()
         {
-            return Objects.hash(getValue(), getReferenceName(), isOnParent(), isOnSelf());
+            return Objects.hash(getValue(), getType(), getReferenceName(), isOnParent(), isOnSelf());
         }
     }
 }
