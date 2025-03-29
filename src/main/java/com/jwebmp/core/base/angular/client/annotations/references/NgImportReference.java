@@ -26,4 +26,11 @@ public @interface NgImportReference
      * @return if the reference must be a direct import, using only the value field for rendering
      */
     boolean direct() default false;
+
+    /**
+     * If the value must be wrapped in braces or is a precise reference
+     *
+     * @return
+     */
+    boolean wrapValueInBraces() default true;
 }

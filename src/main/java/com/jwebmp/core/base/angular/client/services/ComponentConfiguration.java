@@ -438,9 +438,15 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         for (var importReference : importReferences)
         {
             sb.append("import ");
-            sb.append("{");
+            if (importReference.wrapValueInBraces())
+            {
+                sb.append("{");
+            }
             sb.append(importReference.value().trim());
-            sb.append("}");
+            if (importReference.wrapValueInBraces())
+            {
+                sb.append("}");
+            }
             sb.append(" from '");
             sb.append(importReference.reference());
             sb.append("';\n");

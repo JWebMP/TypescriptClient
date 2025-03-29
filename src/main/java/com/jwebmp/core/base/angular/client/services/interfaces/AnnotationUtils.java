@@ -16,6 +16,7 @@ import com.jwebmp.core.base.angular.client.annotations.typescript.NgSourceDirect
 import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
 import com.jwebmp.core.base.angular.client.services.tstypes.any;
 import com.jwebmp.core.databind.IConfiguration;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -180,9 +181,15 @@ public interface AnnotationUtils
         return new MyNgGlobalField(value);
     }
 
+    static MyNgImportReference getNgImportReference(String importName, String reference, boolean direct, boolean wrapValueInBraces)
+    {
+        var ref = new MyNgImportReference(reference, importName, false, true, direct, wrapValueInBraces);
+        return ref;
+    }
+
     static MyNgImportReference getNgImportReference(String importName, String reference)
     {
-        var ref = new MyNgImportReference(reference, importName);
+        var ref = new MyNgImportReference(reference, importName, false, true, false, true);
         return ref;
     }
 
@@ -771,6 +778,7 @@ public interface AnnotationUtils
     @Getter
     @Setter
     @ToString
+    @AllArgsConstructor
     class MyNgImportReference implements NgImportReference, IConfiguration
     {
         private final String reference;
@@ -779,6 +787,7 @@ public interface AnnotationUtils
         private boolean onParent = false;
         private boolean onSelf = true;
         private boolean direct = false;
+        private boolean wrapValueInBraces = true;
 
         public MyNgImportReference(String reference, String importName)
         {
@@ -814,6 +823,12 @@ public interface AnnotationUtils
         public boolean direct()
         {
             return direct;
+        }
+
+        @Override
+        public boolean wrapValueInBraces()
+        {
+            return wrapValueInBraces;
         }
 
         @Override
