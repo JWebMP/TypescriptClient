@@ -67,7 +67,10 @@ public abstract class AbstractNgConfiguration<T extends IComponent<?>>
         sb.append("\t{\n");
         for (var ngOnDestroy : onDestroy)
         {
-            sb.append("\t\t").append(ngOnDestroy.value().trim()).append("\n");
+            for (String s : ngOnDestroy.value().split("\n"))
+            {
+                sb.append("\t\t").append(s).append("\n");
+            }
         }
         sb.append("\t}\n");
         return sb;

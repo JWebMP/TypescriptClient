@@ -30,12 +30,6 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
 @NgDataTypeReference(value = DynamicData.class, primary = false)
 @NgComponentReference(EventBusService.class)
 
-@NgOnDestroy("""
-        this.eventBusService.unregisterListener(this.listenerName, this.handlerId);
-        if (this.subscription) {
-            this.subscription.unsubscribe();
-        }
-        """)
 @NgMethod("""
         get data(): Observable<DynamicData | undefined> {
             return this.dataListener;
@@ -73,8 +67,7 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
             } else {
                 console.warn(`Received empty data for ${this.listenerName}`);
             }
-        }
-        """)
+        }""")
 
 @NgMethod("""
         fetchData() {
