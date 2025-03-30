@@ -13,6 +13,8 @@ import com.jwebmp.core.base.angular.client.annotations.references.NgImportRefere
 import com.jwebmp.core.base.angular.client.annotations.structures.NgField;
 import com.jwebmp.core.base.angular.client.annotations.structures.NgMethod;
 import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
+import com.jwebmp.core.base.angular.client.services.DataServiceConfiguration;
+import com.jwebmp.core.base.angular.client.services.DataServiceReferences;
 import com.jwebmp.core.base.angular.client.services.EventBusService;
 
 import java.util.*;
@@ -21,37 +23,31 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
 
 @NgImportReference(value = "Injectable", reference = "@angular/core")
 @NgImportReference(value = "inject", reference = "@angular/core")
-@NgImportReference(value = "BehaviorSubject, Observable, Subject, Subscription", reference = "rxjs")
-@NgImportReference(value = "bufferTime", reference = "rxjs")
+@NgImportReference(value = "BehaviorSubject, ", reference = "rxjs")
+@NgImportReference(value = "Observable", reference = "rxjs")
+@NgImportReference(value = "Subscription", reference = "rxjs")
 @NgImportReference(value = "v4 as uuidv4", reference = "uuid")
-
 @NgDataTypeReference(value = DynamicData.class, primary = false)
 @NgComponentReference(EventBusService.class)
 
 @NgOnDestroy("""
-        \t
-                console.log(`Cleaning up listener for: ${this.listenerName} with handler ID: ${this.handlerId}`);
-                this.eventBusService.unregisterListener(this.listenerName, this.handlerId);
-                if (this.subscription) {
-                    this.subscription.unsubscribe();
-                }
+        this.eventBusService.unregisterListener(this.listenerName, this.handlerId);
+        if (this.subscription) {
+            this.subscription.unsubscribe();
+        }
         """)
 @NgMethod("""
         get data(): Observable<DynamicData | undefined> {
-                return this.dataListener;
-            }""")
+            return this.dataListener;
+        }""")
 
 @NgMethod("""
-        \t
-            private generateHandlerId(): string {
-                    return `${this.listenerName}-${uuidv4()}`;
-                }
+        private generateHandlerId(): string {
+            return `${this.listenerName}-${uuidv4()}`;
+        }
         """)
 @NgConstructorBody("""
-        \t
-                // Generate a unique handler ID
-                this.handlerId = this.generateHandlerId();
-        
+        this.handlerId = this.generateHandlerId();
         """)
 
 @NgConstructorBody("""
@@ -59,31 +55,57 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
         """)
 
 @NgField("private readonly dataListener :  Observable<DynamicData | undefined>;")
-@NgField("private readonly handlerId: string; // A unique handler ID for this listener")
+@NgField("private readonly handlerId: string;")
 
 @NgConstructorBody("""
-        \t
-                this.subscription = this.dataListener.subscribe(
-                    (data) => this.handleIncomingData(data),
-                    (error) => console.error(` Error listening on ${this.listenerName}:`, error)
-                );
+        this.subscription = this.dataListener.subscribe(
+            (data) => this.handleIncomingData(data),
+            (error) => console.error(` Error listening on ${this.listenerName}:`, error)
+        );
         """)
 
 @NgMethod("""
-        \t
-            private handleIncomingData(data: DynamicData | undefined): void {
-                if (data) {
-                    this.dataSubject.next(data as any);
-                 //   console.log(`Received data for ${this.listenerName}:`, data);
-                    // Perform processing or state updates with the incoming data
-                } else {
-                    console.warn(`Received empty data for ${this.listenerName}`);
-                }
+        private handleIncomingData(data: DynamicData | undefined): void {
+            if (data) {
+                this.dataSubject.next(data as any);
+             //   console.log(`Received data for ${this.listenerName}:`, data);
+                // Perform processing or state updates with the incoming data
+            } else {
+                console.warn(`Received empty data for ${this.listenerName}`);
             }
-        
+        }
         """)
 
-@NgImportReference(value = "OnDestroy", reference = "@angular/core")
+@NgMethod("""
+        fetchData() {
+            this.eventBusService.send(
+                'data',
+                {
+                    dataService: this.listenerName,
+                    ...this.additionalData,
+                    className: this.clazzName,
+                },
+                this.listenerName
+            );
+        }""")
+@NgMethod("""
+        public sendData(datas: any) {
+            this.eventBusService.send(
+                'dataSend',
+                {
+                    dataService: this.listenerName,
+                    ...this.additionalData,
+                    data: { ...datas },
+                    className: this.clazzName,
+                },
+                this.listenerName
+            );
+        }""")
+@NgOnDestroy("""
+        this.eventBusService.unregisterListener(this.listenerName, this.handlerId);
+        if (this.subscription) {
+            this.subscription.unsubscribe();
+        }""")
 public interface INgDataService<J extends INgDataService<J>> extends IComponent<J>
 {
     DynamicData getData(AjaxCall<?> call, AjaxResponse<?> response);
@@ -93,64 +115,65 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
     }
 
     @Override
-    default List<String> interfaces()
+    default StringBuilder renderFields()
     {
-        List<String> out = IComponent.super.interfaces();
-        out.add("OnDestroy");
-        //	out.add("OnInit");
-        return out;
+        DataServiceConfiguration config = DataServiceReferences.getDataServiceConfigurations(this);
+        StringBuilder sb = new StringBuilder();
+        sb.append(config.renderInjects());
+        sb.append(config.renderFields());
+        return sb;
+    }
+
+    @Override
+    default StringBuilder renderConstructorBody()
+    {
+        DataServiceConfiguration config = DataServiceReferences.getDataServiceConfigurations(this);
+        StringBuilder sb = new StringBuilder();
+        sb.append(config.renderConstructorBodies());
+        return sb;
+    }
+
+    @Override
+    default StringBuilder renderConstructorParameters()
+    {
+        DataServiceConfiguration config = DataServiceReferences.getDataServiceConfigurations(this);
+        StringBuilder sb = new StringBuilder();
+        sb.append(config.renderConstructorParameters());
+        return sb;
+    }
+
+    @Override
+    default StringBuilder renderMethods()
+    {
+        DataServiceConfiguration config = DataServiceReferences.getDataServiceConfigurations(this);
+        StringBuilder sb = new StringBuilder();
+        sb.append(config.renderMethods());
+        sb.append(config.renderOnInit());
+        sb.append(config.renderOnDestroy());
+        return sb;
+    }
+
+    @Override
+    default StringBuilder renderInterfaces()
+    {
+        DataServiceConfiguration config = DataServiceReferences.getDataServiceConfigurations(this);
+        StringBuilder sb = new StringBuilder();
+        sb.append(config.renderInterfaces());
+        return sb;
+    }
+
+    @Override
+    default StringBuilder renderImports()
+    {
+        DataServiceConfiguration config = DataServiceReferences.getDataServiceConfigurations(this);
+        StringBuilder sb = new StringBuilder();
+        sb.append(config.renderImportStatements());
+        return sb;
     }
 
     default boolean checkDataIsArray()
     {
         return false;
-    }
-
-    @Override
-    default List<String> methods()
-    {
-        List<String> methods = IComponent.super.methods();
-        if (methods == null)
-        {
-            methods = new ArrayList<>();
-        }
-
-        String dtRef = "";
-        dtRef = getTsFilename(DynamicData.class);
-
-        methods.add("""
-                \t
-                     fetchData() {
-                         this.eventBusService.send(
-                             'data',
-                             {
-                                 dataService: this.listenerName,
-                                 ...this.additionalData,
-                                 className: this.clazzName,
-                             },
-                             this.listenerName
-                         );
-                     }
-                """);
-
-        methods.add("""
-                \t
-                     public sendData(datas: any) {
-                         this.eventBusService.send(
-                             'dataSend',
-                             {
-                                 dataService: this.listenerName,
-                                 ...this.additionalData,
-                                 data: { ...datas },
-                                 className: this.clazzName,
-                             },
-                             this.listenerName
-                         );
-                     }
-                """);
-
-
-        return methods;
     }
 
     @Override
@@ -208,26 +231,6 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
         return fields;
     }
 
-    default boolean buffer()
-    {
-        return false;
-    }
-
-    default int bufferTime()
-    {
-        return 100;
-    }
-
-    default boolean takeLast()
-    {
-        return false;
-    }
-
-    default int takeLastCount()
-    {
-        return 100;
-    }
-
     default String providedIn()
     {
         return "any";
@@ -243,7 +246,7 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
         return out;
     }
 
-    @Override
+    /*@Override
     default String renderOnDestroyMethod()
     {
         StringBuilder out = new StringBuilder(IComponent.super.renderOnDestroyMethod());
@@ -277,6 +280,6 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
                 .append("\n");
         out.append("}\n");
         return out.toString();
-    }
+    }*/
 
 }

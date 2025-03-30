@@ -152,6 +152,44 @@ public interface ImportsStatementsComponent<J extends ImportsStatementsComponent
         return refs;
     }
 
+    default List<NgImportReference> putRelativeLinkInMap(Class<?> clazz, NgDataTypeReference moduleRef)
+    {
+        List<NgImportReference> refs = new ArrayList<>();
+        var baseDir = IComponent.getCurrentAppFile();
+        try
+        {
+            String canonicalPath = (baseDir.get()
+                    .getCanonicalPath() + "/src/app/").replace('\\', '/');
+
+            File me = new File(getFileReference(canonicalPath, clazz));
+            /*File destination = new File(getFileReference(baseDir.get()
+                    .getCanonicalPath(), moduleRef.value()));
+*/
+            String location = clazz.getCanonicalName().replace('.', '/');
+            var f = new File(FilenameUtils.concat(canonicalPath, location));
+            f.mkdirs();
+
+            var destination = getFileReference(canonicalPath, moduleRef.value());
+            String destinationLocation = FilenameUtils.concat(canonicalPath, destination
+                    .replace('.', '/')
+                    .replace('\\', '/'));
+            destinationLocation = canonicalPath + destination.replace('.', '/').replace('\\', '/');
+            var d = new File(destinationLocation);
+
+            String importName = getTsFilename(moduleRef.value());
+            String reference = getRelativePath(f, d, null);
+            reference = reference.replace('\\', '/');
+            //reference = removeFirstParentDirectoryAsString(reference);
+            NgImportReference importReference = AnnotationUtils.getNgImportReference(importName, reference);
+            refs.add(importReference);
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+        return refs;
+    }
+
     default List<NgImportReference> putRelativeLinkInMap(File sourceDirectory, Class<?> componentClass)
     {
         List<NgImportReference> refs = new ArrayList<>();

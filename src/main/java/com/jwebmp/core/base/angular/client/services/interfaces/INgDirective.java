@@ -9,6 +9,7 @@ import com.jwebmp.core.base.angular.client.annotations.functions.NgOnInit;
 import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
 import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
+import com.jwebmp.core.base.angular.client.services.DataServiceConfiguration;
 import com.jwebmp.core.base.angular.client.services.EventBusService;
 
 import java.util.*;
@@ -36,7 +37,7 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
         return new ArrayList<>(out);
     }
 
- /*   @Override
+    /*   @Override
     default List<NgConstructorParameter> getAllConstructorParameters()
     {
         var s = IComponent.super.getAllConstructorParameters();
@@ -79,8 +80,10 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
             {
                 var np = reference.getAnnotation(NgProvider.class);
                 if (!np.singleton())
+                {
                     providers.append(compRef.value()
                             .getSimpleName() + ",\n");
+                }
             }
         }
 

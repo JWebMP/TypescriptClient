@@ -98,10 +98,15 @@ public class AnnotationHelper
         if (superClassMappings.containsKey(clazz))
         {
             maps = superClassMappings.get(clazz);
-        } else
+        }
+        else
         {
             maps = extractAnnotations(clazz);
             superClassMappings.put(clazz, maps);
+        }
+        if (maps == null)
+        {
+            return;
         }
         maps.mergeInto(parentMapping);
 
@@ -118,7 +123,8 @@ public class AnnotationHelper
             {
                 map = extractAnnotations(superclass);
                 superClassMappings.put(superclass, map);
-            } else
+            }
+            else
             {
                 map = superClassMappings.get(superclass);
             }
@@ -202,7 +208,8 @@ public class AnnotationHelper
                 {
                     out.add((T) annotation);
                 }
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 log.log(Level.SEVERE, "Cannot read multiple annotations - " + clazz + " - " + multipleAnnotation, e);
             }
