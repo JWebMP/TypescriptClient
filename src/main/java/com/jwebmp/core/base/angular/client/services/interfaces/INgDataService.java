@@ -164,11 +164,6 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
         return sb;
     }
 
-    default boolean checkDataIsArray()
-    {
-        return false;
-    }
-
     @Override
     default List<String> constructorBody()
     {
@@ -239,40 +234,9 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
         return out;
     }
 
-    /*@Override
-    default String renderOnDestroyMethod()
+    default boolean checkDataIsArray()
     {
-        StringBuilder out = new StringBuilder(IComponent.super.renderOnDestroyMethod());
-        out.append("ngOnDestroy() {\n");
-        for (String s : onDestroy())
-        {
-            out.append("\t")
-                    .append(s)
-                    .append("\n");
-        }
-        List<NgOnDestroy> fInit = IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgOnDestroy.class);
-        fInit.sort(Comparator.comparingInt(NgOnDestroy::sortOrder));
-        Set<String> outs = new LinkedHashSet<>();
-        if (!fInit.isEmpty())
-        {
-            for (NgOnDestroy ngField : fInit)
-            {
-                outs.add(ngField.value()
-                        .trim());
-            }
-        }
-        StringBuilder fInitOut = new StringBuilder();
-        for (String s : outs)
-        {
-            fInitOut.append(s)
-                    .append("\n");
-        }
-        out.append("\t")
-                .append(fInitOut)
-                .append("\n");
-        out.append("}\n");
-        return out.toString();
-    }*/
+        return false;
+    }
 
 }

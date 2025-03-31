@@ -4,22 +4,19 @@ import com.guicedee.client.IGuiceContext;
 import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgDataTypeReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
-import com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils;
-import com.jwebmp.core.base.angular.client.services.interfaces.IComponent;
-import com.jwebmp.core.base.angular.client.services.interfaces.INgDataService;
-import com.jwebmp.core.base.angular.client.services.interfaces.ImportsStatementsComponent;
+import com.jwebmp.core.base.angular.client.services.interfaces.*;
 
 import java.util.List;
 
-public class DataServiceReferences extends AbstractReferences<DataServiceConfiguration<?>>
+public class ServiceProviderReferences extends AbstractReferences<ServiceProviderConfiguration<?>>
 {
-    private static final ThreadLocal<DataServiceConfiguration> DataServiceConfigurations = ThreadLocal.withInitial(() -> new DataServiceConfiguration<>());
+    private static final ThreadLocal<ServiceProviderConfiguration> ServiceProviderConfigurations = ThreadLocal.withInitial(() -> new ServiceProviderConfiguration<>());
 
-    public void onDirectiveConfigure(INgDataService<?> dataService, IComponent<?> component)
+    public void onServiceProviderRender(INgServiceProvider<?> dataService, IComponent<?> component)
     {
-        if (dataService == null && component instanceof INgDataService cDs)
+        if (dataService == null && component instanceof INgServiceProvider cDs)
         {
-            DataServiceConfigurations.get().setRootComponent(cDs);
+            ServiceProviderConfigurations.get().setRootComponent(cDs, cDs.getAnnotation());
         }
         boolean checkForParent = false;
         if (dataService != null)
@@ -32,7 +29,7 @@ public class DataServiceReferences extends AbstractReferences<DataServiceConfigu
             unwrapMethods(component, checkForParent);
         }
 
-        if (dataService == null && component instanceof INgDataService cDs)
+        if (dataService == null && component instanceof INgServiceProvider cDs)
         {
             var refs = AnnotationUtils.getAnnotation(component.getClass(), NgComponentReference.class);
             for (NgComponentReference ref : refs)
@@ -45,7 +42,7 @@ public class DataServiceReferences extends AbstractReferences<DataServiceConfigu
                 {
                     getConfiguration().getImportReferences().add(importStatement);
                 }
-                onDirectiveConfigure(cDs, (IComponent<?>) refObject);
+                onServiceProviderRender(cDs, (IComponent<?>) refObject);
             }
             var dataRefs = AnnotationUtils.getAnnotation(component.getClass(), NgDataTypeReference.class);
             for (NgDataTypeReference ref : dataRefs)
@@ -58,29 +55,29 @@ public class DataServiceReferences extends AbstractReferences<DataServiceConfigu
                 {
                     getConfiguration().getImportReferences().add(importStatement);
                 }
-                onDirectiveConfigure(cDs, (IComponent<?>) refObject);
+                onServiceProviderRender(cDs, (IComponent<?>) refObject);
             }
 
         }
     }
 
-    public DataServiceConfiguration<?> getConfiguration()
+    public ServiceProviderConfiguration getConfiguration()
     {
-        return DataServiceConfigurations.get();
+        return ServiceProviderConfigurations.get();
     }
 
-    public static DataServiceConfiguration getDataServiceConfigurations(INgDataService<?> dataService)
+    public static ServiceProviderConfiguration getServiceProviderConfigurations(INgServiceProvider<?> dataService)
     {
-        if (DataServiceConfigurations.get().getRootComponent() == null)
+        if (ServiceProviderConfigurations.get().getRootComponent() == null)
         {
-            DataServiceConfigurations.get().setRootComponent(dataService);
-            new DataServiceReferences().onDirectiveConfigure(null, dataService);
+            ServiceProviderConfigurations.get().setRootComponent(dataService, dataService.getAnnotation());
+            new ServiceProviderReferences().onServiceProviderRender(null, dataService);
         }
-        return DataServiceConfigurations.get();
+        return ServiceProviderConfigurations.get();
     }
 
     public static void clearThread()
     {
-        DataServiceConfigurations.remove();
+        ServiceProviderConfigurations.remove();
     }
 }

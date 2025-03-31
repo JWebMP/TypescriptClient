@@ -7,6 +7,9 @@ import com.jwebmp.core.base.angular.client.annotations.references.NgComponentRef
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
 import com.jwebmp.core.base.angular.client.annotations.structures.NgField;
 import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
+import com.jwebmp.core.base.angular.client.services.DataServiceConfiguration;
+import com.jwebmp.core.base.angular.client.services.DataServiceReferences;
+import com.jwebmp.core.base.angular.client.services.ServiceProviderReferences;
 
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -19,12 +22,13 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
 @NgImportReference(value = "BehaviorSubject", reference = "rxjs")
 @NgImportReference(value = "Observable", reference = "rxjs")
 @NgImportReference(value = "Injectable", reference = "@angular/core")
+@NgImportReference(value = "Injectable", reference = "@angular/core")
 
 @NgField("private subscription?: Subscription;")
 @NgField("public additionalData: any = {};")
 @NgOnDestroy("this.subscription?.unsubscribe();")
 
-@NgImportReference(value = "OnDestroy", reference = "@angular/core")
+//@NgImportReference(value = "OnDestroy", reference = "@angular/core")
 //@NgImportReference(value = "Output", reference = "@angular/core")
 //@NgImportReference(value = "EventEmitter", reference = "@angular/core")
 public interface INgServiceProvider<J extends INgServiceProvider<J>> extends IComponent<J>
@@ -50,12 +54,60 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
     }
 
     @Override
-    default List<String> constructorParameters()
+    default StringBuilder renderFields()
     {
-        List<String> out = IComponent.super.constructorParameters();
-        //  out.add("private service : " + getAnnotation().value()
-        //          .getSimpleName());
-        return out;
+        var config = ServiceProviderReferences.getServiceProviderConfigurations(this);
+        StringBuilder sb = new StringBuilder();
+        sb.append(config.renderInjects());
+        sb.append(config.renderFields());
+        return sb;
+    }
+
+    @Override
+    default StringBuilder renderConstructorBody()
+    {
+        var config = ServiceProviderReferences.getServiceProviderConfigurations(this);
+        StringBuilder sb = new StringBuilder();
+        sb.append(config.renderConstructorBodies());
+        return sb;
+    }
+
+    @Override
+    default StringBuilder renderConstructorParameters()
+    {
+        var config = ServiceProviderReferences.getServiceProviderConfigurations(this);
+        StringBuilder sb = new StringBuilder();
+        sb.append(config.renderConstructorParameters());
+        return sb;
+    }
+
+    @Override
+    default StringBuilder renderMethods()
+    {
+        var config = ServiceProviderReferences.getServiceProviderConfigurations(this);
+        StringBuilder sb = new StringBuilder();
+        sb.append(config.renderMethods());
+        sb.append(config.renderOnInit());
+        sb.append(config.renderOnDestroy());
+        return sb;
+    }
+
+    @Override
+    default StringBuilder renderInterfaces()
+    {
+        var config = ServiceProviderReferences.getServiceProviderConfigurations(this);
+        StringBuilder sb = new StringBuilder();
+        sb.append(config.renderInterfaces());
+        return sb;
+    }
+
+    @Override
+    default StringBuilder renderImports()
+    {
+        var config = ServiceProviderReferences.getServiceProviderConfigurations(this);
+        StringBuilder sb = new StringBuilder();
+        sb.append(config.renderImportStatements());
+        return sb;
     }
 
     @Override
@@ -74,14 +126,15 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
         List<String> out = IComponent.super.fields();
         out.add("private _onUpdate = new BehaviorSubject<boolean>(false);");
         out.add("private readonly service = inject(" + getAnnotation().value().getSimpleName() + ");");
-
+        INgDataType<?> obj = IGuiceContext.get(getAnnotation().dataType());
         if (!getAnnotation().dataArray())
         {
             out.add(0, "public " + getAnnotation().variableName() + " : " + getAnnotation().dataType()
-                    .getSimpleName() + " = " + INgDataType.renderObjectStructure(getAnnotation().dataType()) + ";");
+                    .getSimpleName() + " = " + obj.renderObjectStructure(getAnnotation().dataType()) + ";");
 
 
-        } else
+        }
+        else
         {
             out.add(0, "public " + getAnnotation().variableName() + " : " + getAnnotation().dataType()
                     .getSimpleName() + "[] = [];");
@@ -94,16 +147,9 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
     default List<String> constructorBody()
     {
         List<String> out = IComponent.super.constructorBody();
-        //        "                    this." + getAnnotation().variableName() + " = JSON.parse(message as any);\n" +
-        /*		     "" +
-		     "" +
-		     "            if (message && observer.out) {\n";
-		s += "                this." + getAnnotation().variableName() + " = message.out[0];\n";
-		s += "                this._onUpdate.next(true);\n" +
-		     "            }\n" +*/
         String s = """
                 \tthis.subscription = this.service.data
-                        %s%s.subscribe(message => {
+                        .subscribe(message => {
                             if (message) {
                                 if (typeof message === 'string')
                                         this.%s = JSON.parse(message as any);
@@ -111,9 +157,7 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
                                 this._onUpdate.next(true);
                             }
                         });
-                """.formatted(buffer() ? ".pipe(bufferTime(" + bufferTime() + "))" : "",
-                takeLast() ? ".pipe(takeLast(" + takeLastCount() + "))" : "",
-                getAnnotation().variableName(), getAnnotation().variableName());
+                """.formatted(getAnnotation().variableName(), getAnnotation().variableName());
         out.add(s);
         //out.add("this.checkData();");
         return out;
@@ -130,22 +174,28 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
 
         out.add(sendDataString);
 
-        out.add("\tget onUpdate(): Observable<boolean> {\n" +
-                "\t\treturn this._onUpdate.asObservable();\n" +
-                "\t}");
-        out.add("\tcheckData()\n" +
-                "\t{\n" +
-                "\t\tthis.service.fetchData();\n" +
-                "\t}");
+        out.add("""
+                \tget onUpdate(): Observable<boolean> {
+                \t\treturn this._onUpdate.asObservable();
+                \t}""");
+        out.add("""
+                \tcheckData()
+                \t{
+                \t\tthis.service.fetchData();
+                \t}""");
 
-        String resetString = "\treset() {\n" +
-                "\t\tthis._onUpdate.next(false);\n" +
-                "\t\tthis.service.additionalData = {};\n" +
-                "\t\tthis.service.additionalData = this.additionalData;\n";
+        String resetString = """
+                \treset() {
+                \t\tthis._onUpdate.next(false);
+                \t\tthis.service.additionalData = {};
+                \t\tthis.service.additionalData = this.additionalData;
+                """;
         if (!getAnnotation().dataArray())
         {
-            resetString += "\t\tthis." + getAnnotation().variableName() + " = " + INgDataType.renderObjectStructure(getAnnotation().dataType()) + ";";
-        } else
+            INgDataType<?> obj = IGuiceContext.get(getAnnotation().dataType());
+            resetString += "\t\tthis." + getAnnotation().variableName() + " = " + obj.renderObjectStructure(getAnnotation().dataType()) + ";";
+        }
+        else
         {
             resetString += "\t\tthis." + getAnnotation().variableName() + " = [];";
 
@@ -167,52 +217,6 @@ public interface INgServiceProvider<J extends INgServiceProvider<J>> extends ICo
         }
         return "any";
     }
-
-    @Override
-    default List<String> interfaces()
-    {
-        List<String> out = IComponent.super.interfaces();
-        out.add("OnDestroy");
-        //out.add("OnInit");
-        return out;
-    }
-
-    @Override
-    default String renderOnDestroyMethod()
-    {
-        StringBuilder out = new StringBuilder(IComponent.super.renderOnDestroyMethod());
-        out.append("ngOnDestroy() {\n");
-        for (String s : onDestroy())
-        {
-            out.append("\t")
-                    .append(s)
-                    .append("\n");
-        }
-        List<NgOnDestroy> fInit = IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgOnDestroy.class);
-        fInit.sort(Comparator.comparingInt(NgOnDestroy::sortOrder));
-        Set<String> outs = new LinkedHashSet<>();
-        if (!fInit.isEmpty())
-        {
-            for (NgOnDestroy ngField : fInit)
-            {
-                outs.add(ngField.value()
-                        .trim());
-            }
-        }
-        StringBuilder fInitOut = new StringBuilder();
-        for (String s : outs)
-        {
-            fInitOut.append(s)
-                    .append("\n");
-        }
-        out.append("\t")
-                .append(fInitOut)
-                .append("\n");
-        out.append("}\n");
-        return out.toString();
-    }
-
 
     default boolean buffer()
     {

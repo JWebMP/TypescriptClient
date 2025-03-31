@@ -1,10 +1,16 @@
 package com.jwebmp.core.base.angular.client.services.interfaces;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.guicedee.services.jsonrepresentation.IJsonRepresentation;
 import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
+import io.vertx.core.json.JsonObject;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -20,9 +26,10 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static com.guicedee.client.IGuiceContext.get;
+import static com.guicedee.guicedinjection.interfaces.ObjectBinderKeys.DefaultObjectMapper;
 import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getNgComponentReference;
 import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getTsFilename;
-
 
 public interface INgDataType<J extends INgDataType<J>>
         extends IComponent<J>, IJsonRepresentation<J>
@@ -55,7 +62,7 @@ public interface INgDataType<J extends INgDataType<J>>
         }
     }
 
-    static String getFieldName(Field field)
+    default String getFieldName(Field field)
     {
         return field.getName();
     }
@@ -66,6 +73,11 @@ public interface INgDataType<J extends INgDataType<J>>
         {
             return;
         }
+
+        if (fieldType.getCanonicalName().contains("TxMessageDTO"))
+        {
+            System.out.printf("here");
+        }
         //    ObjectMapper mapper = IGuiceContext.get(DefaultObjectMapper);
 
         String optionalString = "";
@@ -75,6 +87,18 @@ public interface INgDataType<J extends INgDataType<J>>
         }
 
         if (Number.class.isAssignableFrom(fieldType))
+        {
+            out.append(" public " + fieldName + optionalString + " : number" + (array ? "[]" : "") + " = " + (array ? "[]" : "0") + ";\n");
+        }
+        else if (Integer.class.isAssignableFrom(fieldType) || int.class.isAssignableFrom(fieldType))
+        {
+            out.append(" public " + fieldName + optionalString + " : number" + (array ? "[]" : "") + " = " + (array ? "[]" : "0") + ";\n");
+        }
+        else if (Double.class.isAssignableFrom(fieldType) || double.class.isAssignableFrom(fieldType))
+        {
+            out.append(" public " + fieldName + optionalString + " : number" + (array ? "[]" : "") + " = " + (array ? "[]" : "0") + ";\n");
+        }
+        else if (Float.class.isAssignableFrom(fieldType) || float.class.isAssignableFrom(fieldType))
         {
             out.append(" public " + fieldName + optionalString + " : number" + (array ? "[]" : "") + " = " + (array ? "[]" : "0") + ";\n");
         }
@@ -120,7 +144,7 @@ public interface INgDataType<J extends INgDataType<J>>
         {
             //get generic type
             String genericType = StringUtils.substringBetween(field.getGenericType()
-                                                                   .getTypeName(), "<", ">");
+                    .getTypeName(), "<", ">");
 
             if (field.getGenericType() instanceof ParameterizedType)
             {
@@ -132,7 +156,7 @@ public interface INgDataType<J extends INgDataType<J>>
                     {
                         ParameterizedType pType = (ParameterizedType) arguments[0];
                         Class<?> arg0Clazz = pType.getRawType()
-                                                  .getClass();
+                                .getClass();
                         try
                         {
                             renderFieldTS(out, fieldName, arg0Clazz, field, true);
@@ -140,7 +164,7 @@ public interface INgDataType<J extends INgDataType<J>>
                         catch (InvalidPathException ipe)
                         {
                             Logger.getLogger("INgDataType")
-                                  .log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
+                                    .log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
                         }
                     }
                     else if (arg0 instanceof Class<?>)
@@ -152,7 +176,7 @@ public interface INgDataType<J extends INgDataType<J>>
                         catch (InvalidPathException ipe)
                         {
                             Logger.getLogger("INgDataType")
-                                  .log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
+                                    .log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
                         }
                     }
                 }
@@ -170,7 +194,7 @@ public interface INgDataType<J extends INgDataType<J>>
                 catch (InvalidPathException ipe)
                 {
                     Logger.getLogger("INgDataType")
-                          .log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
+                            .log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
                 }
             }
         }
@@ -178,7 +202,7 @@ public interface INgDataType<J extends INgDataType<J>>
         {
             //get generic type
             String genericType = fieldType.arrayType()
-                                          .getCanonicalName();
+                    .getCanonicalName();
             try
             {
                 renderFieldTS(out, fieldName, Class.forName(genericType), field, true);
@@ -194,59 +218,159 @@ public interface INgDataType<J extends INgDataType<J>>
         }
     }
 
-    static boolean isFieldRequired(Field field)
+    default boolean isFieldRequired(Field field)
     {
-        return field.getAnnotation(NotNull.class) != null;
+        return field.getAnnotation(NotNull.class) != null || field.getType().isPrimitive() || field.getAnnotation(NotEmpty.class) != null || field.getAnnotation(NotBlank.class) != null;
     }
 
-    static StringBuilder renderObjectStructure(Class<?> o)
+    default Object determineDefaultValue(Class<?> o)
+    {
+        if (o.isEnum())
+        {
+            return "'" + o.getEnumConstants()[0].toString() + "'";
+        }
+        if (o.isArray())
+        {
+            return new Object[0];
+        }
+        if (INgDataType.class.isAssignableFrom(o))
+        {
+            try
+            {
+                var s = renderObjectStructure(o).toString();
+                var map = get(DefaultObjectMapper).readerFor(LinkedHashMap.class).readValue(s);
+                return map;
+            }
+            catch (JsonProcessingException e)
+            {
+                throw new RuntimeException(e);
+            }
+
+        }
+        switch (o.getSimpleName())
+        {
+            case "String":
+            case "UUID":
+            case "LocalTime":
+                return "";
+            case "Boolean":
+            case "boolean":
+                return false;
+            case "Integer":
+            case "int":
+            case "Long":
+            case "long":
+            case "Duration":
+            case "BigInteger":
+                return 0;
+            case "Float":
+            case "float":
+            case "Double":
+            case "double":
+            case "BigDecimal":
+                return 0d;
+            case "OffsetDateTime":
+            case "Date":
+            case "LocalDateTime":
+            case "ZonedDateTime":
+            case "LocalDate":
+                return "new Date()";
+            case "List":
+            case "Set":
+            case "HashMap":
+                return new Object[0];
+            default:
+                LogManager.getLogger("INgDataType").error("Cannot determine type for - [{}]", o.getSimpleName());
+        }
+        return null;
+    }
+
+    default StringBuilder renderObjectStructure(Class<?> o)
     {
         StringBuilder out = new StringBuilder();
-        out.append("{");
+        JsonObject jo = new JsonObject();
+        //Map<String, Object> map = new LinkedHashMap<>();
         for (Field declaredField : o.getDeclaredFields())
         {
-            if (out.length() != 1)
+            if (Modifier.isStatic(declaredField.getModifiers()) ||
+                    Modifier.isFinal(declaredField.getModifiers())
+            )
             {
-                out.append(",");
+                continue;
             }
-            if (isFieldRequired(declaredField))
+            var fieldName = getFieldName(declaredField);
+            var defaultValue = determineDefaultValue(declaredField.getType());
+            //map.put(fieldName, defaultValue);
+            jo.put(fieldName, defaultValue);
+        }
+        out.append(jo.encodePrettily());
+        return out;
+/*
+        //    if (o.isEnum())
+        {
+            //    return new StringBuilder();
+        }
+        //   else
+        {
+
+            out.append("{");
+            for (Field declaredField : o.getDeclaredFields())
             {
+                if (out.length() != 1)
+                {
+                    out.append(",");
+                }
+                var fieldName = getFieldName(declaredField);
                 out.append(getFieldName(declaredField));
                 out.append(" ");
                 out.append(":");
-                switch (declaredField.getType()
-                                     .getSimpleName())
+                Object fieldValue;
+                if (o.isEnum())
                 {
-                    case "String":
-                    case "UUID":
-                        out.append("''");
-                        break;
-                    case "Boolean":
-                        out.append("false");
-                        break;
-                    case "Integer":
-                    case "Double":
-                        out.append("0");
-                        break;
-                    case "OffsetDateTime":
-                    case "Date":
-                    case "LocalDateTime":
-                    case "ZonedDateTime":
-                    case "LocalDate":
-                        out.append("new Date()");
-                        break;
-                    case "List":
-                    case "Set":
-                    case "HashMap":
-                        out.append("[]");
-                        break;
-                    default:
-                        out.append(renderObjectStructure(declaredField.getType()));
+                    out.append("'" + o.getEnumConstants()[0].toString() + "");
+                }
+                else
+                {
+                    switch (declaredField.getType()
+                            .getSimpleName())
+                    {
+                        case "String":
+                        case "UUID":
+                            out.append("''");
+                            break;
+                        case "Boolean":
+                        case "boolean":
+                            out.append("false");
+                            break;
+                        case "Integer":
+                        case "int":
+                        case "Float":
+                        case "float":
+                        case "Double":
+                        case "double":
+                            out.append("0");
+                            break;
+                        case "OffsetDateTime":
+                        case "Date":
+                        case "LocalDateTime":
+                        case "ZonedDateTime":
+                        case "LocalDate":
+                            out.append("new Date()");
+                            break;
+                        case "List":
+                        case "Set":
+                        case "HashMap":
+                            out.append("[]");
+                            break;
+                        default:
+                            LogManager.getLogger("INgDataType").error("Cannot determine type for - [{}]-[{}]-[{}]", o.getSimpleName(), fieldName, declaredField.getType());
+                            out.append(renderObjectStructure(declaredField.getType()));
+                    }
                 }
             }
-        }
-        out.append("}");
-        return out;
+            out.append("}");
+            return out;
+        }*/
     }
 
     @Override
@@ -288,7 +412,7 @@ public interface INgDataType<J extends INgDataType<J>>
                     {
                         ParameterizedType pType = (ParameterizedType) arguments[0];
                         Class<?> arg0Clazz = pType.getRawType()
-                                                  .getClass();
+                                .getClass();
                         try
                         {
                             refs.add(getNgComponentReference((Class<? extends IComponent<?>>) arg0Clazz));
@@ -296,7 +420,7 @@ public interface INgDataType<J extends INgDataType<J>>
                         catch (InvalidPathException ipe)
                         {
                             Logger.getLogger("INgDataType")
-                                  .log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
+                                    .log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
                         }
                     }
                     else if (arg0 instanceof Class<?> && !arg0.equals(Object.class) && !arg0.equals(String.class) && !arg0.equals(Boolean.class) && !arg0.equals(Integer.class) && !arg0.equals(Double.class))
@@ -310,7 +434,7 @@ public interface INgDataType<J extends INgDataType<J>>
         {
             //get generic type
             String genericType = fieldType.arrayType()
-                                          .getCanonicalName();
+                    .getCanonicalName();
             try
             {
                 renderFieldReference(fieldName, Class.forName(genericType), field, true);
