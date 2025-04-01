@@ -13,11 +13,11 @@ import static java.lang.annotation.RetentionPolicy.*;
 @Inherited
 public @interface NgComponentReference
 {
-	Class<?> value();
-	
-	boolean provides() default false;
-	
-	boolean onParent() default false;
-	
-	boolean onSelf() default true;
+    Class<? extends IComponent<?>> value();
+
+    boolean provides() default false;
+
+    boolean onParent() default false;
+
+    boolean onSelf() default true;
 }

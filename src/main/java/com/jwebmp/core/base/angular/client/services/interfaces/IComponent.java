@@ -625,15 +625,4 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         return new ArrayList<>();
     }
 
-    default Set<String> moduleImports()
-    {
-        Set<String> list = new LinkedHashSet<>();
-        ServiceLoader<OnGetAllModuleImports> load = ServiceLoader.load(OnGetAllModuleImports.class);
-        for (OnGetAllModuleImports onGetAllModuleImports : load)
-        {
-            onGetAllModuleImports.perform(list, this);
-        }
-        return list;
-    }
-
 }

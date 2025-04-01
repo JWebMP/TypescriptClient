@@ -1,17 +1,24 @@
 package com.jwebmp.core.base.angular.client.services;
 
+import com.jwebmp.core.base.angular.client.annotations.angular.NgDataService;
+import com.jwebmp.core.base.angular.client.annotations.angular.NgDirective;
+import com.jwebmp.core.base.angular.client.annotations.angular.NgProvider;
+import com.jwebmp.core.base.angular.client.annotations.angular.NgServiceProvider;
 import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorBody;
 import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorParameter;
 import com.jwebmp.core.base.angular.client.annotations.functions.NgOnDestroy;
 import com.jwebmp.core.base.angular.client.annotations.functions.NgOnInit;
+import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportModule;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportProvider;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
 import com.jwebmp.core.base.angular.client.annotations.structures.*;
-import com.jwebmp.core.base.angular.client.services.interfaces.IComponent;
+import com.jwebmp.core.base.angular.client.services.interfaces.*;
 import lombok.Getter;
 
+import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -28,7 +35,6 @@ public abstract class AbstractNgConfiguration<T extends IComponent<?>>
     protected final Set<NgMethod> methods = new LinkedHashSet<>();
     protected final Set<NgInterface> interfaces = new LinkedHashSet<>();
 
-    protected final Set<NgImportModule> importModules = new LinkedHashSet<>();
     protected final Set<NgImportProvider> importProviders = new LinkedHashSet<>();
 
     protected final Set<NgConstructorParameter> constructorParameters = new LinkedHashSet<>();
@@ -36,8 +42,67 @@ public abstract class AbstractNgConfiguration<T extends IComponent<?>>
 
     protected final Set<NgInject> injects = new LinkedHashSet<>();
 
+    protected final Set<NgComponentReference> componentReferences = new LinkedHashSet<>();
+
     public abstract T getRootComponent();
 
+    public void splitComponentReferences()
+    {
+        for (NgComponentReference componentReference : componentReferences)
+        {
+            List<NgImportReference> importReferences = retrieveRelativePathForReference(componentReference);
+            var importReference = importReferences.get(0);
+            var classReference = componentReference.value();
+
+            //Create and add a reference
+            if (INgDirective.class.isAssignableFrom(classReference))
+            {
+                //only comes from components?
+            }
+            else if (INgDataService.class.isAssignableFrom(classReference))
+            {
+                for (var ngAnno : AnnotationUtils.getAnnotation(classReference, NgDataService.class))
+                {
+                    getImportReferences().add(AnnotationUtils.getNgImportReference("inject", "@angular/core", true, false, false, true));
+                    getInjects().add(AnnotationUtils.getNgInject(ngAnno.value(), AnnotationUtils.getTsFilename(classReference)));
+                    getImportReferences().add(importReference);
+                }
+            }
+            else if (INgDataType.class.isAssignableFrom(classReference))
+            {
+
+            }
+            else if (INgProvider.class.isAssignableFrom(classReference))
+            {
+                for (var ngAnno : AnnotationUtils.getAnnotation(classReference, NgProvider.class))
+                {
+                    getImportProviders().add(AnnotationUtils.getNgImportProvider(AnnotationUtils.getTsFilename(classReference)));
+                    getImportReferences().add(importReference);
+                }
+            }
+            else if (INgServiceProvider.class.isAssignableFrom(classReference))
+            {
+                for (NgServiceProvider ngAnno : AnnotationUtils.getAnnotation(classReference, NgServiceProvider.class))
+                {
+                    getImportReferences().add(AnnotationUtils.getNgImportReference("inject", "@angular/core", true, false, false, true));
+                    getInjects().add(AnnotationUtils.getNgInject(ngAnno.referenceName(), AnnotationUtils.getTsFilename(classReference)));
+                    getImportReferences().add(importReference);
+                }
+            }
+            else
+            {
+                //standard class read the annotations, but don't make an import
+            }
+        }
+    }
+
+    protected List<NgImportReference> retrieveRelativePathForReference(NgComponentReference importReference)
+    {
+        List<NgImportReference> irs = new ImportsStatementsComponent()
+        {
+        }.putRelativeLinkInMap(getRootComponent().getClass(), importReference);
+        return irs;
+    }
 
     public StringBuilder renderOnInit()
     {
@@ -251,19 +316,6 @@ public abstract class AbstractNgConfiguration<T extends IComponent<?>>
         return sb;
     }
 
-    public StringBuilder renderImportModules()
-    {
-        if (importModules.isEmpty())
-        {
-            return new StringBuilder();
-        }
-        StringBuilder sb = new StringBuilder().append("\n");
-        for (var importProvider : importModules)
-        {
-            sb.append("\t\t" + importProvider.value().trim()).append(",\n");
-        }
-        return sb;
-    }
 
     public StringBuilder renderImportStatements()
     {

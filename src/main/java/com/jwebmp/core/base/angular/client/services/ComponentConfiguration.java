@@ -1,6 +1,9 @@
 package com.jwebmp.core.base.angular.client.services;
 
 import com.google.common.base.Strings;
+import com.jwebmp.core.base.angular.client.annotations.angular.NgComponent;
+import com.jwebmp.core.base.angular.client.annotations.angular.NgDataService;
+import com.jwebmp.core.base.angular.client.annotations.angular.NgDirective;
 import com.jwebmp.core.base.angular.client.annotations.components.NgInput;
 import com.jwebmp.core.base.angular.client.annotations.components.NgOutput;
 import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorParameter;
@@ -8,14 +11,19 @@ import com.jwebmp.core.base.angular.client.annotations.functions.NgAfterContentC
 import com.jwebmp.core.base.angular.client.annotations.functions.NgAfterContentInit;
 import com.jwebmp.core.base.angular.client.annotations.functions.NgAfterViewChecked;
 import com.jwebmp.core.base.angular.client.annotations.functions.NgAfterViewInit;
+import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
+import com.jwebmp.core.base.angular.client.annotations.references.NgImportModule;
+import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
 import com.jwebmp.core.base.angular.client.annotations.structures.*;
 import com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils;
 import com.jwebmp.core.base.angular.client.services.interfaces.INgComponent;
+import com.jwebmp.core.base.angular.client.services.interfaces.INgDirective;
 import com.jwebmp.core.base.html.interfaces.GlobalChildren;
 import com.jwebmp.core.base.interfaces.IComponentHierarchyBase;
 import lombok.Getter;
 
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -29,6 +37,8 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
     private final Set<NgAfterContentInit> afterContentInit = new LinkedHashSet<>();
     private final Set<NgAfterContentChecked> afterContentChecked = new LinkedHashSet<>();
 
+    protected final Set<NgImportModule> importModules = new LinkedHashSet<>();
+
     private final Set<NgInput> inputs = new LinkedHashSet<>();
     private final Set<NgOutput> outputs = new LinkedHashSet<>();
 
@@ -40,6 +50,51 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
     {
         this.rootComponent = (T) rootComponent;
         return this;
+    }
+
+    @Override
+    public void splitComponentReferences()
+    {
+        for (NgComponentReference componentReference : componentReferences)
+        {
+            List<NgImportReference> importReferences = retrieveRelativePathForReference(componentReference);
+            var importReference = importReferences.get(0);
+            var classReference = componentReference.value();
+            if (INgDirective.class.isAssignableFrom(classReference))
+            {
+                for (NgDirective ngDirective : AnnotationUtils.getAnnotation(classReference, NgDirective.class))
+                {
+                    getImportModules().add(AnnotationUtils.getNgImportModule(AnnotationUtils.getTsFilename(classReference)));
+                    getImportReferences().add(importReference);
+                    break;
+                }
+            }
+            if (INgComponent.class.isAssignableFrom(classReference))
+            {
+                for (NgComponent ng : AnnotationUtils.getAnnotation(classReference, NgComponent.class))
+                {
+                    getImportModules().add(AnnotationUtils.getNgImportModule(AnnotationUtils.getTsFilename(classReference)));
+                    getImportReferences().add(importReference);
+                    break;
+                }
+            }
+        }
+
+        super.splitComponentReferences();
+    }
+
+    public StringBuilder renderImportModules()
+    {
+        if (importModules.isEmpty())
+        {
+            return new StringBuilder();
+        }
+        StringBuilder sb = new StringBuilder().append("\n");
+        for (var importProvider : importModules)
+        {
+            sb.append("\t\t" + importProvider.value().trim()).append(",\n");
+        }
+        return sb;
     }
 
     public StringBuilder renderAfterViewInit()

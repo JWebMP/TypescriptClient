@@ -5,10 +5,9 @@ import com.jwebmp.core.base.angular.client.annotations.angularconfig.NgPolyfill;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
 import com.jwebmp.core.base.angular.client.annotations.typescript.TsDependency;
 import com.jwebmp.core.base.angular.client.annotations.typescript.TsDevDependency;
+import com.jwebmp.core.base.angular.client.services.spi.OnGetAllModuleImports;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 @TsDependency(value = "@angular/common", version = "^19.2.0")
 @TsDependency(value = "@angular/compiler", version = "^19.2.0")
@@ -202,4 +201,16 @@ public interface INgModule<J extends INgModule<J>>
     {
         return new ArrayList<>();
     }
+
+    default Set<String> moduleImports()
+    {
+        Set<String> list = new LinkedHashSet<>();
+        ServiceLoader<OnGetAllModuleImports> load = ServiceLoader.load(OnGetAllModuleImports.class);
+        for (OnGetAllModuleImports onGetAllModuleImports : load)
+        {
+            onGetAllModuleImports.perform(list, this);
+        }
+        return list;
+    }
+
 }

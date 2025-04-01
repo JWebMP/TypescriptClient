@@ -5,6 +5,7 @@ import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructo
 import com.jwebmp.core.base.angular.client.annotations.functions.NgOnDestroy;
 import com.jwebmp.core.base.angular.client.annotations.functions.NgOnInit;
 import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
+import com.jwebmp.core.base.angular.client.annotations.references.NgImportModule;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
 import com.jwebmp.core.base.angular.client.annotations.structures.NgField;
 import com.jwebmp.core.base.angular.client.annotations.structures.NgMethod;
@@ -17,6 +18,7 @@ import java.util.List;
 @NgImportReference(value = "Injectable", reference = "@angular/core")
 @NgImportReference(value = "Input", reference = "@angular/core")
 @NgImportReference(value = "inject", reference = "@angular/core", onParent = true)
+@NgImportModule(value = "EventBusListenerDirective", onParent = true)
 
 @NgField("""
           @Input() appEventBusListener!: string | string[]; // The EventBus address(es) to listen on.

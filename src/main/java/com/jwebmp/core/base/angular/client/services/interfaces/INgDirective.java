@@ -8,9 +8,7 @@ import com.jwebmp.core.base.angular.client.annotations.functions.NgOnDestroy;
 import com.jwebmp.core.base.angular.client.annotations.functions.NgOnInit;
 import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
-import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
-import com.jwebmp.core.base.angular.client.services.DataServiceConfiguration;
-import com.jwebmp.core.base.angular.client.services.EventBusService;
+import com.jwebmp.core.base.angular.client.services.*;
 
 import java.util.*;
 
@@ -36,23 +34,6 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
         out.add(getClass().getSimpleName());
         return new ArrayList<>(out);
     }
-
-    /*   @Override
-    default List<NgConstructorParameter> getAllConstructorParameters()
-    {
-        var s = IComponent.super.getAllConstructorParameters();
-        AnnotationHelper ah = IGuiceContext.get(AnnotationHelper.class);
-        var compRefs = ah.getAnnotationFromClass(getClass(), NgComponentReference.class);
-        for (NgComponentReference compRef : compRefs)
-        {
-            var reference = compRef.value();
-            if (reference.isAnnotationPresent(NgProvider.class))
-            {
-                s.add(AnnotationUtils.getNgConstructorParameter("public " + AnnotationUtils.getTsVarName(reference) + " : " + AnnotationUtils.getTsFilename(reference)));
-            }
-        }
-        return s;
-    }*/
 
     @Override
     default List<String> decorators()
@@ -105,6 +86,64 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
         return list;
     }
 
+    @Override
+    default StringBuilder renderFields()
+    {
+        DirectiveConfiguration config = DirectiveReferences.getDataServiceConfigurations(this);
+        StringBuilder sb = new StringBuilder();
+        sb.append(config.renderInjects());
+        sb.append(config.renderFields());
+        return sb;
+    }
+
+    @Override
+    default StringBuilder renderConstructorBody()
+    {
+        DirectiveConfiguration config = DirectiveReferences.getDataServiceConfigurations(this);
+        StringBuilder sb = new StringBuilder();
+        sb.append(config.renderConstructorBodies());
+        return sb;
+    }
+
+    @Override
+    default StringBuilder renderConstructorParameters()
+    {
+        DirectiveConfiguration config = DirectiveReferences.getDataServiceConfigurations(this);
+        StringBuilder sb = new StringBuilder();
+        sb.append(config.renderConstructorParameters());
+        return sb;
+    }
+
+    @Override
+    default StringBuilder renderMethods()
+    {
+        DirectiveConfiguration config = DirectiveReferences.getDataServiceConfigurations(this);
+        StringBuilder sb = new StringBuilder();
+        sb.append(config.renderMethods());
+        sb.append(config.renderOnInit());
+        sb.append(config.renderOnDestroy());
+        return sb;
+    }
+
+    @Override
+    default StringBuilder renderInterfaces()
+    {
+        DirectiveConfiguration config = DirectiveReferences.getDataServiceConfigurations(this);
+        StringBuilder sb = new StringBuilder();
+        sb.append(config.renderInterfaces());
+        return sb;
+    }
+
+    @Override
+    default StringBuilder renderImports()
+    {
+        DirectiveConfiguration config = DirectiveReferences.getDataServiceConfigurations(this);
+        StringBuilder sb = new StringBuilder();
+        sb.append(config.renderImportStatements());
+        return sb;
+    }
+
+
     default List<String> styleUrls()
     {
         return new ArrayList<>();
@@ -128,89 +167,6 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
     default List<String> host()
     {
         return new ArrayList<>();
-    }
-
-    @Override
-    default String renderOnInitMethod()
-    {
-        StringBuilder out = new StringBuilder(IComponent.super.renderOnInitMethod());
-        out.append("ngOnInit() {\n");
-        for (String s : onInit())
-        {
-            out.append("\t")
-                    .append(s)
-                    .append("\n");
-        }
-
-        List<NgOnInit> fInit = IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgOnInit.class);
-        fInit.sort(Comparator.comparingInt(NgOnInit::sortOrder));
-        Set<String> outs = new LinkedHashSet<>();
-        if (!fInit.isEmpty())
-        {
-            for (NgOnInit ngField : fInit)
-            {
-                outs.add(ngField.value()
-                        .trim());
-            }
-        }
-        StringBuilder fInitOut = new StringBuilder();
-        for (String s : outs)
-        {
-            fInitOut.append(s)
-                    .append("\n");
-        }
-        out.append("\t")
-                .append(fInitOut)
-                .append("\n");
-
-        out.append("}\n");
-        return out.toString();
-    }
-
-    @Override
-    default String renderOnDestroyMethod()
-    {
-        StringBuilder out = new StringBuilder(IComponent.super.renderOnDestroyMethod());
-        out.append("ngOnDestroy() {\n");
-        for (String s : onDestroy())
-        {
-            out.append("\t")
-                    .append(s)
-                    .append("\n");
-        }
-        List<NgOnDestroy> fInit = IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgOnDestroy.class);
-        fInit.sort(Comparator.comparingInt(NgOnDestroy::sortOrder));
-        Set<String> outs = new LinkedHashSet<>();
-        if (!fInit.isEmpty())
-        {
-            for (NgOnDestroy ngField : fInit)
-            {
-                outs.add(ngField.value()
-                        .trim());
-            }
-        }
-        StringBuilder fInitOut = new StringBuilder();
-        for (String s : outs)
-        {
-            fInitOut.append(s)
-                    .append("\n");
-        }
-        out.append("\t")
-                .append(fInitOut)
-                .append("\n");
-        out.append("}\n");
-        return out.toString();
-    }
-
-
-    default List<String> interfaces()
-    {
-        List<String> out = IComponent.super.interfaces();
-        out.add("OnInit");
-        out.add("OnDestroy");
-        return out;
     }
 
 }

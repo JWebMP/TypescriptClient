@@ -5,12 +5,11 @@ import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructo
 import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorParameter;
 import com.jwebmp.core.base.angular.client.annotations.functions.NgOnDestroy;
 import com.jwebmp.core.base.angular.client.annotations.functions.NgOnInit;
+import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
 import com.jwebmp.core.base.angular.client.annotations.structures.*;
 import com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils;
 import com.jwebmp.core.base.angular.client.services.interfaces.IComponent;
-import com.jwebmp.core.base.html.interfaces.GlobalChildren;
-import com.jwebmp.core.base.interfaces.IComponentHierarchyBase;
 
 public abstract class AbstractReferences<J extends AbstractNgConfiguration<?>>
 {
@@ -18,6 +17,9 @@ public abstract class AbstractReferences<J extends AbstractNgConfiguration<?>>
 
     protected void processClass(Class<?> clazz, boolean checkForParent)
     {
+
+        addComponentReferences(clazz, checkForParent);
+
         addFields(clazz, checkForParent);
         addMethods(clazz, checkForParent);
         addConstructorParameters(clazz, checkForParent);
@@ -175,6 +177,16 @@ public abstract class AbstractReferences<J extends AbstractNgConfiguration<?>>
             if ((ngField.onSelf() && !checkForParent) || (ngField.onParent() && checkForParent))
             {
                 getConfiguration().getFields().add(AnnotationUtils.getNgField(ngField.value()));
+            }
+        });
+    }
+
+    protected void addComponentReferences(Class<?> component, boolean checkForParent)
+    {
+        AnnotationUtils.getAnnotation(component, NgComponentReference.class).forEach(ngField -> {
+            if ((ngField.onSelf() && !checkForParent) || (ngField.onParent() && checkForParent))
+            {
+                getConfiguration().getComponentReferences().add(AnnotationUtils.getNgComponentReference(ngField.value()));
             }
         });
     }

@@ -279,6 +279,10 @@ public interface INgDataType<J extends INgDataType<J>>
             case "Set":
             case "HashMap":
                 return new Object[0];
+            case "Map":
+            case "TreeMap":
+            case "LinkedHashMap":
+                return new HashMap<>();
             default:
                 LogManager.getLogger("INgDataType").error("Cannot determine type for - [{}]", o.getSimpleName());
         }
