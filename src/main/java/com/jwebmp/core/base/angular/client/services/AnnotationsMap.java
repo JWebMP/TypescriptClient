@@ -164,6 +164,7 @@ public class AnnotationsMap
 
             NgInput.class,
             NgComponentTagAttribute.class,
+            NgImportModule.class,
             NgOutput.class,
 
             NgGlobalConstructorParameter.class,

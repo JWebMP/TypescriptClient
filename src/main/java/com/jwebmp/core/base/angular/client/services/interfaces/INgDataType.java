@@ -239,14 +239,15 @@ public interface INgDataType<J extends INgDataType<J>>
             {
                 var s = renderObjectStructure(o).toString();
                 var map = get(DefaultObjectMapper).readerFor(LinkedHashMap.class).readValue(s);
+                //return this populate ng data type defaults
                 return map;
             }
             catch (JsonProcessingException e)
             {
                 throw new RuntimeException(e);
             }
-
         }
+        //This is the field type
         switch (o.getSimpleName())
         {
             case "String":
