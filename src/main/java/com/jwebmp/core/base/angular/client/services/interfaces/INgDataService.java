@@ -5,7 +5,9 @@ import com.jwebmp.core.base.ajax.AjaxCall;
 import com.jwebmp.core.base.ajax.AjaxResponse;
 import com.jwebmp.core.base.angular.client.DynamicData;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgDataService;
+import com.jwebmp.core.base.angular.client.annotations.angular.NgProvider;
 import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorBody;
+import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorParameter;
 import com.jwebmp.core.base.angular.client.annotations.functions.NgOnDestroy;
 import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgDataTypeReference;
@@ -154,6 +156,23 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
     }
 
     @Override
+    default List<NgConstructorParameter> getAllConstructorParameters()
+    {
+        var s = IComponent.super.getAllConstructorParameters();
+        AnnotationHelper ah = IGuiceContext.get(AnnotationHelper.class);
+        var compRefs = ah.getAnnotationFromClass(getClass(), NgComponentReference.class);
+        for (NgComponentReference compRef : compRefs)
+        {
+            var reference = compRef.value();
+            if (reference.isAnnotationPresent(NgProvider.class))
+            {
+                s.add(AnnotationUtils.getNgConstructorParameter("public " + AnnotationUtils.getTsVarName(reference) + " : " + AnnotationUtils.getTsFilename(reference)));
+            }
+        }
+        return s;
+    }
+
+    @Override
     default List<String> constructorBody()
     {
         List<String> strings = IComponent.super.constructorBody();
@@ -173,11 +192,11 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
     {
         List<String> fields = IComponent.super.fields();
         NgDataService dService = IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgDataService.class)
-                .get(0);
+                                              .getAnnotationFromClass(getClass(), NgDataService.class)
+                                              .get(0);
 
         var dtReferences = IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgDataTypeReference.class);
+                                        .getAnnotationFromClass(getClass(), NgDataTypeReference.class);
         if (dtReferences.isEmpty())
         {
             fields.add("readonly dataSubject : BehaviorSubject<any> = new BehaviorSubject<any>(undefined);");
@@ -185,17 +204,19 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
         else
         {
             var firstReference = dtReferences.stream()
-                    .filter(a -> a.primary())
-                    .findFirst()
-                    .orElse(null);
+                                             .filter(a -> a.primary())
+                                             .findFirst()
+                                             .orElse(null);
 
-            if (firstReference == null || firstReference.value() == null || firstReference.value().getSimpleName() == null)
+            if (firstReference == null || firstReference.value() == null || firstReference.value()
+                                                                                          .getSimpleName() == null)
             {
                 fields.add("readonly dataSubject : BehaviorSubject<any> = new BehaviorSubject<any>(undefined);");
             }
             else
             {
-                var name = firstReference.value().getSimpleName();
+                var name = firstReference.value()
+                                         .getSimpleName();
 
                 fields.add("readonly dataSubject : BehaviorSubject<" + name + " | undefined> = new BehaviorSubject<" + name + " | undefined>(undefined);");
             }
@@ -251,11 +272,11 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
         for (String s : onDestroy())
         {
             out.append("\t")
-                    .append(s)
-                    .append("\n");
+               .append(s)
+               .append("\n");
         }
         List<NgOnDestroy> fInit = IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgOnDestroy.class);
+                                               .getAnnotationFromClass(getClass(), NgOnDestroy.class);
         fInit.sort(Comparator.comparingInt(NgOnDestroy::sortOrder));
         Set<String> outs = new LinkedHashSet<>();
         if (!fInit.isEmpty())
@@ -263,7 +284,7 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
             for (NgOnDestroy ngField : fInit)
             {
                 outs.add(ngField.value()
-                        .trim());
+                                .trim());
             }
         }
         StringBuilder fInitOut = new StringBuilder();
@@ -273,8 +294,8 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
                     .append("\n");
         }
         out.append("\t")
-                .append(fInitOut)
-                .append("\n");
+           .append(fInitOut)
+           .append("\n");
         out.append("}\n");
         return out.toString();
     }

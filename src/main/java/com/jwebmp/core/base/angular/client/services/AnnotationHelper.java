@@ -1,11 +1,11 @@
 package com.jwebmp.core.base.angular.client.services;
 
+import com.google.inject.Singleton;
 import com.guicedee.client.IGuiceContext;
 import com.guicedee.guicedinjection.GuiceContext;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ClassInfoList;
 import io.github.classgraph.ScanResult;
-import jakarta.inject.Singleton;
 import lombok.extern.java.Log;
 
 import java.lang.annotation.Annotation;
@@ -45,7 +45,7 @@ public class AnnotationHelper
         globalAnnotations = new HashMap<>();
         ngAllGlobals.forEach((key, value) -> {
             ScanResult scanResult = GuiceContext.instance()
-                    .getScanResult();
+                                                .getScanResult();
             List<Annotation> globals = new ArrayList<>();
 
             ClassInfoList classesWithAnnotation = scanResult.getClassesWithAnnotation(key);
@@ -64,7 +64,7 @@ public class AnnotationHelper
             for (ClassInfo classInfo : classesWithAnnotation)
             {
                 Annotation annotation = classInfo.loadClass()
-                        .getAnnotation(key);
+                                                 .getAnnotation(key);
                 if (annotation != null)
                 {
                     globals.add(annotation);
@@ -98,7 +98,8 @@ public class AnnotationHelper
         if (superClassMappings.containsKey(clazz))
         {
             maps = superClassMappings.get(clazz);
-        } else
+        }
+        else
         {
             maps = extractAnnotations(clazz);
             superClassMappings.put(clazz, maps);
@@ -118,7 +119,8 @@ public class AnnotationHelper
             {
                 map = extractAnnotations(superclass);
                 superClassMappings.put(superclass, map);
-            } else
+            }
+            else
             {
                 map = superClassMappings.get(superclass);
             }
@@ -178,8 +180,8 @@ public class AnnotationHelper
             scanClass(clazz);
         }
         List<T> ts = (List<T>) mappings.get(clazz)
-                .getLookup()
-                .get(annotation);
+                                       .getLookup()
+                                       .get(annotation);
         if (ts == null)
         {
             return new ArrayList<>();
@@ -196,13 +198,14 @@ public class AnnotationHelper
             try
             {
                 Method valueMethod = refAnnotation.annotationType()
-                        .getDeclaredMethod("value");
+                                                  .getDeclaredMethod("value");
                 Annotation[] result = (Annotation[]) valueMethod.invoke(refAnnotation);
                 for (Annotation annotation : result)
                 {
                     out.add((T) annotation);
                 }
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 log.log(Level.SEVERE, "Cannot read multiple annotations - " + clazz + " - " + multipleAnnotation, e);
             }

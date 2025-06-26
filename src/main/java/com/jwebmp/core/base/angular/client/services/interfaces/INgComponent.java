@@ -27,7 +27,7 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 @NgImportReference(value = "Component", reference = "@angular/core")
-@NgImportReference(value = "CUSTOM_ELEMENTS_SCHEMA", reference = "@angular/core")
+//@NgImportReference(value = "CUSTOM_ELEMENTS_SCHEMA", reference = "@angular/core")
 //@NgImportReference(value = "Injectable", reference = "@angular/core")
 //@NgImportReference(value = "AfterViewInit", reference = "@angular/core")
 //@NgImportReference(value = "AfterViewChecked", reference = "@angular/core")
@@ -94,18 +94,19 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
         }
         if (!getClass().isAnnotationPresent(NgComponent.class))
         {
-            LogManager.getLogger("INgComponent").warn("This one doesn't have a ng component");
+            LogManager.getLogger("INgComponent")
+                      .warn("This one doesn't have a ng component");
             return list;
         }
         NgComponent ngComponent = IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgComponent.class)
-                .get(0);
+                                               .getAnnotationFromClass(getClass(), NgComponent.class)
+                                               .get(0);
         if (!Strings.isNullOrEmpty(getClass().getAnnotation(NgComponent.class)
-                .providedIn()))
+                                             .providedIn()))
         {
             list.add("@Injectable ({" + "  providedIn:" + (ngComponent.providedIn()
-                    .startsWith("!") ? "" : "'") + ngComponent.providedIn() + (ngComponent.providedIn()
-                    .startsWith("!") ? "" : "'") + "})");
+                                                                      .startsWith("!") ? "" : "'") + ngComponent.providedIn() + (ngComponent.providedIn()
+                                                                                                                                            .startsWith("!") ? "" : "'") + "})");
             me().addConfiguration(AnnotationUtils.getNgImportReference("Injectable", "@angular/core"));
 
         }
@@ -124,23 +125,23 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
 
         IComponentHierarchyBase<?, ?> chb = (IComponentHierarchyBase<?, ?>) this;
         chb.asTagBase()
-                .setRenderTag(true);
+           .setRenderTag(true);
         selector.append(ngComponent.value());
 
         StringBuilder templateUrls = new StringBuilder();
         templateUrls.append("./")
-                .append(getTsFilename(getClass()))
-                .append(".html");
+                    .append(getTsFilename(getClass()))
+                    .append(".html");
 
         styleUrls.append("'./")
-                .append(getTsFilename(getClass()))
-                .append(".scss")
-                .append("',\n");
+                 .append(getTsFilename(getClass()))
+                 .append(".scss")
+                 .append("',\n");
         for (String styleUrl : styleUrls())
         {
             styleUrls.append("'")
-                    .append(styleUrl)
-                    .append("',\n");
+                     .append(styleUrl)
+                     .append("',\n");
         }
         if (styleUrls.length() > 0)
         {
@@ -150,8 +151,8 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
         for (String style : styles())
         {
             styles.append("`")
-                    .append(style)
-                    .append("`,\n");
+                  .append(style)
+                  .append("`,\n");
         }
         if (styles.length() > 0)
         {
@@ -188,13 +189,13 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
         {
             var refs = componentHierarchyBase.getConfigurations(NgImportProvider.class, false);
             for (var ref : refs.stream()
-                    .map(NgImportProvider::value)
-                    .distinct()
-                    .toList())
+                               .map(NgImportProvider::value)
+                               .distinct()
+                               .toList())
             {
                 providers.append(ref)
-                        .append(",")
-                        .append("\n");
+                         .append(",")
+                         .append("\n");
             }
         }
 
@@ -280,7 +281,7 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
             componentString = String.format(INgComponent.componentStandaloneString, selector, templateUrls, styles, styleUrls, "", //viewProviders
                     "", //Animations
                     providers, //Directive Providers,
-                    "CUSTOM_ELEMENTS_SCHEMA", //schemas
+                    "", //schemas
                     hosts, //hosts entry
                     importsModules,
                     standalone);
@@ -328,8 +329,8 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
     default File getFile(Class<?> clazz, String... extension)
     {
         String baseDir = getFileReference(IComponent.getCurrentAppFile()
-                .get()
-                .getPath(), clazz, extension);
+                                                    .get()
+                                                    .getPath(), clazz, extension);
         File file = new File(baseDir);
         return file;
     }
@@ -370,10 +371,14 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
     default StringBuilder renderMethods()
     {
         J me = (J) this;
-        if (me.asBase().getProperties().containsKey("AngularConfiguration"))
+        if (me.asBase()
+              .getProperties()
+              .containsKey("AngularConfiguration"))
         {
             StringBuilder sb = new StringBuilder();
-            ComponentConfiguration config = (ComponentConfiguration) me.asBase().getProperties().get("AngularConfiguration");
+            ComponentConfiguration config = (ComponentConfiguration) me.asBase()
+                                                                       .getProperties()
+                                                                       .get("AngularConfiguration");
             sb.append(config.renderOnInit());
             sb.append(config.renderAfterViewInit());
             sb.append(config.renderAfterContentInit());
@@ -396,9 +401,13 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
     default StringBuilder renderFields()
     {
         J me = (J) this;
-        if (me.asBase().getProperties().containsKey("AngularConfiguration"))
+        if (me.asBase()
+              .getProperties()
+              .containsKey("AngularConfiguration"))
         {
-            ComponentConfiguration config = (ComponentConfiguration) me.asBase().getProperties().get("AngularConfiguration");
+            ComponentConfiguration config = (ComponentConfiguration) me.asBase()
+                                                                       .getProperties()
+                                                                       .get("AngularConfiguration");
             StringBuilder sb = new StringBuilder();
             sb.append(config.renderInjects());
             sb.append(config.renderModals());
@@ -415,9 +424,13 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
     default StringBuilder renderConstructorBody()
     {
         J me = (J) this;
-        if (me.asBase().getProperties().containsKey("AngularConfiguration"))
+        if (me.asBase()
+              .getProperties()
+              .containsKey("AngularConfiguration"))
         {
-            ComponentConfiguration config = (ComponentConfiguration) me.asBase().getProperties().get("AngularConfiguration");
+            ComponentConfiguration config = (ComponentConfiguration) me.asBase()
+                                                                       .getProperties()
+                                                                       .get("AngularConfiguration");
             return config.renderConstructorBodies();
         }
         return new StringBuilder();
@@ -427,9 +440,13 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
     default StringBuilder renderConstructorParameters()
     {
         J me = (J) this;
-        if (me.asBase().getProperties().containsKey("AngularConfiguration"))
+        if (me.asBase()
+              .getProperties()
+              .containsKey("AngularConfiguration"))
         {
-            ComponentConfiguration config = (ComponentConfiguration) me.asBase().getProperties().get("AngularConfiguration");
+            ComponentConfiguration config = (ComponentConfiguration) me.asBase()
+                                                                       .getProperties()
+                                                                       .get("AngularConfiguration");
             return config.renderConstructorParameters();
         }
         return new StringBuilder();
@@ -439,9 +456,13 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
     default StringBuilder renderInterfaces()
     {
         J me = (J) this;
-        if (me.asBase().getProperties().containsKey("AngularConfiguration"))
+        if (me.asBase()
+              .getProperties()
+              .containsKey("AngularConfiguration"))
         {
-            ComponentConfiguration config = (ComponentConfiguration) me.asBase().getProperties().get("AngularConfiguration");
+            ComponentConfiguration config = (ComponentConfiguration) me.asBase()
+                                                                       .getProperties()
+                                                                       .get("AngularConfiguration");
             return config.renderInterfaces();
         }
         return new StringBuilder();
@@ -451,9 +472,13 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
     default StringBuilder renderImports()
     {
         J me = (J) this;
-        if (me.asBase().getProperties().containsKey("AngularConfiguration"))
+        if (me.asBase()
+              .getProperties()
+              .containsKey("AngularConfiguration"))
         {
-            ComponentConfiguration config = (ComponentConfiguration) me.asBase().getProperties().get("AngularConfiguration");
+            ComponentConfiguration config = (ComponentConfiguration) me.asBase()
+                                                                       .getProperties()
+                                                                       .get("AngularConfiguration");
             return config.renderImportStatements();
         }
         return new StringBuilder();
@@ -462,9 +487,13 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
     default StringBuilder renderImportModules()
     {
         J me = (J) this;
-        if (me.asBase().getProperties().containsKey("AngularConfiguration"))
+        if (me.asBase()
+              .getProperties()
+              .containsKey("AngularConfiguration"))
         {
-            ComponentConfiguration config = (ComponentConfiguration) me.asBase().getProperties().get("AngularConfiguration");
+            ComponentConfiguration config = (ComponentConfiguration) me.asBase()
+                                                                       .getProperties()
+                                                                       .get("AngularConfiguration");
             return config.renderImportModules();
         }
         return new StringBuilder();

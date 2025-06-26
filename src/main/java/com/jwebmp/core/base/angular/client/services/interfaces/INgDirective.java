@@ -36,7 +36,7 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
         return new ArrayList<>(out);
     }
 
- /*   @Override
+    @Override
     default List<NgConstructorParameter> getAllConstructorParameters()
     {
         var s = IComponent.super.getAllConstructorParameters();
@@ -51,7 +51,7 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
             }
         }
         return s;
-    }*/
+    }
 
     @Override
     default List<String> decorators()
@@ -79,16 +79,18 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
             {
                 var np = reference.getAnnotation(NgProvider.class);
                 if (!np.singleton())
+                {
                     providers.append(compRef.value()
-                            .getSimpleName() + ",\n");
+                                            .getSimpleName() + ",\n");
+                }
             }
         }
 
         providers()
                 .forEach((key) -> {
                     providers.append(key)
-                            .append(",")
-                            .append("\n");
+                             .append(",")
+                             .append("\n");
                 });
         if (!providers()
                 .isEmpty())
@@ -135,12 +137,12 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
         for (String s : onInit())
         {
             out.append("\t")
-                    .append(s)
-                    .append("\n");
+               .append(s)
+               .append("\n");
         }
 
         List<NgOnInit> fInit = IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgOnInit.class);
+                                            .getAnnotationFromClass(getClass(), NgOnInit.class);
         fInit.sort(Comparator.comparingInt(NgOnInit::sortOrder));
         Set<String> outs = new LinkedHashSet<>();
         if (!fInit.isEmpty())
@@ -148,7 +150,7 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
             for (NgOnInit ngField : fInit)
             {
                 outs.add(ngField.value()
-                        .trim());
+                                .trim());
             }
         }
         StringBuilder fInitOut = new StringBuilder();
@@ -158,8 +160,8 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
                     .append("\n");
         }
         out.append("\t")
-                .append(fInitOut)
-                .append("\n");
+           .append(fInitOut)
+           .append("\n");
 
         out.append("}\n");
         return out.toString();
@@ -173,11 +175,11 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
         for (String s : onDestroy())
         {
             out.append("\t")
-                    .append(s)
-                    .append("\n");
+               .append(s)
+               .append("\n");
         }
         List<NgOnDestroy> fInit = IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgOnDestroy.class);
+                                               .getAnnotationFromClass(getClass(), NgOnDestroy.class);
         fInit.sort(Comparator.comparingInt(NgOnDestroy::sortOrder));
         Set<String> outs = new LinkedHashSet<>();
         if (!fInit.isEmpty())
@@ -185,7 +187,7 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
             for (NgOnDestroy ngField : fInit)
             {
                 outs.add(ngField.value()
-                        .trim());
+                                .trim());
             }
         }
         StringBuilder fInitOut = new StringBuilder();
@@ -195,8 +197,8 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
                     .append("\n");
         }
         out.append("\t")
-                .append(fInitOut)
-                .append("\n");
+           .append(fInitOut)
+           .append("\n");
         out.append("}\n");
         return out.toString();
     }

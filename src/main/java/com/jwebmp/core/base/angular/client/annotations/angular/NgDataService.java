@@ -10,12 +10,26 @@ import static java.lang.annotation.RetentionPolicy.*;
 @Inherited
 public @interface NgDataService
 {
-	/**
-	 * The signal name
-	 *
-	 * @return
-	 */
-	String value();
-	
-	boolean fetchOnCreate() default true;
+    /**
+     * The signal name
+     *
+     * @return
+     */
+    String value();
+
+    /**
+     * The listener name to apply
+     *
+     * @return
+     */
+    String listenerName() default "";
+
+    /**
+     * If the service provides data, and is fetched on request through a service provider
+     *
+     * @return Sets the providedIn value to 'root' or 'any'
+     */
+    boolean singleton() default true;
+
+    boolean fetchOnCreate() default true;
 }
