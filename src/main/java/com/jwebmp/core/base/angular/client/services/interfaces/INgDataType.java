@@ -1,21 +1,23 @@
 package com.jwebmp.core.base.angular.client.services.interfaces;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.Strings;
+import com.guicedee.client.IGuiceContext;
 import com.guicedee.services.jsonrepresentation.IJsonRepresentation;
+import com.jwebmp.core.base.angular.client.annotations.angular.NgDataType;
 import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
+import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
 import jakarta.validation.constraints.NotNull;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.file.InvalidPathException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -55,6 +57,95 @@ public interface INgDataType<J extends INgDataType<J>>
         }
     }
 
+    default NgDataType.DataTypeClass typeClass()
+    {
+        List<NgDataType> cType = IGuiceContext.get(AnnotationHelper.class)
+                                              .getAnnotationFromClass(getClass(), NgDataType.class);
+        if (cType.isEmpty())
+        {
+            return NgDataType.DataTypeClass.Class;
+        }
+        var t = cType.getFirst();
+        return t.value();
+    }
+
+    default String typeField(Class fieldType, Field field)
+    {
+        String arrayString = fieldType.isArray() ? "[]" : "";
+
+        if (Object.class.equals(fieldType))
+        {
+            return "any" + arrayString;
+        }
+        else if (
+                Number.class.isAssignableFrom(fieldType) ||
+                        BigDecimal.class.isAssignableFrom(fieldType) ||
+                        BigInteger.class.isAssignableFrom(fieldType) ||
+                        int.class.isAssignableFrom(fieldType) ||
+                        double.class.isAssignableFrom(fieldType) ||
+                        float.class.isAssignableFrom(fieldType)
+        )
+        {
+            return "number" + arrayString;
+        }
+        else if (String.class.isAssignableFrom(fieldType) ||
+                UUID.class.isAssignableFrom(fieldType) ||
+                Character.class.isAssignableFrom(fieldType) ||
+                fieldType.isEnum() ||
+                Duration.class.isAssignableFrom(fieldType)
+        )
+        {
+            return "string" + arrayString;
+        }
+        else if (Boolean.class.isAssignableFrom(fieldType) || boolean.class.isAssignableFrom(fieldType))
+        {
+            return "boolean" + arrayString;
+        }
+        else if (OffsetDateTime.class.isAssignableFrom(fieldType) ||
+                LocalDateTime.class.isAssignableFrom(fieldType) ||
+                ZonedDateTime.class.isAssignableFrom(fieldType) ||
+                LocalDate.class.isAssignableFrom(fieldType) ||
+                Date.class.isAssignableFrom(fieldType))
+        {
+            return "Date" + arrayString;
+        }
+        else if (INgDataType.class.isAssignableFrom(fieldType))
+        {
+            return getTsFilename(fieldType) + arrayString;
+        }
+        else if (IComponent.class.isAssignableFrom(fieldType))
+        {
+            return getTsFilename(fieldType) + arrayString;
+        }
+        else if (Collection.class.isAssignableFrom(fieldType))
+        {
+            return getGenericType(field) + "[]";
+        }
+        else if (Map.class.isAssignableFrom(fieldType))
+        {
+            return "any" + arrayString;
+        }
+        else
+        {
+            Logger.getLogger("DataType")
+                  .warning("Type not catered for : [" + fieldType + "] - [" + getClass().getCanonicalName() + "]");
+            return "any" + arrayString;
+        }
+    }
+
+    default String getGenericType(Field field)
+    {
+        if (field.getGenericType()
+                 .getTypeName()
+                 .equals("Object"))
+        {
+            return "any";
+        }
+        String genericType = StringUtils.substringBetween(field.getGenericType()
+                                                               .getTypeName(), "<", ">");
+        return genericType;
+    }
+
     static String getFieldName(Field field)
     {
         return field.getName();
@@ -62,10 +153,14 @@ public interface INgDataType<J extends INgDataType<J>>
 
     default void renderFieldTS(StringBuilder out, String fieldName, Class fieldType, Field field, boolean array)
     {
-        if (field.getAnnotation(JsonIgnore.class) != null || Modifier.isStatic(field.getModifiers()))
+        if (field.getAnnotation(JsonIgnore.class) != null ||
+                Modifier.isStatic(field.getModifiers()) ||
+                Modifier.isFinal(field.getModifiers())
+        )
         {
             return;
         }
+
         //    ObjectMapper mapper = IGuiceContext.get(DefaultObjectMapper);
 
         String optionalString = "";
@@ -74,25 +169,45 @@ public interface INgDataType<J extends INgDataType<J>>
             optionalString = "?";
         }
 
-        if (Number.class.isAssignableFrom(fieldType))
+        var type = typeClass();
+        String encap = " public";
+        if (type == NgDataType.DataTypeClass.Interface)
         {
-            out.append(" public " + fieldName + optionalString + " : number" + (array ? "[]" : "") + " = " + (array ? "[]" : "0") + ";\n");
+            encap = " ";
+        }
+        String fieldDeclaration = encap + " " + fieldName + optionalString;
+        String typeField = typeField(fieldType, field);
+        typeField = typeField.replace("java.lang.Object", "any");
+
+        if (type == NgDataType.DataTypeClass.Interface)
+        {
+            out.append(fieldDeclaration + " : " + typeField + ";\n");
+            return;
+        }
+
+        if (Object.class.equals(fieldType))
+        {
+            out.append(fieldDeclaration + " : any" + (array ? "[]" : "") + " = " + (array ? "[]" : "0") + ";\n");
+        }
+        else if (Number.class.isAssignableFrom(fieldType))
+        {
+            out.append(fieldDeclaration + " : number" + (array ? "[]" : "") + " = " + (array ? "[]" : "0") + ";\n");
         }
         else if (BigDecimal.class.isAssignableFrom(fieldType))
         {
-            out.append(" public " + fieldName + optionalString + " : number" + (array ? "[]" : "") + " = " + (array ? "[]" : "0") + ";\n");
+            out.append(fieldDeclaration + " : number" + (array ? "[]" : "") + " = " + (array ? "[]" : "0") + ";\n");
         }
         else if (BigInteger.class.isAssignableFrom(fieldType))
         {
-            out.append(" public " + fieldName + optionalString + " : number" + (array ? "[]" : "") + " = " + (array ? "[]" : "0") + ";\n");
+            out.append(fieldDeclaration + " : number" + (array ? "[]" : "") + " = " + (array ? "[]" : "0") + ";\n");
         }
-        else if (String.class.isAssignableFrom(fieldType))
+        else if (String.class.isAssignableFrom(fieldType) || UUID.class.isAssignableFrom(fieldType) || Character.class.isAssignableFrom(fieldType))
         {
-            out.append(" public " + fieldName + optionalString + " : string" + (array ? "[]" : "") + " = " + (array ? "[]" : "''") + ";\n");
+            out.append(fieldDeclaration + " : string" + (array ? "[]" : "") + " = " + (array ? "[]" : "''") + ";\n");
         }
         else if (Boolean.class.isAssignableFrom(fieldType) || boolean.class.isAssignableFrom(fieldType))
         {
-            out.append(" public " + fieldName + optionalString + " : boolean" + (array ? "[]" : "") + " =" + (array ? "[]" : "false") + ";\n");
+            out.append(fieldDeclaration + " : boolean" + (array ? "[]" : "") + " =" + (array ? "[]" : "false") + ";\n");
         }
         else if (OffsetDateTime.class.isAssignableFrom(fieldType) ||
                 LocalDateTime.class.isAssignableFrom(fieldType) ||
@@ -101,20 +216,20 @@ public interface INgDataType<J extends INgDataType<J>>
                 Date.class.isAssignableFrom(fieldType)
         )
         {
-            out.append(" public " + fieldName + optionalString + " : Date" + (array ? "[]" : "") + " =" + (array ? "[]" : "new Date()") + ";\n");
+            out.append(fieldDeclaration + " : Date" + (array ? "[]" : "") + " =" + (array ? "[]" : "new Date()") + ";\n");
         }
         else if (INgDataType.class.isAssignableFrom(fieldType))
         {
             //todo make this import the data type from the class
             //out.append(" public " + fieldName + "? : " + getTsFilename(fieldType) + "" + (array ? "[]" : "") + " = " + (array ? "[]" : "{}") + ";\n");
             String typeName = getTsFilename(fieldType);
-            out.append(" public " + fieldName + optionalString + " : " + typeName + " " + (array ? "[]" : "") + " = " + (array ? "[]" : renderObjectStructure(fieldType)) + ";\n");
+            out.append(fieldDeclaration + " : " + typeName + " " + (array ? "[]" : "") + " = " + (array ? "[]" : renderObjectStructure(fieldType)) + ";\n");
         }
         else if (IComponent.class.isAssignableFrom(fieldType))
         {
             //todo make this import the data type from the class
             //out.append(" public " + fieldName + "? : " + getTsFilename(fieldType) + "" + (array ? "[]" : "") + " = " + (array ? "[]" : "{}") + ";\n");
-            out.append(" public " + fieldName + optionalString + " : any " + (array ? "[]" : "") + " = " + (array ? "[]" : renderObjectStructure(fieldType)) + ";\n");
+            out.append(fieldDeclaration + " : any " + (array ? "[]" : "") + " = " + (array ? "[]" : renderObjectStructure(fieldType)) + ";\n");
         }
         else if (Collection.class.isAssignableFrom(fieldType))
         {
@@ -188,15 +303,28 @@ public interface INgDataType<J extends INgDataType<J>>
                 e.printStackTrace();
             }
         }
-        else if (Object.class.isAssignableFrom(fieldType))
+        else if (fieldType.isEnum())
         {
-            out.append(" public " + fieldName + optionalString + " : any" + (array ? "[]" : "") + " = " + (array ? "[]" : renderObjectStructure(fieldType)) + ";\n");
+            //get generic type
+            String genericType = fieldType.arrayType()
+                                          .getCanonicalName();
+            try
+            {
+                renderFieldTS(out, fieldName, Class.forName(genericType), field, false);
+            }
+            catch (ClassNotFoundException e)
+            {
+                e.printStackTrace();
+            }
         }
     }
 
     static boolean isFieldRequired(Field field)
     {
-        return field.getAnnotation(NotNull.class) != null;
+        return field.getAnnotation(NotNull.class) != null ||
+                field.getType()
+                     .isPrimitive()
+                ;
     }
 
     static StringBuilder renderObjectStructure(Class<?> o)
@@ -205,27 +333,46 @@ public interface INgDataType<J extends INgDataType<J>>
         out.append("{");
         for (Field declaredField : o.getDeclaredFields())
         {
+            if (Modifier.isStatic(declaredField.getModifiers()) || Modifier.isFinal(declaredField.getModifiers()) || declaredField.getAnnotation(JsonIgnore.class) != null)
+            {
+                continue;
+            }
+
             if (out.length() != 1)
             {
                 out.append(",");
             }
-            if (isFieldRequired(declaredField))
+            //  if (isFieldRequired(declaredField))
+            //    {
+            out.append(getFieldName(declaredField));
+            out.append(" ");
+            out.append(":");
+
+            if (declaredField.getType()
+                             .isEnum())
             {
-                out.append(getFieldName(declaredField));
-                out.append(" ");
-                out.append(":");
+                out.append("''");
+            }
+            else
+            {
                 switch (declaredField.getType()
                                      .getSimpleName())
                 {
                     case "String":
+                    case "Character":
+                    case "char":
                     case "UUID":
+                    case "Duration":
                         out.append("''");
                         break;
                     case "Boolean":
+                    case "boolean":
                         out.append("false");
                         break;
                     case "Integer":
+                    case "int":
                     case "Double":
+                    case "double":
                         out.append("0");
                         break;
                     case "OffsetDateTime":
@@ -236,14 +383,44 @@ public interface INgDataType<J extends INgDataType<J>>
                         out.append("new Date()");
                         break;
                     case "List":
+                    case "ArrayList":
                     case "Set":
-                    case "HashMap":
                         out.append("[]");
                         break;
+                    case "HashMap":
+                    case "Map":
+                    case "TreeMap":
+                        out.append("{}");
+                        break;
+                    case "Object":
+                        out.append("any");
+                        break;
                     default:
-                        out.append(renderObjectStructure(declaredField.getType()));
+                    {
+                        if (o.getAnnotationsByType(NgDataType.class).length > 0 && !o.isEnum())
+                        {
+                            out.append(renderObjectStructure(declaredField.getType()));
+                        }
+                        else if (o.getAnnotationsByType(NgDataType.class).length > 0 && !o.isEnum())
+                        {
+                            out.append("''");
+                        }
+                        else
+                        {
+                            Logger.getLogger("DataType")
+                                  .warning("Type not catered for : " + declaredField.getType() + " in [" + o.getCanonicalName() + "]");
+                        }
+                        //    out.append(renderObjectStructure(declaredField.getType()));
+                    }
+
                 }
             }
+/*            }
+            else
+            {
+                out.append(getFieldName(declaredField));
+                out.append("?");
+            }*/
         }
         out.append("}");
         return out;

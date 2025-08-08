@@ -17,6 +17,7 @@ import java.util.List;
 @NgDataType
 public final class DynamicData implements INgDataType<DynamicData>, IJsonRepresentation<DynamicData>
 {
+    
     private List<Object> out = new ArrayList<>();
 
     public DynamicData addData(INgDataType<?>... out)

@@ -13,6 +13,7 @@ import com.jwebmp.core.base.angular.client.annotations.references.NgImportRefere
 import com.jwebmp.core.base.angular.client.annotations.structures.*;
 import com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils;
 import com.jwebmp.core.base.angular.client.services.interfaces.INgComponent;
+import com.jwebmp.core.base.angular.client.services.tstypes.bool;
 import com.jwebmp.core.base.html.interfaces.GlobalChildren;
 import com.jwebmp.core.base.interfaces.IComponentHierarchyBase;
 import lombok.Getter;
@@ -74,7 +75,10 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         sb.append("\t{\n");
         for (var ngOnInit : onInit)
         {
-            sb.append("\t\t").append(ngOnInit.value().trim()).append("\n");
+            sb.append("\t\t")
+              .append(ngOnInit.value()
+                              .trim())
+              .append("\n");
         }
         sb.append("\t}\n");
         return sb;
@@ -91,7 +95,10 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         sb.append("\t{\n");
         for (var ngOnDestroy : onDestroy)
         {
-            sb.append("\t\t").append(ngOnDestroy.value().trim()).append("\n");
+            sb.append("\t\t")
+              .append(ngOnDestroy.value()
+                                 .trim())
+              .append("\n");
         }
         sb.append("\t}\n");
         return sb;
@@ -108,7 +115,10 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         sb.append("\t{\n");
         for (var ngAfterViewInit : afterViewInit)
         {
-            sb.append("\t\t").append(ngAfterViewInit.value().trim()).append("\n");
+            sb.append("\t\t")
+              .append(ngAfterViewInit.value()
+                                     .trim())
+              .append("\n");
         }
         sb.append("\t}\n");
         return sb;
@@ -125,7 +135,10 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         sb.append("\t{\n");
         for (var ngAfterViewChecked : afterViewChecked)
         {
-            sb.append("\t\t").append(ngAfterViewChecked.value().trim()).append("\n");
+            sb.append("\t\t")
+              .append(ngAfterViewChecked.value()
+                                        .trim())
+              .append("\n");
         }
         sb.append("\t}\n");
         return sb;
@@ -142,7 +155,10 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         sb.append("\t{\n");
         for (var ngAfterContentInit : afterContentInit)
         {
-            sb.append("\t\t").append(ngAfterContentInit.value().trim()).append("\n");
+            sb.append("\t\t")
+              .append(ngAfterContentInit.value()
+                                        .trim())
+              .append("\n");
         }
         sb.append("\t}\n");
         return sb;
@@ -159,7 +175,10 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         sb.append("\t{\n");
         for (var ngAfterContentChecked : afterContentChecked)
         {
-            sb.append("\t\t").append(ngAfterContentChecked.value().trim()).append("\n");
+            sb.append("\t\t")
+              .append(ngAfterContentChecked.value()
+                                           .trim())
+              .append("\n");
         }
         sb.append("\t}\n");
         return sb;
@@ -175,10 +194,10 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         for (NgInject inject : injects)
         {
             sb.append("\treadonly ")
-                    .append(inject.referenceName())
-                    .append(" = inject(")
-                    .append(inject.value())
-                    .append(");\n");
+              .append(inject.referenceName())
+              .append(" = inject(")
+              .append(inject.value())
+              .append(");\n");
         }
         return sb;
     }
@@ -193,10 +212,10 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         for (var inject : modals)
         {
             sb.append("\tconst ")
-                    .append(inject.referenceName())
-                    .append(" = modal(")
-                    .append(inject.value())
-                    .append(");\n");
+              .append(inject.referenceName())
+              .append(" = modal(")
+              .append(inject.value())
+              .append(");\n");
         }
         return sb;
     }
@@ -211,11 +230,12 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         for (var inject : signals)
         {
             sb.append("\treadonly ")
-                    .append(inject.referenceName()).append(" = signal")
-                    .append(!Strings.isNullOrEmpty(inject.type()) ? "<" + inject.type() + ">" : "")
-                    .append("(")
-                    .append(inject.value())
-                    .append(");\n");
+              .append(inject.referenceName())
+              .append(" = signal")
+              .append(!Strings.isNullOrEmpty(inject.type()) ? "<" + inject.type() + ">" : "")
+              .append("(")
+              .append(inject.value())
+              .append(");\n");
         }
         return sb;
     }
@@ -229,8 +249,8 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         StringBuilder sb = new StringBuilder();
         sb.append(" implements ");
         String joinedInterfaces = interfaces.stream()
-                .map(NgInterface::value)
-                .collect(Collectors.joining(","));
+                                            .map(NgInterface::value)
+                                            .collect(Collectors.joining(","));
         sb.append(joinedInterfaces);
         return sb;
     }
@@ -245,12 +265,15 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         StringBuilder sb = new StringBuilder();
         for (NgField field : fields)
         {
-            String value = field.value().trim();
+            String value = field.value()
+                                .trim();
             if (!value.endsWith(";"))
             {
                 value += ";";
             }
-            sb.append("\t").append(value).append("\n");
+            sb.append("\t")
+              .append(value)
+              .append("\n");
         }
         return sb;
     }
@@ -265,12 +288,15 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         StringBuilder sb = new StringBuilder();
         for (var field : globalFields)
         {
-            String value = field.value().trim();
+            String value = field.value()
+                                .trim();
             if (!value.endsWith(";"))
             {
                 value += ";";
             }
-            sb.append("\t").append(value).append("\n");
+            sb.append("\t")
+              .append(value)
+              .append("\n");
         }
         return sb;
     }
@@ -285,7 +311,8 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         StringBuilder sb = new StringBuilder();
         for (var method : methods)
         {
-            var lines = method.value().split("\n");
+            var lines = method.value()
+                              .split("\n");
             boolean openBracketHit = false;
             for (String line : lines)
             {
@@ -308,7 +335,8 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
                     value = "\t" + value;
                 }
 
-                sb.append(value).append("\n");
+                sb.append(value)
+                  .append("\n");
             }
         }
         sb.append("\n");
@@ -328,7 +356,8 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
 
         for (NgConstructorParameter parameter : constructorParameters)
         {
-            sb.append(parameter.value().trim());
+            sb.append(parameter.value()
+                               .trim());
             if (index < size - 1)
             {
                 sb.append(",");
@@ -347,7 +376,8 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         StringBuilder sb = new StringBuilder();
         for (var constructorBody : constructorBodies)
         {
-            var lines = constructorBody.value().split("\n");
+            var lines = constructorBody.value()
+                                       .split("\n");
             for (String line : lines)
             {
                 String value = line;
@@ -355,7 +385,8 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
                 {
                     value = "\t\t" + value;
                 }
-                sb.append(value).append("\n");
+                sb.append(value)
+                  .append("\n");
             }
         }
         return sb;
@@ -371,15 +402,26 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         for (var input : inputs)
         {
             sb.append("\t")
-                    .append(input.value().trim())
-                    .append(" = input");
+              .append(input.value()
+                           .trim())
+              .append(" = input");
             if (input.mandatory())
             {
                 sb.append(".required");
             }
-
-            sb.append("<").append(AnnotationUtils.getTsFilename(input.type())).append(">();\n");
-
+            if (input.type() != null && input.type()
+                                             .equals(bool.class))
+            {
+                sb.append("<")
+                  .append("boolean")
+                  .append(">();\n");
+            }
+            else
+            {
+                sb.append("<")
+                  .append(AnnotationUtils.getTsFilename(input.type()))
+                  .append(">();\n");
+            }
         }
         return sb;
     }
@@ -393,9 +435,12 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         StringBuilder sb = new StringBuilder();
         for (NgOutput output : outputs)
         {
-            sb.append("\t").append(output.value().trim()).append(" = output<")
-                    .append(AnnotationUtils.getTsFilename(output.type()))
-                    .append(">();\n");
+            sb.append("\t")
+              .append(output.value()
+                            .trim())
+              .append(" = output<")
+              .append(AnnotationUtils.getTsFilename(output.type()))
+              .append(">();\n");
         }
         return sb;
     }
@@ -409,7 +454,9 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         StringBuilder sb = new StringBuilder();
         for (var importProvider : importProviders)
         {
-            sb.append("\n\t\t" + importProvider.value().trim()).append(",\n");
+            sb.append("\n\t\t" + importProvider.value()
+                                               .trim())
+              .append(",\n");
         }
         return sb;
     }
@@ -423,7 +470,9 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         StringBuilder sb = new StringBuilder().append("\n");
         for (var importProvider : importModules)
         {
-            sb.append("\t\t" + importProvider.value().trim()).append(",\n");
+            sb.append("\t\t" + importProvider.value()
+                                             .trim())
+              .append(",\n");
         }
         return sb;
     }
@@ -442,7 +491,8 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
             {
                 sb.append("{");
             }
-            sb.append(importReference.value().trim());
+            sb.append(importReference.value()
+                                     .trim());
             if (importReference.wrapValueInBraces())
             {
                 sb.append("}");

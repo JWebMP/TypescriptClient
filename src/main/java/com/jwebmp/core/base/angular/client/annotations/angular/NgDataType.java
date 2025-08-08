@@ -10,31 +10,32 @@ import static java.lang.annotation.RetentionPolicy.*;
 @Inherited
 public @interface NgDataType
 {
-	DataTypeClass value() default DataTypeClass.Class;
-	
-	boolean exports() default true;
-	
-	String name() default "";
-	
-	enum DataTypeClass
-	{
-		Class,
-		Function,
-		Enum,
-		AbstractClass,
-		Interface,
-		Const,
-		;
-		
-		public String description()
-		{
-			return name().toLowerCase();
-		}
-	}
-	
-	/**
-	 * If a function what is the return type, after the :
-	 * @return
-	 */
-	String returnType() default "";
+    DataTypeClass value() default DataTypeClass.Interface;
+
+    boolean exports() default true;
+
+    String name() default "";
+
+    enum DataTypeClass
+    {
+        Class,
+        Function,
+        Enum,
+        AbstractClass,
+        Interface,
+        Const,
+        ;
+
+        public String description()
+        {
+            return name().toLowerCase();
+        }
+    }
+
+    /**
+     * If a function what is the return type, after the :
+     *
+     * @return
+     */
+    String returnType() default "";
 }

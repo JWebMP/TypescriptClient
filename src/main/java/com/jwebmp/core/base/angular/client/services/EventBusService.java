@@ -17,8 +17,7 @@ import java.util.List;
 //@NgScript("sockjs-client/dist/sockjs.js")
 //@NgScript("@vertx/event-bridge-client.js/vertx-eventbus.js")
 
-@NgImportReference(value = "!EventBus", reference = "@vertx/eventbus-bridge-client.js")
-@NgImportReference(value = "!{ EventBus as EventBusType }", reference = "@vertx/eventbus-bridge-client.js")
+@NgImportReference(value = "Client, IMessage, IFrame, StompSubscription", reference = "@stomp/stompjs")
 //@NgImportReference(value = "!SockJS", reference = "sockjs-client")
 @NgImportReference(value = "ElementRef", reference = "@angular/core")
 @NgImportReference(value = "Location", reference = "@angular/common")
@@ -40,7 +39,7 @@ import java.util.List;
 @NgImportReference(value = "takeUntil", reference = "rxjs/operators")
 
 @NgField("""
-        private eventBus?: EventBusType;
+        private stompClient?: Client;
           private readonly eventBusUrl: string = '/eventbus'; // Update as needed
           private reconnectAttempts: number = 0;
           private readonly reconnectDelay: number = 5000;
@@ -53,7 +52,7 @@ import java.util.List;
           private connectionState$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
         
           private pendingListeners: Array<{ address: string; handlerId: string }> = [];
-        
+          private stompSubscriptions: Map<string, StompSubscription> = new Map();
         
           private destroy$ = new Subject<void>();
           private messageSubjects: Map<string, Map<string, Subject<any>>> = new Map();
@@ -134,8 +133,8 @@ import java.util.List;
 
 @NgMethod("""
         \tprivate processPendingListeners(): void {
-                  if (!this.eventBus) {
-                      console.warn('[EventBusService] EventBus not initialized yet!');
+                  if (!this.stompClient?.connected) {
+                      console.warn('[EventBusService] STOMP client not connected yet!');
                       return;
                   }
         
@@ -143,34 +142,48 @@ import java.util.List;
                   while (this.pendingListeners.length > 0) {
                       const { address, handlerId } = this.pendingListeners.shift()!;
         
-                      // Register the listener
-                      this.eventBus.registerHandler(address, {}, (error, message) => {
-                          if (error) {
-                              console.error(`[EventBusService] Error in listener for address "${address}":`, error);
-                          } else {
-                              console.log(`[EventBusService] Message received on address "${address}":`, message);
+                      // Subscribe to the address
+                      const subscription = this.stompClient.subscribe(`/toStomp/${address}`, (message) => {
+                          try {
+                              console.log(`[EventBusService] Message received on address "${address}":`, message.body);
+        
+                              // Parse the message body
+                              const body = JSON.parse(message.body);
         
                               // Emit the message to the relevant Subject
                               const handlers = this.messageSubjects.get(address);
                               const subject = handlers?.get(handlerId);
-                              subject?.next(message.body);
+                              subject?.next(body);
+                          } catch (error) {
+                              console.error(`[EventBusService] Error parsing message on address "${address}":`, error);
                           }
                       });
-                      if(this.guid) {
-                           this.eventBus.registerHandler(this.guid + "." + address, {}, (error, message) => {
-                               if (error) {
-                                   console.error(`[EventBusService] Error in listener for address "${this.guid + "." + address}":`, error);
-                               } else {
-                                   console.log(`[EventBusService] Message received on address "${this.guid + "." + address}":`, message);
         
-                                   // Emit the message to the relevant Subject
-                                   const handlers = this.messageSubjects.get(address);
-                                   const subject = handlers?.get(handlerId);
-                                   subject?.next(message.body);
-                               }
-                           });
-                           console.log(`[EventBusService] Private Listener registered for address: "${this.guid + "." + address}", handler ID: "${handlerId}"`);
-                       }
+                      // Store the subscription for later unsubscribe
+                      this.stompSubscriptions.set(`${address}:${handlerId}`, subscription);
+        
+                      // Also subscribe to the private address if guid exists
+                      if(this.guid) {
+                          const privateAddress = `${this.guid}.${address}`;
+                          const privateSubscription = this.stompClient.subscribe(`/toStomp/${privateAddress}`, (message) => {
+                              try {
+                                  console.log(`[EventBusService] Message received on private address "${privateAddress}":`, message.body);
+        
+                                  // Parse the message body
+                                  const body = JSON.parse(message.body);
+        
+                                  // Emit the message to the relevant Subject
+                                  const handlers = this.messageSubjects.get(address);
+                                  const subject = handlers?.get(handlerId);
+                                  subject?.next(body);
+                              } catch (error) {
+                                  console.error(`[EventBusService] Error parsing message on private address "${privateAddress}":`, error);
+                              }
+                          });
+        
+                          this.stompSubscriptions.set(`${privateAddress}:${handlerId}`, privateSubscription);
+                          console.log(`[EventBusService] Private Listener registered for address: "${privateAddress}", handler ID: "${handlerId}"`);
+                      }
         
                       console.log(`[EventBusService] Listener registered for address: "${address}", handler ID: "${handlerId}"`);
                   }
@@ -232,37 +245,34 @@ import java.util.List;
         }
         
           /**
-           * Connect to the Vert.x EventBus.
+           * Connect to the Vert.x EventBus using STOMP.
            */
           private connect(): void {
-            this.eventBus = new EventBus(this.eventBusUrl,{
-        
-                  vertxbus_ping_interval: 10000,
-                  vertxbus_reconnect_attempts_max: 9999,
-                  vertxbus_reconnect_delay_min: 1000,
-                  vertxbus_reconnect_delay_max: 10000,
+            this.stompClient = new Client({
+              brokerURL: `${window.location.protocol === 'https:' ? 'wss://' : 'ws://'}${window.location.host}${this.eventBusUrl}`,
+              reconnectDelay: this.reconnectDelay,
+              heartbeatIncoming: 10000,
+              heartbeatOutgoing: 10000,
+              onConnect: () => {
+                console.log('[EventBus] Connected via STOMP.');
+                this.reconnectAttempts = 0;
+                this.connectionState$.next(true); // Notify successful connection
+              },
+              onDisconnect: () => {
+                console.warn('[EventBus] Disconnected.');
+                this.connectionState$.next(false); // Notify disconnection
+              },
+              onStompError: (frame) => {
+                console.error('[EventBus] Error:', frame.headers['message']);
+                this.connectionState$.next(false); // Notify disconnection on error
               }
-          );
+            });
         
-            this.eventBus.onopen = () => {
-              console.log('[EventBus] Connected.');
-              this.reconnectAttempts = 0;
-              this.connectionState$.next(true); // Notify successful connection
-            };
-        
-            this.eventBus.onclose = () => {
-              console.warn('[EventBus] Connection closed.');
-              this.connectionState$.next(false); // Notify disconnection
-            };
-        
-            this.eventBus.onerror = (error: any) => {
-              console.error('[EventBus] Error:', error);
-              this.connectionState$.next(false); // Notify disconnection on error
-            };
+            this.stompClient.activate();
           }
         
         /**
-             * Connects to the EventBus with a timeout.
+             * Connects to the EventBus with a timeout using STOMP.
              * If the connection is not established within the defined timeout, it triggers a reconnect attempt.
              */
             private connectWithTimeout(): void {
@@ -273,34 +283,39 @@ import java.util.List;
               const timeout = setTimeout(() => {
                 if (!connectionEstablished) {
                   console.error('[EventBusService] Connection timed out. Retrying...');
-                  this.eventBus?.close(); // Ensure the WebSocket is closed
+                  this.stompClient?.deactivate(); // Ensure the STOMP client is deactivated
                   this.scheduleReconnect(); // Trigger a reconnect attempt
                 }
               }, connectionTimeout);
         
-              // Create event bus instance
-              this.eventBus = new EventBus(this.eventBusUrl, {
-                transport: 'websocket',
-                vertxbus_ping_interval: 10000,
-                vertxbus_reconnect_attempts_max: 99999,
-                vertxbus_reconnect_delay_min: 1000,
-                vertxbus_reconnect_delay_max: 10000,
+              // Create STOMP client instance
+              this.stompClient = new Client({
+                brokerURL: `${window.location.protocol === 'https:' ? 'wss://' : 'ws://'}${window.location.host}${this.eventBusUrl}`,
+                reconnectDelay: this.reconnectDelay,
+                heartbeatIncoming: 10000,
+                heartbeatOutgoing: 10000,
+                onConnect: () => {
+                  console.log('[EventBusService] Connection to STOMP established.');
+                  connectionEstablished = true; // Mark connection as established
+                  clearTimeout(timeout); // Clear the timeout
+                  this.connectionState$.next(true); // Update connection state
+                  this.reconnectAttempts = 0; // Reset reconnect attempts
+                },
+                onDisconnect: () => {
+                  console.warn('[EventBusService] Connection lost. Retrying...');
+                  this.connectionState$.next(false);
+                  if (!connectionEstablished) {
+                    clearTimeout(timeout); // Ensure timeout is cleared
+                  }
+                  this.scheduleReconnect(); // Trigger a reconnect attempt
+                },
+                onStompError: (frame) => {
+                  console.error('[EventBusService] STOMP Error:', frame.headers['message']);
+                  this.connectionState$.next(false);
+                }
               });
         
-              this.eventBus.onopen = () => {
-                console.log('[EventBusService] Connection to EventBus established.');
-                connectionEstablished = true; // Mark connection as established
-                clearTimeout(timeout); // Clear the timeout
-                this.connectionState$.next(true); // Update connection state
-                this.reconnectAttempts = 0; // Reset reconnect attempts
-              };
-        
-              this.eventBus.onclose = () => {
-                console.warn('[EventBusService] Connection lost. Retrying...');
-                this.connectionState$.next(false);
-                clearTimeout(timeout); // Ensure timeout is cleared
-                this.scheduleReconnect(); // Trigger a reconnect attempt
-              };
+              this.stompClient.activate();
             }
         
             private scheduleReconnect(): void {
@@ -321,7 +336,7 @@ import java.util.List;
                 }
         
           /**
-           * Reconnect to the EventBus with a backoff strategy.
+           * Reconnect to the EventBus with a backoff strategy using STOMP.
            */
           private reconnect(): void {
             if (this.reconnectAttempts >= this.maxReconnectAttempts) {
@@ -332,7 +347,12 @@ import java.util.List;
             }
         
             this.reconnectAttempts++;
-            console.log(`[EventBus] Reconnecting... (Attempt #${this.reconnectAttempts})`);
+            console.log(`[EventBus] Reconnecting via STOMP... (Attempt #${this.reconnectAttempts})`);
+        
+            // Ensure the old client is deactivated
+            if (this.stompClient?.active) {
+              this.stompClient.deactivate();
+            }
         
             setTimeout(() => this.connect(), this.reconnectDelay);
           }
@@ -466,16 +486,15 @@ import java.util.List;
                       news.event = JSON.stringify(message.event);
                   }
         
-                  if (this.eventBus) {
-                      this.eventBus.send('incoming', news, (err: any, reply: any) => {
-                          if (err) {
-                              console.error(`[EventBus] Failed to send message: ${err.message}`);
-                          } else {
-                              console.log(`[EventBus] Message sent successfully:`, reply);
-                          }
+                  if (this.stompClient?.connected) {
+                      this.stompClient.publish({
+                          destination: '/toBus/incoming',
+                          body: JSON.stringify(news),
+                          headers: { 'content-type': 'application/json' }
                       });
+                      console.log(`[EventBus] Message sent via STOMP:`, news);
                   } else {
-                      console.error('[EventBus] EventBus is not initialized.');
+                      console.error('[EventBus] STOMP client is not connected.');
                   }
               }
         
@@ -524,7 +543,9 @@ import java.util.List;
            * Disconnect the service and clean up resources.
            */
           public disconnect(): void {
-            this.eventBus?.close();
+            if (this.stompClient?.connected) {
+              this.stompClient.deactivate();
+            }
             console.log('[EventBus] Disconnected.');
             this.destroy$.next();
             this.destroy$.complete();
@@ -635,27 +656,29 @@ import java.util.List;
                           listeners!.delete(handlerId);
                           console.log(`[EventBusService] Unregistered handler ID "${handlerId}" for address: "${normalizedAddress}"`);
         
-                          // If no listeners remain for this address, clean up the EventBus handler
+                          // Unsubscribe from STOMP
+                          const subscriptionKey = `${normalizedAddress}:${handlerId}`;
+                          if (this.stompSubscriptions.has(subscriptionKey)) {
+                              this.stompSubscriptions.get(subscriptionKey)!.unsubscribe();
+                              this.stompSubscriptions.delete(subscriptionKey);
+                              console.log(`[EventBusService] STOMP subscription unregistered for address: "${normalizedAddress}", handler ID: "${handlerId}"`);
+                          }
+        
+                          // Also unsubscribe from private address if guid exists
+                          if (this.guid) {
+                              const privateSubscriptionKey = `${this.guid}.${normalizedAddress}:${handlerId}`;
+                              if (this.stompSubscriptions.has(privateSubscriptionKey)) {
+                                  this.stompSubscriptions.get(privateSubscriptionKey)!.unsubscribe();
+                                  this.stompSubscriptions.delete(privateSubscriptionKey);
+                                  console.log(`[EventBusService] STOMP private subscription unregistered for address: "${this.guid}.${normalizedAddress}", handler ID: "${handlerId}"`);
+                              }
+                          }
+        
+                          // If no listeners remain for this address, clean up
                           if (listeners!.size === 0) {
                               this.messageSubjects.delete(normalizedAddress);
-        
-                              if (this.eventBus && this.registeredListeners.has(normalizedAddress)) {
-                                  this.eventBus.unregisterHandler(normalizedAddress, (error: any) => {
-                                      if (error) {
-                                          console.error(`[EventBusService] Failed to unregister handler for address: "${normalizedAddress}"`, error);
-                                      } else {
-                                          console.log(`[EventBusService] All handlers removed. EventBus handler unregistered for address: "${normalizedAddress}"`);
-                                          this.registeredListeners.delete(normalizedAddress);
-                                      }
-                                  });
-                                  this.eventBus.unregisterHandler(this.guid + "." + normalizedAddress, (error: any) => {
-                                      if (error) {
-                                          console.error(`[EventBusService] Failed to unregister handler for address: "${normalizedAddress}"`, error);
-                                      } else {
-                                          console.log(`[EventBusService] All handlers removed. EventBus handler unregistered for address: "${normalizedAddress}"`);
-                                      }
-                                  });
-                              }
+                              this.registeredListeners.delete(normalizedAddress);
+                              console.log(`[EventBusService] All handlers removed for address: "${normalizedAddress}"`);
                           }
                       } else {
                           console.warn(`[EventBusService] No handler found with ID "${handlerId}" for address: "${normalizedAddress}"`);
@@ -671,7 +694,7 @@ import java.util.List;
              * Utility to unregister all listeners. Useful for cleanup operations.
              */
             unregisterAllListeners(): void {
-                if (this.eventBus && this.messageSubjects.size > 0) {
+                if (this.stompClient && this.messageSubjects.size > 0) {
                     this.messageSubjects.forEach((handlers, address) => {
                         // Unregister each handler for the address
                         handlers.forEach((_, handlerId) => {

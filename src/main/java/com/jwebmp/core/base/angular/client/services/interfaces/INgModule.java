@@ -44,8 +44,7 @@ import java.util.List;
 @TsDevDependency(value = "karma-jasmine-html-reporter", version = "~2.1.0")
 
 
-@TsDependency(value = "@vertx/eventbus-bridge-client.js", version = "^1.0.0-3-SNAPSHOT")
-@TsDevDependency(value = "@types/vertx__eventbus-bridge-client.js", version = "^1.0.3")
+@TsDependency(value = "@stomp/stompjs", version = "^7.0.0")
 
 
 @NgImportReference(value = "NgModule", reference = "@angular/core")

@@ -4,6 +4,6 @@ import com.jwebmp.core.base.angular.client.annotations.references.NgIgnoreImport
 import com.jwebmp.core.base.angular.client.services.interfaces.INgDataType;
 
 @NgIgnoreImportReference
-public class numeric implements INgDataType<numeric>
+public class number implements INgDataType<number>
 {
 }
