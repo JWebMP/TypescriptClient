@@ -44,7 +44,8 @@ public interface AnnotationUtils
         visited.add(clazz);
 
         //find both single and repeatables
-        var annotations = IGuiceContext.get(AnnotationHelper.class).getAnnotationFromClass(clazz, annotation);
+        var annotations = IGuiceContext.get(AnnotationHelper.class)
+                                       .getAnnotationFromClass(clazz, annotation);
         if (!annotations.isEmpty())
         {
             return true;
@@ -97,7 +98,8 @@ public interface AnnotationUtils
         {
             annotations.addAll(List.of(clazz.getAnnotationsByType(annotation)));
         }
-        var annos = IGuiceContext.get(AnnotationHelper.class).getAnnotationFromClass(clazz, annotation);
+        var annos = IGuiceContext.get(AnnotationHelper.class)
+                                 .getAnnotationFromClass(clazz, annotation);
         for (T anno : annos)
         {
             annotations.add(anno);
@@ -118,10 +120,11 @@ public interface AnnotationUtils
     {
         NgApp app;
         if (!clazz.getClass()
-                .isAnnotationPresent(NgApp.class))
+                  .isAnnotationPresent(NgApp.class))
         {
-            LogManager.getLogger("AnnotationUtils").error("Ng App Interface without NgApp Annotation? - " + clazz.getClass()
-                    .getCanonicalName());
+            LogManager.getLogger("AnnotationUtils")
+                      .error("Ng App Interface without NgApp Annotation? - " + clazz.getClass()
+                                                                                    .getCanonicalName());
             throw new RuntimeException("Unable to build application without base metadata");
         }
         return clazz.name();
@@ -143,7 +146,7 @@ public interface AnnotationUtils
         catch (Exception e)
         {
             LogManager.getLogger("AnnotationUtils")
-                    .error("Unable to render a ts file name for " + clazz.getCanonicalName(), e);
+                      .error("Unable to render a ts file name for " + clazz.getCanonicalName(), e);
         }
         return clazz.getSimpleName();
     }
@@ -152,7 +155,7 @@ public interface AnnotationUtils
     {
         String tsName = getTsFilename(clazz);
         tsName = tsName.substring(0, 1)
-                .toLowerCase() + tsName.substring(1);
+                       .toLowerCase() + tsName.substring(1);
         return tsName;
     }
 
@@ -259,19 +262,27 @@ public interface AnnotationUtils
 
     static MyNgInput getNgInput(String value, boolean mandatory, Class<? extends INgDataType<?>> type)
     {
-        var ref = new MyNgInput(value).setMandatory(mandatory).setType(type);
+        var ref = new MyNgInput(value).setMandatory(mandatory)
+                                      .setType(type);
         return ref;
     }
 
     static MyNgInput getNgInput(String value, boolean mandatory, Class<? extends INgDataType<?>> type, String attributeReference, boolean renderAttributeReference)
     {
-        var ref = new MyNgInput(value).setMandatory(mandatory).setType(type).setAttributeReference(attributeReference).setRenderAttributeReference(renderAttributeReference);
+        var ref = new MyNgInput(value).setMandatory(mandatory)
+                                      .setType(type)
+                                      .setAttributeReference(attributeReference)
+                                      .setRenderAttributeReference(renderAttributeReference);
         return ref;
     }
 
     static MyNgInput getNgInput(String value, boolean mandatory, Class<? extends INgDataType<?>> type, String attributeReference, boolean renderAttributeReference, boolean additionalData)
     {
-        var ref = new MyNgInput(value).setMandatory(mandatory).setType(type).setAttributeReference(attributeReference).setRenderAttributeReference(renderAttributeReference).setAdditionalData(additionalData);
+        var ref = new MyNgInput(value).setMandatory(mandatory)
+                                      .setType(type)
+                                      .setAttributeReference(attributeReference)
+                                      .setRenderAttributeReference(renderAttributeReference)
+                                      .setAdditionalData(additionalData);
         return ref;
     }
 
@@ -295,19 +306,23 @@ public interface AnnotationUtils
 
     static MyNgInject getNgInject(String referenceName, String type)
     {
-        var ref = new MyNgInject().setReferenceName(referenceName).setValue(type);
+        var ref = new MyNgInject().setReferenceName(referenceName)
+                                  .setValue(type);
         return ref;
     }
 
     static MyNgModal getNgModal(String value, String referenceName)
     {
-        var ref = new MyNgModal().setValue(value).setReferenceName(referenceName);
+        var ref = new MyNgModal().setValue(value)
+                                 .setReferenceName(referenceName);
         return ref;
     }
 
     static MyNgSignal getNgSignal(String referenceName, String value, String type)
     {
-        var ref = new MyNgSignal().setReferenceName(referenceName).setValue(value).setType(type);
+        var ref = new MyNgSignal().setReferenceName(referenceName)
+                                  .setValue(value)
+                                  .setType(type);
         return ref;
     }
 
@@ -320,7 +335,7 @@ public interface AnnotationUtils
     static MyNgComponentTagAttribute getNgComponentTagAttribute(String key, String value)
     {
         var ref = new MyNgComponentTagAttribute().setKey(key)
-                .setValue(value);
+                                                 .setValue(value);
         return ref;
     }
 
@@ -1567,6 +1582,7 @@ public interface AnnotationUtils
         private boolean provides = false;
         private boolean onParent = false;
         private boolean onSelf = true;
+        private boolean referenceOnly = false;
 
         public MyNgComponentReference(Class<? extends IComponent<?>> aClass)
         {
@@ -1604,6 +1620,12 @@ public interface AnnotationUtils
         }
 
         @Override
+        public boolean referenceOnly()
+        {
+            return referenceOnly;
+        }
+
+        @Override
         public boolean equals(Object o)
         {
             if (o == null || getClass() != o.getClass())
@@ -1611,7 +1633,7 @@ public interface AnnotationUtils
                 return false;
             }
             MyNgComponentReference that = (MyNgComponentReference) o;
-            return isProvides() == that.isProvides() && isOnParent() == that.isOnParent() && isOnSelf() == that.isOnSelf() && Objects.equals(aClass, that.aClass);
+            return isProvides() == that.isProvides() && isOnParent() == that.isOnParent() && isOnSelf() == that.isOnSelf() && this.referenceOnly == that.referenceOnly && Objects.equals(aClass, that.aClass);
         }
 
         @Override
