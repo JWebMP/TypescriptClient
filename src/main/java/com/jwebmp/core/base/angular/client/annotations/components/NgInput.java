@@ -35,4 +35,6 @@ public @interface NgInput
     boolean onSelf() default true;
 
     int sortOrder() default 100;
+
+    boolean array() default false;
 }

@@ -286,6 +286,17 @@ public interface AnnotationUtils
         return ref;
     }
 
+    static MyNgInput getNgInput(String value, boolean mandatory, Class<? extends INgDataType<?>> type, String attributeReference, boolean renderAttributeReference, boolean additionalData, boolean array)
+    {
+        var ref = new MyNgInput(value).setMandatory(mandatory)
+                                      .setType(type)
+                                      .setAttributeReference(attributeReference)
+                                      .setRenderAttributeReference(renderAttributeReference)
+                                      .setAdditionalData(additionalData)
+                                      .setArray(array);
+        return ref;
+    }
+
     static MyNgOutput getNgOutput(String value, String parentMethodName)
     {
         var ref = new MyNgOutput(value, parentMethodName);
@@ -1229,6 +1240,7 @@ public interface AnnotationUtils
         private boolean renderAttributeReference = true;
         private boolean additionalData = true;
         private boolean mandatory = false;
+        private boolean array = false;
 
         private boolean onSelf = true;
         private boolean onParent = false;
@@ -1278,6 +1290,12 @@ public interface AnnotationUtils
         public int sortOrder()
         {
             return 0;
+        }
+
+        @Override
+        public boolean array()
+        {
+            return array;
         }
 
         @Override
@@ -1587,6 +1605,14 @@ public interface AnnotationUtils
         public MyNgComponentReference(Class<? extends IComponent<?>> aClass)
         {
             this.aClass = aClass;
+            if (aClass.isAnnotationPresent(NgComponentReference.class))
+            {
+                NgComponentReference ngComponentReference = aClass.getAnnotation(NgComponentReference.class);
+                this.provides = ngComponentReference.provides();
+                this.referenceOnly = ngComponentReference.referenceOnly();
+                this.onParent = ngComponentReference.onParent();
+                this.onSelf = ngComponentReference.onSelf();
+            }
         }
 
         @Override

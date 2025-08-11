@@ -419,8 +419,12 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
             else
             {
                 sb.append("<")
-                  .append(AnnotationUtils.getTsFilename(input.type()))
-                  .append(">();\n");
+                  .append(AnnotationUtils.getTsFilename(input.type()));
+                if (input.array())
+                {
+                    sb.append("[]");
+                }
+                sb.append(">();\n");
             }
         }
         return sb;
