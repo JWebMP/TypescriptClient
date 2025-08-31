@@ -16,10 +16,11 @@ import java.util.logging.Level;
 import static com.jwebmp.core.base.angular.client.services.AnnotationsMap.ngAllGlobals;
 import static com.jwebmp.core.base.angular.client.services.AnnotationsMap.ngAllMultiples;
 
-@Singleton
 @Log
 public class AnnotationHelper
 {
+    public static final AnnotationHelper instance = new AnnotationHelper();
+
     private final Map<Class<?>, ClassAnnotationMapping> mappings;
     private final Set<Class<? extends Annotation>> annotationsListing;
 
@@ -27,10 +28,9 @@ public class AnnotationHelper
 
     public static void startup()
     {
-        AnnotationHelper annotationHelper = IGuiceContext.get(AnnotationHelper.class);
         for (Class<?> loadAllClass : AnnotationsMap.loadAllClasses())
         {
-            annotationHelper.scanClass(loadAllClass);
+            instance.scanClass(loadAllClass);
         }
     }
 
@@ -92,7 +92,7 @@ public class AnnotationHelper
 
     private static final Map<Class<?>, ClassAnnotationMapping> superClassMappings = new HashMap<>();
 
-    private void scanClassHierarchy(ClassAnnotationMapping parentMapping, Class<?> clazz)
+    private synchronized void scanClassHierarchy(ClassAnnotationMapping parentMapping, Class<?> clazz)
     {
         ClassAnnotationMapping maps = null;
         if (superClassMappings.containsKey(clazz))
@@ -103,6 +103,10 @@ public class AnnotationHelper
         {
             maps = extractAnnotations(clazz);
             superClassMappings.put(clazz, maps);
+        }
+        if (maps == null)
+        {
+            maps = extractAnnotations(clazz);
         }
         maps.mergeInto(parentMapping);
 
@@ -123,6 +127,10 @@ public class AnnotationHelper
             else
             {
                 map = superClassMappings.get(superclass);
+            }
+            if (map == null)
+            {
+                map = extractAnnotations(clazz);
             }
             map.mergeInto(parentMapping);
 
@@ -177,6 +185,12 @@ public class AnnotationHelper
     {
         if (!mappings.containsKey(clazz))
         {
+            scanClass(clazz);
+        }
+        if (mappings.get(clazz) == null || mappings.get(clazz)
+                                                   .getLookup() == null)
+        {
+            log.log(Level.SEVERE, "No mapping for " + clazz);
             scanClass(clazz);
         }
         List<T> ts = (List<T>) mappings.get(clazz)

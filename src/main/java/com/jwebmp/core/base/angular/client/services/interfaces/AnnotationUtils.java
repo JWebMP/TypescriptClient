@@ -148,7 +148,38 @@ public interface AnnotationUtils
             LogManager.getLogger("AnnotationUtils")
                       .error("Unable to render a ts file name for " + clazz.getCanonicalName(), e);
         }
-        return clazz.getSimpleName();
+        // Prefer the standard simple name when available (covers top-level and member classes)
+        String simple = clazz.getSimpleName();
+        if (!Strings.isNullOrEmpty(simple))
+        {
+            return simple;
+        }
+        // Handle anonymous/local classes where getSimpleName() may be empty
+        String binary = clazz.getName();
+        // Strip package
+        int lastDot = binary.lastIndexOf('.');
+        String noPkg = lastDot >= 0 ? binary.substring(lastDot + 1) : binary;
+        // If there is a '$', try to use the simple segment after the last '$'
+        int lastDollar = noPkg.lastIndexOf('$');
+        if (lastDollar >= 0 && lastDollar < noPkg.length() - 1)
+        {
+            String after = noPkg.substring(lastDollar + 1);
+            // If it's an anonymous class (numeric suffix), fall back to enclosing class name or the part before '$'
+            if (after.chars()
+                     .allMatch(Character::isDigit))
+            {
+                Class<?> enclosing = clazz.getEnclosingClass();
+                if (enclosing != null && !Strings.isNullOrEmpty(enclosing.getSimpleName()))
+                {
+                    return enclosing.getSimpleName();
+                }
+                // Fallback: return the part before the last '$'
+                return noPkg.substring(0, lastDollar);
+            }
+            return after;
+        }
+        // Final fallback: return whatever remains without package
+        return noPkg;
     }
 
     static String getTsVarName(Class<?> clazz)

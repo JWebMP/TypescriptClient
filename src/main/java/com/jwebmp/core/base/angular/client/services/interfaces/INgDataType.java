@@ -69,10 +69,32 @@ public interface INgDataType<J extends INgDataType<J>>
         return t.value();
     }
 
+    default String getGenericTypeForField(Field field)
+    {
+        String genericType = StringUtils.substringBetween(field.getGenericType()
+                                                               .getTypeName(), "<", ">");
+        try
+        {
+            Class c = Class.forName(genericType);
+            if (c.getSimpleName()
+                 .equals("Object"))
+            {
+                return "any";
+            }
+            return c.getSimpleName();
+        }
+        catch (ClassNotFoundException e)
+        {
+            e.printStackTrace();
+        }
+
+
+        return genericType;
+    }
+
     default String typeField(Class fieldType, Field field)
     {
         String arrayString = fieldType.isArray() ? "[]" : "";
-
         if (Object.class.equals(fieldType))
         {
             return "any" + arrayString;
@@ -83,7 +105,8 @@ public interface INgDataType<J extends INgDataType<J>>
                         BigInteger.class.isAssignableFrom(fieldType) ||
                         int.class.isAssignableFrom(fieldType) ||
                         double.class.isAssignableFrom(fieldType) ||
-                        float.class.isAssignableFrom(fieldType)
+                        float.class.isAssignableFrom(fieldType) ||
+                        long.class.isAssignableFrom(fieldType)
         )
         {
             return "number" + arrayString;
@@ -119,7 +142,7 @@ public interface INgDataType<J extends INgDataType<J>>
         }
         else if (Collection.class.isAssignableFrom(fieldType))
         {
-            return getGenericType(field) + "[]";
+            return getGenericTypeForField(field) + "[]";
         }
         else if (Map.class.isAssignableFrom(fieldType))
         {
@@ -128,7 +151,7 @@ public interface INgDataType<J extends INgDataType<J>>
         else
         {
             Logger.getLogger("DataType")
-                  .warning("Type not catered for : [" + fieldType + "] - [" + getClass().getCanonicalName() + "]");
+                  .warning("Type not catered for : [" + fieldType + "] - [" + getClass().getSimpleName() + "]");
             return "any" + arrayString;
         }
     }
@@ -178,6 +201,7 @@ public interface INgDataType<J extends INgDataType<J>>
         String fieldDeclaration = encap + " " + fieldName + optionalString;
         String typeField = typeField(fieldType, field);
         typeField = typeField.replace("java.lang.Object", "any");
+        typeField = typeField.replace("za.co.uweassist.web.dto.", "");
 
         if (type == NgDataType.DataTypeClass.Interface)
         {
@@ -190,6 +214,10 @@ public interface INgDataType<J extends INgDataType<J>>
             out.append(fieldDeclaration + " : any" + (array ? "[]" : "") + " = " + (array ? "[]" : "0") + ";\n");
         }
         else if (Number.class.isAssignableFrom(fieldType))
+        {
+            out.append(fieldDeclaration + " : number" + (array ? "[]" : "") + " = " + (array ? "[]" : "0") + ";\n");
+        }
+        else if (Long.class.isAssignableFrom(fieldType))
         {
             out.append(fieldDeclaration + " : number" + (array ? "[]" : "") + " = " + (array ? "[]" : "0") + ";\n");
         }
@@ -373,6 +401,12 @@ public interface INgDataType<J extends INgDataType<J>>
                     case "int":
                     case "Double":
                     case "double":
+                    case "Long":
+                    case "long":
+                    case "Float":
+                    case "float":
+                    case "BigDecimal":
+                    case "BigInteger":
                         out.append("0");
                         break;
                     case "OffsetDateTime":
@@ -385,6 +419,7 @@ public interface INgDataType<J extends INgDataType<J>>
                     case "List":
                     case "ArrayList":
                     case "Set":
+                    case "TreeSet":
                         out.append("[]");
                         break;
                     case "HashMap":

@@ -1,6 +1,8 @@
 import com.guicedee.guicedinjection.interfaces.IGuiceConfigurator;
+import com.guicedee.guicedinjection.interfaces.IGuiceModule;
 import com.guicedee.guicedinjection.interfaces.IGuicePostStartup;
 import com.guicedee.guicedinjection.interfaces.IGuiceScanModuleInclusions;
+import com.jwebmp.core.base.angular.client.implementations.AngularClientModule;
 import com.jwebmp.core.base.angular.client.implementations.AngularTypeScriptClientModuleInclusion;
 import com.jwebmp.core.base.angular.client.implementations.AngularTypeScriptPostStartup;
 import com.jwebmp.core.base.angular.client.implementations.GuicedConfig;
@@ -41,6 +43,8 @@ module com.jwebmp.core.base.angular.client {
 
 
     provides IGuiceScanModuleInclusions with AngularTypeScriptClientModuleInclusion;
+
+    provides IGuiceModule with AngularClientModule;
 
     uses OnGetAllConstructorParameters;
     uses OnGetAllConstructorBodies;
