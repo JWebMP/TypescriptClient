@@ -12,12 +12,17 @@ import static java.lang.annotation.RetentionPolicy.*;
 @Inherited
 public @interface NgServiceProvider
 {
-	Class<? extends INgDataService<?>> value();
-	Class<? extends INgDataType<?>> dataType();
-	String variableName();
-	String referenceName();
-	
-	boolean dataArray() default false;
-	
-	boolean singleton() default false;
+    Class<? extends INgDataService<?>> value();
+
+    Class<? extends INgDataType<?>> dataType();
+
+    String variableName();
+
+    String referenceName();
+
+    boolean dataArray() default false;
+
+    boolean singleton() default false;
+
+    boolean deepMerge() default false;
 }

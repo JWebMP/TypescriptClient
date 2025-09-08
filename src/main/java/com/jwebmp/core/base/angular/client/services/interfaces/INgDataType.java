@@ -7,9 +7,12 @@ import com.guicedee.services.jsonrepresentation.IJsonRepresentation;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgDataType;
 import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
 import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
+import com.jwebmp.core.base.interfaces.ICSSImpl;
+import com.jwebmp.core.base.servlets.interfaces.ICSSComponent;
 import jakarta.validation.constraints.NotNull;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
@@ -103,6 +106,10 @@ public interface INgDataType<J extends INgDataType<J>>
                 Number.class.isAssignableFrom(fieldType) ||
                         BigDecimal.class.isAssignableFrom(fieldType) ||
                         BigInteger.class.isAssignableFrom(fieldType) ||
+                        Integer.class.isAssignableFrom(fieldType) ||
+                        Double.class.isAssignableFrom(fieldType) ||
+                        Float.class.isAssignableFrom(fieldType) ||
+                        Long.class.isAssignableFrom(fieldType) ||
                         int.class.isAssignableFrom(fieldType) ||
                         double.class.isAssignableFrom(fieldType) ||
                         float.class.isAssignableFrom(fieldType) ||
@@ -115,6 +122,7 @@ public interface INgDataType<J extends INgDataType<J>>
                 UUID.class.isAssignableFrom(fieldType) ||
                 Character.class.isAssignableFrom(fieldType) ||
                 fieldType.isEnum() ||
+                LocalTime.class.isAssignableFrom(fieldType) ||
                 Duration.class.isAssignableFrom(fieldType)
         )
         {
@@ -144,6 +152,15 @@ public interface INgDataType<J extends INgDataType<J>>
         {
             return getGenericTypeForField(field) + "[]";
         }
+        else if (ICSSImpl.class.isAssignableFrom(fieldType))
+        {
+            return "string" + arrayString;
+        }
+        else if (Serializable.class.getCanonicalName()
+                                   .equals(fieldType.getCanonicalName()))
+        {
+            return "any" + arrayString;
+        }
         else if (Map.class.isAssignableFrom(fieldType))
         {
             return "any" + arrayString;
@@ -151,7 +168,7 @@ public interface INgDataType<J extends INgDataType<J>>
         else
         {
             Logger.getLogger("DataType")
-                  .warning("Type not catered for : [" + fieldType + "] - [" + getClass().getSimpleName() + "]");
+                  .warning("Type FIELD not catered for : [" + fieldType + "] - [" + getClass().getSimpleName() + "]");
             return "any" + arrayString;
         }
     }
@@ -209,7 +226,117 @@ public interface INgDataType<J extends INgDataType<J>>
             return;
         }
 
-        if (Object.class.equals(fieldType))
+        appendBasicFieldType(out, fieldType, array, fieldDeclaration);
+
+
+        if (Collection.class.isAssignableFrom(fieldType))
+        {
+            //get generic type
+            String genericType = StringUtils.substringBetween(field.getGenericType()
+                                                                   .getTypeName(), "<", ">");
+
+            if (field.getGenericType() instanceof ParameterizedType)
+            {
+                var arguments = ((ParameterizedType) field.getGenericType()).getActualTypeArguments();
+                if (arguments != null)
+                {
+                    Object arg0 = arguments[0];
+                    if (arg0 instanceof ParameterizedType)
+                    {
+                        ParameterizedType pType = (ParameterizedType) arguments[0];
+                        Class<?> arg0Clazz = pType.getRawType()
+                                                  .getClass();
+                        try
+                        {
+                            appendBasicFieldType(out, arg0Clazz, true, fieldDeclaration);
+                            //renderFieldTS(out, fieldName, arg0Clazz, field, true);
+                        }
+                        catch (InvalidPathException ipe)
+                        {
+                            Logger.getLogger("INgDataType")
+                                  .log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
+                        }
+                    }
+                    else if (arg0 instanceof Class<?>)
+                    {
+                        try
+                        {
+                            renderFieldTS(out, fieldName, (Class) arg0, field, true);
+                        }
+                        catch (InvalidPathException ipe)
+                        {
+                            Logger.getLogger("INgDataType")
+                                  .log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                try
+                {
+
+                    renderFieldTS(out, fieldName, Class.forName(genericType), field, true);
+                }
+                catch (ClassNotFoundException e)
+                {
+                    e.printStackTrace();
+                }
+                catch (InvalidPathException ipe)
+                {
+                    Logger.getLogger("INgDataType")
+                          .log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
+                }
+            }
+        }
+        else if (fieldType.isArray())
+        {
+            //get generic type
+            String genericType = fieldType.arrayType()
+                                          .getCanonicalName();
+            try
+            {
+                appendBasicFieldType(out, Class.forName(genericType), true, fieldDeclaration);
+                //renderFieldTS(out, fieldName, Class.forName(genericType), field, true);
+            }
+            catch (ClassNotFoundException e)
+            {
+                e.printStackTrace();
+            }
+        }
+        else if (fieldType.isEnum())
+        {
+            //get generic type
+            String genericType = fieldType.arrayType()
+                                          .getCanonicalName();
+            try
+            {
+                //todo render then enum type and reference, use the nice typescript way
+                renderFieldTS(out, fieldName, Class.forName(genericType), field, false);
+            }
+            catch (ClassNotFoundException e)
+            {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static void appendBasicFieldType(StringBuilder out, Class fieldType, boolean array, String fieldDeclaration)
+    {
+        if (INgDataType.class.isAssignableFrom(fieldType))
+        {
+            //todo make this import the data type from the class
+            //out.append(" public " + fieldName + "? : " + getTsFilename(fieldType) + "" + (array ? "[]" : "") + " = " + (array ? "[]" : "{}") + ";\n");
+            String typeName = getTsFilename(fieldType);
+            out.append(fieldDeclaration + " : " + typeName + " " + (array ? "[]" : "") + " = " + (array ? "[]" : renderObjectStructure(fieldType)) + ";\n");
+        }
+        else if (IComponent.class.isAssignableFrom(fieldType))
+        {
+            //todo make this import the data type from the class
+            //out.append(" public " + fieldName + "? : " + getTsFilename(fieldType) + "" + (array ? "[]" : "") + " = " + (array ? "[]" : "{}") + ";\n");
+            out.append(fieldDeclaration + " : any " + (array ? "[]" : "") + " = " + (array ? "[]" : renderObjectStructure(fieldType)) + ";\n");
+        }
+        else if (Object.class.equals(fieldType))
         {
             out.append(fieldDeclaration + " : any" + (array ? "[]" : "") + " = " + (array ? "[]" : "0") + ";\n");
         }
@@ -245,105 +372,6 @@ public interface INgDataType<J extends INgDataType<J>>
         )
         {
             out.append(fieldDeclaration + " : Date" + (array ? "[]" : "") + " =" + (array ? "[]" : "new Date()") + ";\n");
-        }
-        else if (INgDataType.class.isAssignableFrom(fieldType))
-        {
-            //todo make this import the data type from the class
-            //out.append(" public " + fieldName + "? : " + getTsFilename(fieldType) + "" + (array ? "[]" : "") + " = " + (array ? "[]" : "{}") + ";\n");
-            String typeName = getTsFilename(fieldType);
-            out.append(fieldDeclaration + " : " + typeName + " " + (array ? "[]" : "") + " = " + (array ? "[]" : renderObjectStructure(fieldType)) + ";\n");
-        }
-        else if (IComponent.class.isAssignableFrom(fieldType))
-        {
-            //todo make this import the data type from the class
-            //out.append(" public " + fieldName + "? : " + getTsFilename(fieldType) + "" + (array ? "[]" : "") + " = " + (array ? "[]" : "{}") + ";\n");
-            out.append(fieldDeclaration + " : any " + (array ? "[]" : "") + " = " + (array ? "[]" : renderObjectStructure(fieldType)) + ";\n");
-        }
-        else if (Collection.class.isAssignableFrom(fieldType))
-        {
-            //get generic type
-            String genericType = StringUtils.substringBetween(field.getGenericType()
-                                                                   .getTypeName(), "<", ">");
-
-            if (field.getGenericType() instanceof ParameterizedType)
-            {
-                var arguments = ((ParameterizedType) field.getGenericType()).getActualTypeArguments();
-                if (arguments != null)
-                {
-                    Object arg0 = arguments[0];
-                    if (arg0 instanceof ParameterizedType)
-                    {
-                        ParameterizedType pType = (ParameterizedType) arguments[0];
-                        Class<?> arg0Clazz = pType.getRawType()
-                                                  .getClass();
-                        try
-                        {
-                            renderFieldTS(out, fieldName, arg0Clazz, field, true);
-                        }
-                        catch (InvalidPathException ipe)
-                        {
-                            Logger.getLogger("INgDataType")
-                                  .log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
-                        }
-                    }
-                    else if (arg0 instanceof Class<?>)
-                    {
-                        try
-                        {
-                            renderFieldTS(out, fieldName, (Class) arg0, field, true);
-                        }
-                        catch (InvalidPathException ipe)
-                        {
-                            Logger.getLogger("INgDataType")
-                                  .log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                try
-                {
-                    renderFieldTS(out, fieldName, Class.forName(genericType), field, true);
-                }
-                catch (ClassNotFoundException e)
-                {
-                    e.printStackTrace();
-                }
-                catch (InvalidPathException ipe)
-                {
-                    Logger.getLogger("INgDataType")
-                          .log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
-                }
-            }
-        }
-        else if (fieldType.isArray())
-        {
-            //get generic type
-            String genericType = fieldType.arrayType()
-                                          .getCanonicalName();
-            try
-            {
-                renderFieldTS(out, fieldName, Class.forName(genericType), field, true);
-            }
-            catch (ClassNotFoundException e)
-            {
-                e.printStackTrace();
-            }
-        }
-        else if (fieldType.isEnum())
-        {
-            //get generic type
-            String genericType = fieldType.arrayType()
-                                          .getCanonicalName();
-            try
-            {
-                renderFieldTS(out, fieldName, Class.forName(genericType), field, false);
-            }
-            catch (ClassNotFoundException e)
-            {
-                e.printStackTrace();
-            }
         }
     }
 
@@ -443,7 +471,7 @@ public interface INgDataType<J extends INgDataType<J>>
                         else
                         {
                             Logger.getLogger("DataType")
-                                  .warning("Type not catered for : " + declaredField.getType() + " in [" + o.getCanonicalName() + "]");
+                                  .warning("Render Object Structure Type not catered for : " + declaredField.getType() + " in [" + o.getCanonicalName() + "]");
                         }
                         //    out.append(renderObjectStructure(declaredField.getType()));
                     }
@@ -488,8 +516,12 @@ public interface INgDataType<J extends INgDataType<J>>
         {
             refs.add(getNgComponentReference(fieldType));
         }
-        else if (Collection.class.isAssignableFrom(fieldType))
+        else if (Collection.class.isAssignableFrom(fieldType) || fieldType.isArray())
         {
+            if (fieldType.isArray())
+            {
+                System.out.print("field is array - ");
+            }
             if (field.getGenericType() instanceof ParameterizedType)
             {
                 var arguments = ((ParameterizedType) field.getGenericType()).getActualTypeArguments();
@@ -518,20 +550,14 @@ public interface INgDataType<J extends INgDataType<J>>
                 }
             }
         }
-        else if (fieldType.isArray())
+   /*     else if (fieldType.isArray())
         {
             //get generic type
             String genericType = fieldType.arrayType()
                                           .getCanonicalName();
-            try
-            {
-                renderFieldReference(fieldName, Class.forName(genericType), field, true);
-            }
-            catch (ClassNotFoundException e)
-            {
-                e.printStackTrace();
-            }
-        }
+            appendBasicFieldType();
+            renderFieldReference(fieldName, fieldType.arrayType(), field, true);
+        }*/
         return refs;
     }
 

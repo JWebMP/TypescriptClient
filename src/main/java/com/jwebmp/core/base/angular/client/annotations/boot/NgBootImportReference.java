@@ -20,4 +20,14 @@ public @interface NgBootImportReference
     boolean onParent() default false;
 
     boolean onSelf() default true;
+
+    /**
+     * If the reference must be a direct import, using only the value field for rendering
+     */
+    boolean direct() default false;
+
+    /**
+     * If the value must be wrapped in braces or is a precise reference
+     */
+    boolean wrapValueInBraces() default true;
 }

@@ -87,7 +87,7 @@ public class AnnotationsMap
             NgImportModule.class, NgImportModules.class,
             NgImportReference.class, NgImportReferences.class,
             NgDataTypeReference.class, NgDataTypeReferences.class,
-
+            NgComponentTagAttribute.class, NgComponentTagAttributes.class,
             NgSignalComputed.class, NgSignalComputeds.class,
             NgSignalEffect.class, NgSignalEffects.class
     );
@@ -185,7 +185,7 @@ public class AnnotationsMap
     {
         Set<Class<?>> allAffectedClasses = new HashSet<>();
         ScanResult scanResult = IGuiceContext.instance()
-                .getScanResult();
+                                             .getScanResult();
         for (Class<? extends Annotation> annotation : annotations)
         {
             for (ClassInfo allClass : scanResult
