@@ -22,6 +22,10 @@ import java.math.BigInteger;
 import java.nio.file.InvalidPathException;
 import java.time.*;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.DoubleFunction;
+import java.util.function.IntFunction;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -164,6 +168,13 @@ public interface INgDataType<J extends INgDataType<J>>
         else if (Map.class.isAssignableFrom(fieldType))
         {
             return "any" + arrayString;
+        }
+        else if (Supplier.class.isAssignableFrom(fieldType) ||
+                Consumer.class.isAssignableFrom(fieldType) ||
+                IntFunction.class.isAssignableFrom(fieldType) ||
+                DoubleFunction.class.isAssignableFrom(fieldType))
+        {
+            return "";
         }
         else
         {

@@ -105,8 +105,13 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
                     }
                 }
         
-                // NOTE: We intentionally do not remove properties that are missing in source to avoid accidental data loss.
-                // If you want deletions, add logic here to prune keys not present in source.
+                // Remove properties in target that are not present in source
+                for (const key of Object.keys(target)) {
+                    if (!Object.prototype.hasOwnProperty.call(source, key)) {
+                        delete target[key];
+                        changed = true;
+                    }
+                }
         
                 return changed;
             }
@@ -134,31 +139,43 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
                     'id' in sourceArr[0];
         
                 if (!itemsAreObjectsWithId) {
-                    // Shallow compare by length and primitive equality for simple arrays
-                    if (targetArr.length !== sourceArr.length) {
-                        // Replace needed
-                        targetArr.length = 0;
-                        for (const item of sourceArr) targetArr.push(item);
-                        return true;
-                    }
-                    let changed = false;
-                    for (let i = 0; i < sourceArr.length; i++) {
-                        const s = sourceArr[i];
-                        const t = targetArr[i];
-                        if (typeof s === 'object') {
-                            // If complex object without id, fallback: replace slot if different reference
-                            if (t !== s) {
-                                targetArr[i] = s;
-                                changed = true;
-                            }
-                        } else {
+                    // For non-id arrays:
+                    // - If primitives only, replace if length/content differ
+                    // - If contains objects/arrays, replace entire array when any difference is detected to avoid nested duplications
+                    const primitivesOnly = sourceArr.every(it => it === null || (typeof it !== 'object'));
+
+                    if (primitivesOnly) {
+                        if (targetArr.length !== sourceArr.length) {
+                            targetArr.length = 0;
+                            for (const item of sourceArr) targetArr.push(item);
+                            return true;
+                        }
+                        let changed = false;
+                        for (let i = 0; i < sourceArr.length; i++) {
+                            const s = sourceArr[i];
+                            const t = targetArr[i];
                             if (t !== s) {
                                 targetArr[i] = s;
                                 changed = true;
                             }
                         }
+                        return changed;
+                    } else {
+                        // Contains complex items (objects/arrays) -> avoid deep index merges which can duplicate nested children.
+                        // Replace entire array if shallow reference or length/content differ
+                        let identical = targetArr.length === sourceArr.length;
+                        if (identical) {
+                            for (let i = 0; i < sourceArr.length; i++) {
+                                if (targetArr[i] !== sourceArr[i]) { identical = false; break; }
+                            }
+                        }
+                        if (!identical) {
+                            targetArr.length = 0;
+                            for (const item of sourceArr) targetArr.push(item);
+                            return true;
+                        }
+                        return false;
                     }
-                    return changed;
                 }
         
                 // Merge by id
@@ -166,18 +183,33 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
                 for (let i = 0; i < targetArr.length; i++) {
                     const item = targetArr[i];
                     if (item && typeof item === 'object' && 'id' in item) {
-                        indexById.set(item.id, i);
+                        if (!indexById.has(item.id)) {
+                            indexById.set(item.id, i);
+                        }
                     }
                 }
         
                 let changed = false;
+                const seenIds = new Set<any>();
         
                 for (const srcItem of sourceArr) {
-                    const id = srcItem.id;
+                    if (!srcItem || typeof srcItem !== 'object' || Array.isArray(srcItem) || !('id' in srcItem)) {
+                        // Non-object or missing id inside an id-array branch: skip to avoid accidental duplicates
+                        // Such items should be handled by the non-id branch above
+                        continue;
+                    }
+                    const id = (srcItem as any).id;
+                    if (seenIds.has(id)) {
+                        // Skip duplicate ids in this source payload
+                        continue;
+                    }
+                    seenIds.add(id);
+        
                     if (!indexById.has(id)) {
-                        // New item -> push
+                        // New item -> push (preserves existing positions)
                         targetArr.push(srcItem);
                         changed = true;
+                        indexById.set(id, targetArr.length - 1);
                     } else {
                         const idx = indexById.get(id)!;
                         const tgtItem = targetArr[idx];
@@ -186,23 +218,44 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
                         if (tgtItem && typeof tgtItem === 'object' && !Array.isArray(tgtItem)) {
                             const nestedChanged = this.deepMergeInto(tgtItem, srcItem);
                             if (nestedChanged) changed = true;
-                        } else {
-                            if (tgtItem !== srcItem) {
-                                targetArr[idx] = srcItem;
-                                changed = true;
-                            }
+                        } else if (tgtItem !== srcItem) {
+                            // Replace the slot but keep the same index to preserve position
+                            targetArr[idx] = srcItem;
+                            changed = true;
                         }
                     }
                 }
         
-                //Remove any missing items
-                const sourceIds = new Set(sourceArr.map(it => (it && typeof it === 'object' && 'id' in it ? it.id : undefined)));
+                // Remove items from target whose ids are not present in the source array
                 for (let i = targetArr.length - 1; i >= 0; i--) {
                     const it = targetArr[i];
-                    if (it && typeof it === 'object' && 'id' in it) {
-                        if (!sourceIds.has(it.id)) {
+                    if (it && typeof it === 'object' && !Array.isArray(it) && 'id' in it) {
+                        const id = (it as any).id;
+                        if (!seenIds.has(id)) {
                             targetArr.splice(i, 1);
                             changed = true;
+                        }
+                    }
+                }
+        
+                // Deduplicate target by id while preserving the first occurrence's position.
+                const firstIndexById = new Map<any, number>();
+                for (let i = 0; i < targetArr.length; i++) {
+                    const it = targetArr[i];
+                    if (it && typeof it === 'object' && !Array.isArray(it) && 'id' in it) {
+                        const id = (it as any).id;
+                        if (!firstIndexById.has(id)) {
+                            firstIndexById.set(id, i);
+                        } else {
+                            const firstIdx = firstIndexById.get(id)!;
+                            const firstItem = targetArr[firstIdx];
+                            if (firstItem && typeof firstItem === 'object' && !Array.isArray(firstItem)) {
+                                const nestedChanged = this.deepMergeInto(firstItem, it);
+                                if (nestedChanged) changed = true;
+                            }
+                            targetArr.splice(i, 1);
+                            changed = true;
+                            i--; // adjust after removal
                         }
                     }
                 }
