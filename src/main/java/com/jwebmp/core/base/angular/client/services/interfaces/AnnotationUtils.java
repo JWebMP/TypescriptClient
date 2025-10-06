@@ -353,10 +353,12 @@ public interface AnnotationUtils
         return ref;
     }
 
-    static MyNgModal getNgModal(String value, String referenceName)
+    static MyNgModel getNgModel(String value, String referenceName, Class<? extends INgDataType<?>> dataType, boolean mandatory)
     {
-        var ref = new MyNgModal().setValue(value)
-                                 .setReferenceName(referenceName);
+        var ref = new MyNgModel().setValue(value)
+                                 .setReferenceName(referenceName)
+                                 .setDataType(dataType)
+                                 .setMandatory(mandatory);
         return ref;
     }
 
@@ -1763,10 +1765,12 @@ public interface AnnotationUtils
     @Getter
     @Setter
     @ToString
-    class MyNgModal implements NgModal, IConfiguration
+    class MyNgModel implements NgModel, IConfiguration
     {
         private String value;
         private String referenceName;
+        private Class<? extends INgDataType<?>> dataType;
+        private boolean mandatory = false;
         private boolean onParent = false;
         private boolean onSelf = true;
 
@@ -1789,9 +1793,21 @@ public interface AnnotationUtils
         }
 
         @Override
+        public Class<? extends INgDataType<?>> dataType()
+        {
+            return dataType;
+        }
+
+        @Override
+        public boolean mandatory()
+        {
+            return mandatory;
+        }
+
+        @Override
         public Class<? extends Annotation> annotationType()
         {
-            return NgModal.class;
+            return NgModel.class;
         }
 
         @Override
@@ -1807,7 +1823,7 @@ public interface AnnotationUtils
             {
                 return false;
             }
-            MyNgModal myNgModal = (MyNgModal) o;
+            MyNgModel myNgModal = (MyNgModel) o;
             return isOnParent() == myNgModal.isOnParent() && isOnSelf() == myNgModal.isOnSelf() && Objects.equals(getValue(), myNgModal.getValue()) && Objects.equals(getReferenceName(), myNgModal.getReferenceName());
         }
 
@@ -1851,7 +1867,7 @@ public interface AnnotationUtils
         @Override
         public Class<? extends Annotation> annotationType()
         {
-            return NgModal.class;
+            return NgModel.class;
         }
 
         @Override

@@ -3,28 +3,18 @@ package com.jwebmp.core.base.angular.client.services.interfaces;
 import com.google.common.base.Strings;
 import com.guicedee.client.IGuiceContext;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgComponent;
-import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorBody;
-import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorParameter;
-import com.jwebmp.core.base.angular.client.annotations.functions.*;
-import com.jwebmp.core.base.angular.client.annotations.globals.NgGlobalComponentImportReference;
-import com.jwebmp.core.base.angular.client.annotations.references.NgImportModule;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportProvider;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
-import com.jwebmp.core.base.angular.client.annotations.structures.NgField;
 import com.jwebmp.core.base.angular.client.annotations.structures.NgMethod;
 import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
 import com.jwebmp.core.base.angular.client.services.ComponentConfiguration;
 import com.jwebmp.core.base.interfaces.IComponentHierarchyBase;
-import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
-import java.util.logging.Logger;
 
 import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getTsFilename;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 @NgImportReference(value = "Component", reference = "@angular/core")
 //@NgImportReference(value = "CUSTOM_ELEMENTS_SCHEMA", reference = "@angular/core")
@@ -410,7 +400,7 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
                                                                        .get("AngularConfiguration");
             StringBuilder sb = new StringBuilder();
             sb.append(config.renderInjects());
-            sb.append(config.renderModals());
+            sb.append(config.renderModels());
             sb.append(config.renderSignals());
             sb.append(config.renderInputs());
             sb.append(config.renderOutputs());

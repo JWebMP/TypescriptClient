@@ -1,5 +1,8 @@
 package com.jwebmp.core.base.angular.client.annotations.structures;
 
+import com.jwebmp.core.base.angular.client.services.interfaces.INgDataType;
+import com.jwebmp.core.base.angular.client.services.tstypes.any;
+
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
@@ -10,13 +13,17 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Target({TYPE})
 @Retention(RUNTIME)
-@Repeatable(NgModals.class)
+@Repeatable(NgModels.class)
 @Inherited
-public @interface NgModal
+public @interface NgModel
 {
     String value();
 
     String referenceName();
+
+    Class<? extends INgDataType<?>> dataType() default any.class;
+
+    boolean mandatory() default false;
 
     boolean onParent() default false;
 

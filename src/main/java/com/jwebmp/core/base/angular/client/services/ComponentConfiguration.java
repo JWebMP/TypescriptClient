@@ -1,7 +1,6 @@
 package com.jwebmp.core.base.angular.client.services;
 
 import com.google.common.base.Strings;
-import com.jwebmp.core.base.angular.client.AppUtils;
 import com.jwebmp.core.base.angular.client.annotations.components.NgInput;
 import com.jwebmp.core.base.angular.client.annotations.components.NgOutput;
 import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorBody;
@@ -54,7 +53,7 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
 
 
     private final Set<NgInject> injects = new LinkedHashSet<>();
-    private final Set<NgModal> modals = new LinkedHashSet<>();
+    private final Set<NgModel> models = new LinkedHashSet<>();
     private final Set<NgSignal> signals = new LinkedHashSet<>();
 
 
@@ -202,18 +201,21 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
         return sb;
     }
 
-    public StringBuilder renderModals()
+    public StringBuilder renderModels()
     {
-        if (modals.isEmpty())
+        if (models.isEmpty())
         {
             return new StringBuilder();
         }
         StringBuilder sb = new StringBuilder();
-        for (var inject : modals)
+        for (var inject : models)
         {
-            sb.append("\tconst ")
+            sb.append("\treadonly ")
               .append(inject.referenceName())
-              .append(" = modal(")
+              .append(" = model<")
+              .append(inject.dataType()
+                            .getSimpleName())
+              .append(">(")
               .append(inject.value())
               .append(");\n");
         }

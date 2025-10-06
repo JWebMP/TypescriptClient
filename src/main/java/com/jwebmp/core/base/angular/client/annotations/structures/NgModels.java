@@ -10,12 +10,12 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target({TYPE})
 @Retention(RUNTIME)
 @Inherited
-public @interface NgModals
+public @interface NgModels
 {
     /**
      * The string name of the dev dependency for the given ng app
      *
      * @return
      */
-    NgModal[] value();
+    NgModel[] value();
 }

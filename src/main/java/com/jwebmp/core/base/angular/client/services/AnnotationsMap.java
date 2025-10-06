@@ -101,7 +101,7 @@ public class AnnotationsMap
             NgMethod.class, NgMethods.class,
             NgValidator.class, NgValidators.class,
             NgInject.class, NgInjects.class,
-            NgModal.class, NgModals.class,
+            NgModel.class, NgModels.class,
             NgSignal.class, NgSignals.class
     );
 
@@ -173,7 +173,7 @@ public class AnnotationsMap
             NgValidator.class,
 
             NgInject.class,
-            NgModal.class,
+            NgModel.class,
 
             NgSignal.class,
             NgSignalComputed.class,
