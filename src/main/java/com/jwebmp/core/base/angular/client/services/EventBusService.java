@@ -145,7 +145,7 @@ import java.util.List;
                       // Subscribe to the address
                       const subscription = this.stompClient.subscribe(`/toStomp/${address}`, (message) => {
                           try {
-                              console.log(`[EventBusService] Message received on address "${address}":`, message.body);
+                            //  console.log(`[EventBusService] Message received on address "${address}":`, message.body);
         
                               // Parse the message body
                               const body = JSON.parse(message.body);
@@ -167,7 +167,7 @@ import java.util.List;
                           const privateAddress = `${this.guid}.${address}`;
                           const privateSubscription = this.stompClient.subscribe(`/toStomp/${privateAddress}`, (message) => {
                               try {
-                                  console.log(`[EventBusService] Message received on private address "${privateAddress}":`, message.body);
+                               //   console.log(`[EventBusService] Message received on private address "${privateAddress}":`, message.body);
         
                                   // Parse the message body
                                   const body = JSON.parse(message.body);
