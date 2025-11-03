@@ -93,7 +93,7 @@ import java.util.List;
                 this.processResult(data);
             });
             const sessionStorage = this.generateGUID();
-            this.listen("SessionStorage",everyoneId).subscribe(data => {
+            this.listen("SessionStorage",sessionStorage).subscribe(data => {
                 Object.keys(data).forEach(prop => {
                         window.sessionStorage.setItem(prop, data[prop]);
                         if (prop === 'contextId') {
@@ -102,7 +102,7 @@ import java.util.List;
                     });
             });
             const localStorage = this.generateGUID();
-            this.listen("LocalStorage",everyoneId).subscribe(data => {
+            this.listen("LocalStorage",localStorage).subscribe(data => {
                 Object.keys(data).forEach(prop => {
                         window.localStorage.setItem(prop, data[prop]);
                     });

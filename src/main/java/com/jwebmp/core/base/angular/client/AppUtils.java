@@ -662,7 +662,8 @@ public class AppUtils
     public static String getFileReferenceSrcAppFile(Class<? extends INgApp<?>> app, Class<?> clazz, String... extension)
     {
         String classLocationDirectory = getClassLocationDirectory(clazz);
-        classLocationDirectory = classLocationDirectory.replaceAll("\\\\", "/").replace('.', '/');
+        classLocationDirectory = classLocationDirectory.replaceAll("\\\\", "/")
+                                                       .replace('.', '/');
 
         String baseLocation = null;
         try
@@ -721,6 +722,59 @@ public class AppUtils
     {
         String baseDir = getFileReferenceSrcAppFile(app, clazz, extension);
         return new File(baseDir);
+    }
+
+    public static void saveAssetToBaseDir(Class<? extends INgApp<?>> app, InputStream inputStream, String fileName, boolean includeDist)
+    {
+        File appAssetsPath = getAppAssetsPath(app).getParentFile();
+        byte[] data;
+        try
+        {
+            data = IOUtils.toByteArray(inputStream);
+        }
+        catch (IOException e)
+        {
+            throw new UnsupportedOperationException(e);
+        }
+
+        fileName = cleanAssetName(fileName);
+        /*if (fileName.startsWith("/"))
+        {
+            fileName = fileName.substring(1);
+        }
+        if (fileName.startsWith("assets/"))
+        {
+            fileName = fileName.substring(fileName.indexOf("assets/") + 7);
+        }*/
+        String assetFilePath;
+        try
+        {
+            assetFilePath = FilenameUtils.concat(appAssetsPath.getCanonicalPath(), fileName);
+        }
+        catch (IOException e)
+        {
+            throw new UnsupportedOperationException(e);
+        }
+        writeFile(new ByteArrayInputStream(data), assetFilePath);
+        if (!appAssets.containsKey(app))
+        {
+            appAssets.put(app, new ArrayList<>());
+        }
+        appAssets.get(app)
+                 .add("public/" + fileName);
+
+        if (includeDist)
+        {
+            try
+            {
+                assetFilePath = FilenameUtils.concat(getDistAssetsPath(app).getCanonicalPath(), fileName);
+            }
+            catch (IOException e)
+            {
+                throw new UnsupportedOperationException(e);
+            }
+            writeFile(new ByteArrayInputStream(data), assetFilePath);
+        }
     }
 
     public static void saveAsset(Class<? extends INgApp<?>> app, InputStream inputStream, String fileName)
@@ -788,7 +842,7 @@ public class AppUtils
             appAssets.put(app, new ArrayList<>());
         }
         appAssets.get(app)
-                .add("public/" + fileName);
+                 .add("public/" + fileName);
 
         if (includeDist)
         {
@@ -877,7 +931,7 @@ public class AppUtils
     public static Set<Class<?>> getAllValidClasses(ClassInfo a)
     {
         ScanResult scan = IGuiceContext.instance()
-                .getScanResult();
+                                       .getScanResult();
         Set<Class<?>> classes = new HashSet<>();
         if (a.isInterface() || a.isAbstract())
         {
