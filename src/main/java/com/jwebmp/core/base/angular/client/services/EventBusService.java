@@ -138,7 +138,7 @@ import java.util.List;
                       return;
                   }
         
-                  console.log('[EventBusService] Processing queued listeners...');
+                  //console.log('[EventBusService] Processing queued listeners...');
                   while (this.pendingListeners.length > 0) {
                       const { address, handlerId } = this.pendingListeners.shift()!;
         
@@ -182,10 +182,10 @@ import java.util.List;
                           });
         
                           this.stompSubscriptions.set(`${privateAddress}:${handlerId}`, privateSubscription);
-                          console.log(`[EventBusService] Private Listener registered for address: "${privateAddress}", handler ID: "${handlerId}"`);
+                          //console.log(`[EventBusService] Private Listener registered for address: "${privateAddress}", handler ID: "${handlerId}"`);
                       }
         
-                      console.log(`[EventBusService] Listener registered for address: "${address}", handler ID: "${handlerId}"`);
+                      //console.log(`[EventBusService] Listener registered for address: "${address}", handler ID: "${handlerId}"`);
                   }
               }
         """)
@@ -198,7 +198,7 @@ import java.util.List;
                   );
         
                   if (!isAlreadyQueued) {
-                      console.log(`[EventBusService] Queuing listener for address: "${address}", handler ID: "${handlerId}"`);
+                      //console.log(`[EventBusService] Queuing listener for address: "${address}", handler ID: "${handlerId}"`);
                       this.pendingListeners.push({ address, handlerId });
                   }
         
@@ -492,7 +492,7 @@ import java.util.List;
                           body: JSON.stringify(news),
                           headers: { 'content-type': 'application/json' }
                       });
-                      console.log(`[EventBus] Message sent via STOMP:`, news);
+                      //console.log(`[EventBus] Message sent via STOMP:`, news);
                   } else {
                       console.error('[EventBus] STOMP client is not connected.');
                   }

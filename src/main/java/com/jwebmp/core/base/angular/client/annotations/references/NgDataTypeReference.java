@@ -13,14 +13,14 @@ import static java.lang.annotation.RetentionPolicy.*;
 @Repeatable(NgDataTypeReferences.class)
 public @interface NgDataTypeReference
 {
-	/**
-	 * The boot module to call from the angular app
-	 *
-	 * @return
-	 */
-	Class<? extends INgDataType<?>> value();
-	
-	boolean primary() default true;
-	
-	String signalName() default "";
+    /**
+     * The boot module to call from the angular app
+     *
+     * @return
+     */
+    Class<? extends INgDataType<?>> value();
+
+    boolean primary() default true;
+
+    String signalName() default "";
 }

@@ -169,6 +169,10 @@ public interface INgDataType<J extends INgDataType<J>>
         {
             return "any" + arrayString;
         }
+        else if (fieldType.isInterface())
+        {
+            return "any" + arrayString;
+        }
         else if (Supplier.class.isAssignableFrom(fieldType) ||
                 Consumer.class.isAssignableFrom(fieldType) ||
                 IntFunction.class.isAssignableFrom(fieldType) ||
