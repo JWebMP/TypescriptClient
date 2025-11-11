@@ -185,7 +185,7 @@ import java.util.List;
                           //console.log(`[EventBusService] Private Listener registered for address: "${privateAddress}", handler ID: "${handlerId}"`);
                       }
         
-                      //console.log(`[EventBusService] Listener registered for address: "${address}", handler ID: "${handlerId}"`);
+                      console.log(`[EventBusService] Listener registered for address: "${address}", handler ID: "${handlerId}"`);
                   }
               }
         """)
@@ -568,6 +568,12 @@ import java.util.List;
 @NgMethod("""
         \t
             processResult(response: any) {
+                    if(!response)
+                    {
+                        console.log('No response object received!?');
+                        debugger;
+                    }
+        
                     if (response.localStorage) {
                         Object.keys(response.localStorage).forEach(prop => {
                             window.localStorage.setItem(prop, response.localStorage[prop]);
@@ -661,7 +667,7 @@ import java.util.List;
                           if (this.stompSubscriptions.has(subscriptionKey)) {
                               this.stompSubscriptions.get(subscriptionKey)!.unsubscribe();
                               this.stompSubscriptions.delete(subscriptionKey);
-                              console.log(`[EventBusService] STOMP subscription unregistered for address: "${normalizedAddress}", handler ID: "${handlerId}"`);
+                              //console.log(`[EventBusService] STOMP subscription unregistered for address: "${normalizedAddress}", handler ID: "${handlerId}"`);
                           }
         
                           // Also unsubscribe from private address if guid exists
@@ -670,7 +676,7 @@ import java.util.List;
                               if (this.stompSubscriptions.has(privateSubscriptionKey)) {
                                   this.stompSubscriptions.get(privateSubscriptionKey)!.unsubscribe();
                                   this.stompSubscriptions.delete(privateSubscriptionKey);
-                                  console.log(`[EventBusService] STOMP private subscription unregistered for address: "${this.guid}.${normalizedAddress}", handler ID: "${handlerId}"`);
+                                  //console.log(`[EventBusService] STOMP private subscription unregistered for address: "${this.guid}.${normalizedAddress}", handler ID: "${handlerId}"`);
                               }
                           }
         
