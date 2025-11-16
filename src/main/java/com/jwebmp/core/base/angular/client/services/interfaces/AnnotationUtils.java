@@ -215,6 +215,12 @@ public interface AnnotationUtils
         return new MyNgGlobalField(value);
     }
 
+    static MyNgImportReference getNgImportReference(String importName, String reference, boolean onSelf, boolean onParent, boolean direct, boolean wrapValueInBraces)
+    {
+        var ref = new MyNgImportReference(reference, importName, onParent, onSelf, direct, wrapValueInBraces);
+        return ref;
+    }
+
     static MyNgImportReference getNgImportReference(String importName, String reference, boolean direct, boolean wrapValueInBraces)
     {
         var ref = new MyNgImportReference(reference, importName, false, true, direct, wrapValueInBraces);

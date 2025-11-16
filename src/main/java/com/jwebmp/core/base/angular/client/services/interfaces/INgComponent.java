@@ -110,7 +110,7 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
         StringBuilder providers = new StringBuilder();
         StringBuilder hosts = new StringBuilder();
 
-        StringBuilder importsModules = new StringBuilder();
+        //StringBuilder importsModules = new StringBuilder();
         boolean standalone = false;
 
         IComponentHierarchyBase<?, ?> chb = (IComponentHierarchyBase<?, ?>) this;
@@ -223,38 +223,7 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
         {
             standalone = override;
         }
-
-        if (standalone)
-        {
-            importsModules = renderImportModules();
-            /*List<NgImportModule> importModules = new ArrayList<>();// IGuiceContext.get(AnnotationHelper.class)
-            //             .getAnnotationFromClass(getClass(), NgImportModule.class);
-            if (this instanceof IComponentHierarchyBase<?, ?> comp)
-            {
-                importModules.addAll(comp.getConfigurations(NgImportModule.class, false));
-            }
-            for (var compRef : importModules.stream()
-                    .filter(a -> a.onSelf())
-                    .map(NgImportModule::value)
-                    .distinct()
-                    .toList())
-            {
-                importsModules.append(compRef)
-                        .append(",\n");
-            }
-
-            *//*
-            for (String customImportModule : moduleImports())
-            {
-                importsModules.append(customImportModule)
-                              .append(",\n");
-            }*//*
-
-            if (importsModules.length() > 1)
-            {
-                importsModules.deleteCharAt(importsModules.length() - 2);
-            }*/
-        }
+        var importsModules = renderImportModules();
 
         String componentString;
         if (!standalone)
@@ -334,15 +303,6 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
     default Boolean standaloneOverride()
     {
         return null;
-    }
-
-    default Set<String> moduleImports()
-    {
-        Set<String> list = IComponent.super.moduleImports();
-/*        list.add("NgForOf");
-        list.add("NgIf");
-        list.add("JsonPipe");*/
-        return list;
     }
 
     // ================= Component Overrides ====================

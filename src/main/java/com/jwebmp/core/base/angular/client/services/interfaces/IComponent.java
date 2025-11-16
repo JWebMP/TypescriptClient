@@ -84,6 +84,8 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
                     out.add(ngField);
                 }
             }
+
+
         }
 
         for (String field : fields())
@@ -621,17 +623,6 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
     default List<String> decorators()
     {
         return new ArrayList<>();
-    }
-
-    default Set<String> moduleImports()
-    {
-        Set<String> list = new LinkedHashSet<>();
-        ServiceLoader<OnGetAllModuleImports> load = ServiceLoader.load(OnGetAllModuleImports.class);
-        for (OnGetAllModuleImports onGetAllModuleImports : load)
-        {
-            onGetAllModuleImports.perform(list, this);
-        }
-        return list;
     }
 
 }
