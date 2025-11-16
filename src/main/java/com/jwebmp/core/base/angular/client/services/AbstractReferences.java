@@ -41,7 +41,8 @@ public abstract class AbstractReferences<J extends AbstractNgConfiguration<?>>
                 var ng = AnnotationUtils.getNgInterface(componentMethod);
                 if ((ng.onSelf() && !checkForParent) || (ng.onParent() && checkForParent))
                 {
-                    getConfiguration().getInterfaces().add(ng);
+                    getConfiguration().getInterfaces()
+                                      .add(ng);
                 }
             }
         }
@@ -53,7 +54,8 @@ public abstract class AbstractReferences<J extends AbstractNgConfiguration<?>>
                 var ng = AnnotationUtils.getNgConstructorParameter(componentConstructorParameter);
                 if ((ng.isOnSelf() && !checkForParent) || (ng.isOnParent() && checkForParent))
                 {
-                    getConfiguration().getConstructorParameters().add(AnnotationUtils.getNgConstructorParameter(ng.value()));
+                    getConfiguration().getConstructorParameters()
+                                      .add(AnnotationUtils.getNgConstructorParameter(ng.value()));
                 }
             }
         }
@@ -64,7 +66,8 @@ public abstract class AbstractReferences<J extends AbstractNgConfiguration<?>>
                 var ng = AnnotationUtils.getNgConstructorBody(componentConstructorBody);
                 if ((ng.isOnSelf() && !checkForParent) || (ng.isOnParent() && checkForParent))
                 {
-                    getConfiguration().getConstructorBodies().add(AnnotationUtils.getNgConstructorBody(ng.value()));
+                    getConfiguration().getConstructorBodies()
+                                      .add(AnnotationUtils.getNgConstructorBody(ng.value()));
                 }
             }
         }
@@ -76,7 +79,8 @@ public abstract class AbstractReferences<J extends AbstractNgConfiguration<?>>
                 var ng = AnnotationUtils.getNgComponentMethod(componentMethod);
                 if ((ng.isOnSelf() && !checkForParent) || (ng.isOnParent() && checkForParent))
                 {
-                    getConfiguration().getMethods().add(ng);
+                    getConfiguration().getMethods()
+                                      .add(ng);
                 }
             }
         }
@@ -88,7 +92,8 @@ public abstract class AbstractReferences<J extends AbstractNgConfiguration<?>>
                 var ng = AnnotationUtils.getNgGlobalField(componentField);
                 if ((ng.isOnSelf() && !checkForParent) || (ng.isOnParent() && checkForParent))
                 {
-                    getConfiguration().getGlobalFields().add(ng);
+                    getConfiguration().getGlobalFields()
+                                      .add(ng);
                 }
             }
         }
@@ -100,7 +105,8 @@ public abstract class AbstractReferences<J extends AbstractNgConfiguration<?>>
                 var ng = AnnotationUtils.getNgField(componentField);
                 if ((ng.isOnSelf() && !checkForParent) || (ng.isOnParent() && checkForParent))
                 {
-                    getConfiguration().getFields().add(ng);
+                    getConfiguration().getFields()
+                                      .add(ng);
                 }
             }
         }
@@ -109,142 +115,170 @@ public abstract class AbstractReferences<J extends AbstractNgConfiguration<?>>
         {
             if (!Strings.isNullOrEmpty(onInit))
             {
-                getConfiguration().getImportReferences().add(AnnotationUtils.getNgImportReference("OnInit", "@angular/core"));
-                getConfiguration().getInterfaces().add(AnnotationUtils.getNgInterface("OnInit"));
-                getConfiguration().getOnInit().add(AnnotationUtils.getNgOnInit(onInit));
+                getConfiguration().getImportReferences()
+                                  .add(AnnotationUtils.getNgImportReference("OnInit", "@angular/core"));
+                getConfiguration().getInterfaces()
+                                  .add(AnnotationUtils.getNgInterface("OnInit"));
+                getConfiguration().getOnInit()
+                                  .add(AnnotationUtils.getNgOnInit(onInit));
             }
         }
         for (String onDestroy : comp.onDestroy())
         {
             if (!Strings.isNullOrEmpty(onDestroy))
             {
-                getConfiguration().getImportReferences().add(AnnotationUtils.getNgImportReference("OnDestroy", "@angular/core"));
-                getConfiguration().getInterfaces().add(AnnotationUtils.getNgInterface("OnDestroy"));
-                getConfiguration().getOnDestroy().add(AnnotationUtils.getNgOnDestroy(onDestroy));
+                getConfiguration().getImportReferences()
+                                  .add(AnnotationUtils.getNgImportReference("OnDestroy", "@angular/core"));
+                getConfiguration().getInterfaces()
+                                  .add(AnnotationUtils.getNgInterface("OnDestroy"));
+                getConfiguration().getOnDestroy()
+                                  .add(AnnotationUtils.getNgOnDestroy(onDestroy));
             }
         }
     }
 
     protected void addOnInit(Class<?> component, boolean checkForParent)
     {
-        AnnotationUtils.getAnnotation(component, NgOnInit.class).forEach(ngMethod -> {
-            if ((ngMethod.onSelf() && !checkForParent) || (ngMethod.onParent() && checkForParent))
-            {
-                getConfiguration().getImportReferences().add(AnnotationUtils.getNgImportReference("OnInit", "@angular/core"));
-                getConfiguration().getInterfaces().add(AnnotationUtils.getNgInterface("OnInit"));
-                getConfiguration().getOnInit().add(AnnotationUtils.getNgOnInit(ngMethod.value().trim()));
-            }
-        });
+        AnnotationUtils.getAnnotation(component, NgOnInit.class)
+                       .forEach(ngMethod -> {
+                           if ((ngMethod.onSelf() && !checkForParent) || (ngMethod.onParent() && checkForParent))
+                           {
+                               getConfiguration().getImportReferences()
+                                                 .add(AnnotationUtils.getNgImportReference("OnInit", "@angular/core"));
+                               getConfiguration().getInterfaces()
+                                                 .add(AnnotationUtils.getNgInterface("OnInit"));
+                               getConfiguration().getOnInit()
+                                                 .add(AnnotationUtils.getNgOnInit(ngMethod.value()
+                                                                                          .trim()));
+                           }
+                       });
     }
 
     protected void addOnDestroy(Class<?> component, boolean checkForParent)
     {
-        AnnotationUtils.getAnnotation(component, NgOnDestroy.class).forEach(ngMethod -> {
-            if ((ngMethod.onSelf() && !checkForParent) || (ngMethod.onParent() && checkForParent))
-            {
-                getConfiguration().getImportReferences().add(AnnotationUtils.getNgImportReference("OnDestroy", "@angular/core"));
-                getConfiguration().getInterfaces().add(AnnotationUtils.getNgInterface("OnDestroy"));
-                getConfiguration().getOnDestroy().add(AnnotationUtils.getNgOnDestroy(ngMethod.value()));
-            }
-        });
+        AnnotationUtils.getAnnotation(component, NgOnDestroy.class)
+                       .forEach(ngMethod -> {
+                           if ((ngMethod.onSelf() && !checkForParent) || (ngMethod.onParent() && checkForParent))
+                           {
+                               getConfiguration().getImportReferences()
+                                                 .add(AnnotationUtils.getNgImportReference("OnDestroy", "@angular/core"));
+                               getConfiguration().getInterfaces()
+                                                 .add(AnnotationUtils.getNgInterface("OnDestroy"));
+                               getConfiguration().getOnDestroy()
+                                                 .add(AnnotationUtils.getNgOnDestroy(ngMethod.value()));
+                           }
+                       });
     }
 
     protected void addConstructorParameters(Class<?> component, boolean checkForParent)
     {
         AnnotationUtils.getAnnotation(component, NgConstructorParameter.class)
-                .forEach(constructorParameter -> {
-                    if ((constructorParameter.onSelf() && !checkForParent) || (constructorParameter.onParent() && checkForParent))
-                    {
-                        getConfiguration().getConstructorParameters().add(AnnotationUtils.getNgConstructorParameter(constructorParameter.value()));
-                    }
-                });
+                       .forEach(constructorParameter -> {
+                           if ((constructorParameter.onSelf() && !checkForParent) || (constructorParameter.onParent() && checkForParent))
+                           {
+                               getConfiguration().getConstructorParameters()
+                                                 .add(AnnotationUtils.getNgConstructorParameter(constructorParameter.value()));
+                           }
+                       });
     }
 
     protected void addConstructorBodies(Class<?> component, boolean checkForParent)
     {
         AnnotationUtils.getAnnotation(component, NgConstructorBody.class)
-                .forEach(ngConstructorBody -> {
-                    if ((ngConstructorBody.onSelf() && !checkForParent) || (ngConstructorBody.onParent() && checkForParent))
-                    {
-                        getConfiguration().getConstructorBodies().add(AnnotationUtils.getNgConstructorBody(ngConstructorBody.value()));
-                    }
-                });
+                       .forEach(ngConstructorBody -> {
+                           if ((ngConstructorBody.onSelf() && !checkForParent) || (ngConstructorBody.onParent() && checkForParent))
+                           {
+                               getConfiguration().getConstructorBodies()
+                                                 .add(AnnotationUtils.getNgConstructorBody(ngConstructorBody.value()));
+                           }
+                       });
     }
 
     protected void addFields(Class<?> component, boolean checkForParent)
     {
-        AnnotationUtils.getAnnotation(component, NgField.class).forEach(ngField -> {
-            if ((ngField.onSelf() && !checkForParent) || (ngField.onParent() && checkForParent))
-            {
-                getConfiguration().getFields().add(AnnotationUtils.getNgField(ngField.value()));
-            }
-        });
+        AnnotationUtils.getAnnotation(component, NgField.class)
+                       .forEach(ngField -> {
+                           if ((ngField.onSelf() && !checkForParent) || (ngField.onParent() && checkForParent))
+                           {
+                               getConfiguration().getFields()
+                                                 .add(AnnotationUtils.getNgField(ngField.value()));
+                           }
+                       });
     }
 
     protected void addComponentReferences(Class<?> component, boolean checkForParent)
     {
-        AnnotationUtils.getAnnotation(component, NgComponentReference.class).forEach(ngField -> {
-            if ((ngField.onSelf() && !checkForParent) || (ngField.onParent() && checkForParent))
-            {
-                getConfiguration().getComponentReferences().add(AnnotationUtils.getNgComponentReference(ngField.value()));
-            }
-        });
+        AnnotationUtils.getAnnotation(component, NgComponentReference.class)
+                       .forEach(ngField -> {
+                           if ((ngField.onSelf() && !checkForParent) || (ngField.onParent() && checkForParent))
+                           {
+                               getConfiguration().getComponentReferences()
+                                                 .add(AnnotationUtils.getNgComponentReference((Class<? extends IComponent<?>>) ngField.value()));
+                           }
+                       });
     }
 
     protected void addGlobalFields(Class<?> component, boolean checkForParent)
     {
         AnnotationUtils.getAnnotation(component, NgGlobalField.class)
-                .forEach(ngField -> {
-                    if ((ngField.onSelf() && !checkForParent) || (ngField.onParent() && checkForParent))
-                    {
-                        getConfiguration().getGlobalFields().add(AnnotationUtils.getNgGlobalField(ngField.value()));
-                    }
-                });
+                       .forEach(ngField -> {
+                           if ((ngField.onSelf() && !checkForParent) || (ngField.onParent() && checkForParent))
+                           {
+                               getConfiguration().getGlobalFields()
+                                                 .add(AnnotationUtils.getNgGlobalField(ngField.value()));
+                           }
+                       });
     }
 
     protected void addMethods(Class<?> component, boolean checkForParent)
     {
         AnnotationUtils.getAnnotation(component, NgMethod.class)
-                .forEach(ngMethod -> {
-                    if ((ngMethod.onSelf() && !checkForParent) || (ngMethod.onParent() && checkForParent))
-                    {
-                        getConfiguration().getMethods().add(AnnotationUtils.getNgComponentMethod(ngMethod.value()));
-                    }
-                });
+                       .forEach(ngMethod -> {
+                           if ((ngMethod.onSelf() && !checkForParent) || (ngMethod.onParent() && checkForParent))
+                           {
+                               getConfiguration().getMethods()
+                                                 .add(AnnotationUtils.getNgComponentMethod(ngMethod.value()));
+                           }
+                       });
     }
 
     protected void addInterfaces(Class<?> component, boolean checkForParent)
     {
         AnnotationUtils.getAnnotation(component, NgInterface.class)
-                .forEach(ngMethod -> {
-                    if ((ngMethod.onSelf() && !checkForParent) || (ngMethod.onParent() && checkForParent))
-                    {
-                        getConfiguration().getInterfaces().add(AnnotationUtils.getNgInterface(ngMethod.value()));
-                    }
-                });
+                       .forEach(ngMethod -> {
+                           if ((ngMethod.onSelf() && !checkForParent) || (ngMethod.onParent() && checkForParent))
+                           {
+                               getConfiguration().getInterfaces()
+                                                 .add(AnnotationUtils.getNgInterface(ngMethod.value()));
+                           }
+                       });
     }
 
     protected void addInjects(Class<?> component, boolean checkForParent)
     {
-        AnnotationUtils.getAnnotation(component, NgInject.class).forEach(ngMethod -> {
-            if ((ngMethod.onSelf() && !checkForParent) || (ngMethod.onParent() && checkForParent))
-            {
-                getConfiguration().getInjects().add(AnnotationUtils.getNgInject(ngMethod.referenceName(), ngMethod.value()));
-            }
-        });
+        AnnotationUtils.getAnnotation(component, NgInject.class)
+                       .forEach(ngMethod -> {
+                           if ((ngMethod.onSelf() && !checkForParent) || (ngMethod.onParent() && checkForParent))
+                           {
+                               getConfiguration().getInjects()
+                                                 .add(AnnotationUtils.getNgInject(ngMethod.referenceName(), ngMethod.value()));
+                           }
+                       });
     }
 
     protected void addImportReferences(Class<?> component, boolean checkForParent)
     {
-        AnnotationUtils.getAnnotation(component, NgImportReference.class).forEach(importReference -> {
-            if ((importReference.onSelf() && !checkForParent) || (importReference.onParent() && checkForParent))
-            {
-                getConfiguration().getImportReferences().add(
-                        AnnotationUtils.getNgImportReference(importReference.value(), importReference.reference(),
-                                importReference.direct(), importReference.wrapValueInBraces()
-                        )
-                );
-            }
-        });
+        AnnotationUtils.getAnnotation(component, NgImportReference.class)
+                       .forEach(importReference -> {
+                           if ((importReference.onSelf() && !checkForParent) || (importReference.onParent() && checkForParent))
+                           {
+                               getConfiguration().getImportReferences()
+                                                 .add(
+                                                         AnnotationUtils.getNgImportReference(importReference.value(), importReference.reference(),
+                                                                 importReference.direct(), importReference.wrapValueInBraces()
+                                                         )
+                                                 );
+                           }
+                       });
     }
 }

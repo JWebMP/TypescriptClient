@@ -730,7 +730,7 @@ import java.util.List;
 
 @NgProvider(singleton = true)
 @NgInject(value = "EventBusService", referenceName = "eventBusService", onParent = true, onSelf = false)
-public class EventBusService implements INgProvider<EventBusService>
+public class EventBusService<J extends EventBusService<J>> implements INgProvider<J>
 {
 
     @Override
