@@ -190,24 +190,24 @@ public interface AnnotationUtils
         return tsName;
     }
 
-    static MyNgField getNgField(String value)
+    static MyNgField getNgField(String value, boolean onParent, boolean onSelf)
     {
-        return new MyNgField(value);
+        return new MyNgField(value, onParent,onSelf);
     }
 
-    static MyNgConstructorParameter getNgConstructorParameter(String value)
+    static MyNgConstructorParameter getNgConstructorParameter(String value, boolean onParent, boolean onSelf,boolean isPublic)
     {
-        return new MyNgConstructorParameter(value);
+        return new MyNgConstructorParameter(value, onParent, onSelf,isPublic);
     }
 
-    static MyNgConstructorBody getNgConstructorBody(String value)
+    static MyNgConstructorBody getNgConstructorBody(String value, boolean onParent, boolean onSelf)
     {
-        return new MyNgConstructorBody(value);
+        return new MyNgConstructorBody(value,onParent,onSelf);
     }
 
-    static MyNgMethod getNgMethod(String value)
+    static MyNgMethod getNgMethod(String value, boolean onParent, boolean onSelf)
     {
-        return new MyNgMethod(value);
+        return new MyNgMethod(value,onParent,onSelf);
     }
 
     static MyNgGlobalField getNgGlobalField(String value)
@@ -334,9 +334,9 @@ public interface AnnotationUtils
         return ref;
     }
 
-    static MyNgOutput getNgOutput(String value, String parentMethodName)
+    static MyNgOutput getNgOutput(String value, String parentMethodName,Class<? extends INgDataType<?>> type, boolean onSelf, boolean onParent)
     {
-        var ref = new MyNgOutput(value, parentMethodName);
+        var ref = new MyNgOutput(value, parentMethodName,type, onSelf, onParent);
         return ref;
     }
 
@@ -346,9 +346,9 @@ public interface AnnotationUtils
         return ref;
     }
 
-    static MyNgMethod getNgComponentMethod(String importName)
+    static MyNgMethod getNgComponentMethod(String importName, boolean onParent, boolean onSelf)
     {
-        var ref = new MyNgMethod(importName);
+        var ref = new MyNgMethod(importName,onParent,onSelf);
         return ref;
     }
 
@@ -559,13 +559,16 @@ public interface AnnotationUtils
     class MyNgConstructorParameter implements NgConstructorParameter, IConfiguration
     {
         private final String value;
-        private boolean onParent = false;
-        private boolean onSelf = true;
-        private boolean isPublic = false;
+        private boolean onParent;
+        private boolean onSelf;
+        private boolean isPublic;
 
-        public MyNgConstructorParameter(String value)
+        public MyNgConstructorParameter(String value, boolean onParent, boolean onSelf, boolean isPublic)
         {
             this.value = value;
+												this.onParent = onParent;
+												this.onSelf = onSelf;
+												this.isPublic = isPublic;
         }
 
         @Override
@@ -625,9 +628,11 @@ public interface AnnotationUtils
         private boolean onParent = false;
         private boolean onSelf = true;
 
-        public MyNgField(String value)
+        public MyNgField(String value, boolean onParent, boolean onSelf)
         {
             this.value = value;
+												this.onParent = onParent;
+												this.onSelf = onSelf;
         }
 
         @Override
@@ -681,9 +686,11 @@ public interface AnnotationUtils
         private boolean onParent = false;
         private boolean onSelf = true;
 
-        public MyNgConstructorBody(String value)
+        public MyNgConstructorBody(String value, boolean onParent, boolean onSelf)
         {
             this.value = value;
+												this.onParent = onParent;
+												this.onSelf = onSelf;
         }
 
         @Override
@@ -737,9 +744,11 @@ public interface AnnotationUtils
         private boolean onParent = false;
         private boolean onSelf = true;
 
-        public MyNgMethod(String value)
+        public MyNgMethod(String value, boolean onParent, boolean onSelf)
         {
             this.value = value;
+												this.onParent = onParent;
+												this.onSelf = onSelf;
         }
 
         @Override
@@ -1380,14 +1389,17 @@ public interface AnnotationUtils
     {
         private String value;
         private String parentMethodName;
-        private Class<? extends INgDataType<?>> type = any.class;
+        private Class<? extends INgDataType<?>> type;
         private boolean onSelf = true;
         private boolean onParent = false;
 
-        public MyNgOutput(String value, String parentMethodName)
+        public MyNgOutput(String value, String parentMethodName,Class<? extends INgDataType<?>> type, boolean onSelf, boolean onParent)
         {
-            this.value = value;
-            this.parentMethodName = parentMethodName;
+										this.value = value;
+										this.parentMethodName = parentMethodName;
+										this.type = type;
+										this.onSelf = onSelf;
+										this.onParent = onParent;
         }
 
         @Override

@@ -47,7 +47,8 @@ public interface INgDirective<J extends INgDirective<J>> extends IComponent<J>
             var reference = compRef.value();
             if (reference.isAnnotationPresent(NgProvider.class))
             {
-                s.add(AnnotationUtils.getNgConstructorParameter("public " + AnnotationUtils.getTsVarName(reference) + " : " + AnnotationUtils.getTsFilename(reference)));
+                s.add(AnnotationUtils.getNgConstructorParameter("public " + AnnotationUtils.getTsVarName(reference) + " : " + AnnotationUtils.getTsFilename(reference),
+																																																																compRef.onParent(),compRef.onSelf(),compRef.onParent()));
             }
         }
         return s;

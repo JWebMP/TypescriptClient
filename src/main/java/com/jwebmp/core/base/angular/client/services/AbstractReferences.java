@@ -51,11 +51,11 @@ public abstract class AbstractReferences<J extends AbstractNgConfiguration<?>>
         {
             if (!Strings.isNullOrEmpty(componentConstructorParameter))
             {
-                var ng = AnnotationUtils.getNgConstructorParameter(componentConstructorParameter);
+                var ng = AnnotationUtils.getNgConstructorParameter(componentConstructorParameter,false,true,false);
                 if ((ng.isOnSelf() && !checkForParent) || (ng.isOnParent() && checkForParent))
                 {
                     getConfiguration().getConstructorParameters()
-                                      .add(AnnotationUtils.getNgConstructorParameter(ng.value()));
+                                      .add(AnnotationUtils.getNgConstructorParameter(ng.value(),false,true,false));
                 }
             }
         }
@@ -63,11 +63,11 @@ public abstract class AbstractReferences<J extends AbstractNgConfiguration<?>>
         {
             if (!Strings.isNullOrEmpty(componentConstructorBody))
             {
-                var ng = AnnotationUtils.getNgConstructorBody(componentConstructorBody);
+                var ng = AnnotationUtils.getNgConstructorBody(componentConstructorBody,false,true);
                 if ((ng.isOnSelf() && !checkForParent) || (ng.isOnParent() && checkForParent))
                 {
                     getConfiguration().getConstructorBodies()
-                                      .add(AnnotationUtils.getNgConstructorBody(ng.value()));
+                                      .add(AnnotationUtils.getNgConstructorBody(ng.value(),false,true));
                 }
             }
         }
@@ -76,7 +76,7 @@ public abstract class AbstractReferences<J extends AbstractNgConfiguration<?>>
         {
             if (!Strings.isNullOrEmpty(componentMethod))
             {
-                var ng = AnnotationUtils.getNgComponentMethod(componentMethod);
+                var ng = AnnotationUtils.getNgComponentMethod(componentMethod,false,true);
                 if ((ng.isOnSelf() && !checkForParent) || (ng.isOnParent() && checkForParent))
                 {
                     getConfiguration().getMethods()
@@ -102,7 +102,7 @@ public abstract class AbstractReferences<J extends AbstractNgConfiguration<?>>
         {
             if (!Strings.isNullOrEmpty(componentField))
             {
-                var ng = AnnotationUtils.getNgField(componentField);
+                var ng = AnnotationUtils.getNgField(componentField,false,true);
                 if ((ng.isOnSelf() && !checkForParent) || (ng.isOnParent() && checkForParent))
                 {
                     getConfiguration().getFields()
@@ -177,7 +177,7 @@ public abstract class AbstractReferences<J extends AbstractNgConfiguration<?>>
                            if ((constructorParameter.onSelf() && !checkForParent) || (constructorParameter.onParent() && checkForParent))
                            {
                                getConfiguration().getConstructorParameters()
-                                                 .add(AnnotationUtils.getNgConstructorParameter(constructorParameter.value()));
+                                                 .add(AnnotationUtils.getNgConstructorParameter(constructorParameter.value(),constructorParameter.onParent(),constructorParameter.onSelf(),constructorParameter.isPublic()));
                            }
                        });
     }
@@ -189,7 +189,7 @@ public abstract class AbstractReferences<J extends AbstractNgConfiguration<?>>
                            if ((ngConstructorBody.onSelf() && !checkForParent) || (ngConstructorBody.onParent() && checkForParent))
                            {
                                getConfiguration().getConstructorBodies()
-                                                 .add(AnnotationUtils.getNgConstructorBody(ngConstructorBody.value()));
+                                                 .add(AnnotationUtils.getNgConstructorBody(ngConstructorBody.value(),ngConstructorBody.onParent(),ngConstructorBody.onSelf()));
                            }
                        });
     }
@@ -201,7 +201,7 @@ public abstract class AbstractReferences<J extends AbstractNgConfiguration<?>>
                            if ((ngField.onSelf() && !checkForParent) || (ngField.onParent() && checkForParent))
                            {
                                getConfiguration().getFields()
-                                                 .add(AnnotationUtils.getNgField(ngField.value()));
+                                                 .add(AnnotationUtils.getNgField(ngField.value(),ngField.onParent(),ngField.onSelf()));
                            }
                        });
     }
@@ -237,7 +237,7 @@ public abstract class AbstractReferences<J extends AbstractNgConfiguration<?>>
                            if ((ngMethod.onSelf() && !checkForParent) || (ngMethod.onParent() && checkForParent))
                            {
                                getConfiguration().getMethods()
-                                                 .add(AnnotationUtils.getNgComponentMethod(ngMethod.value()));
+                                                 .add(AnnotationUtils.getNgComponentMethod(ngMethod.value(),ngMethod.onParent(),ngMethod.onSelf()));
                            }
                        });
     }

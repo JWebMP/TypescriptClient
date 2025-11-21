@@ -571,7 +571,8 @@ import java.util.List;
                     if(!response)
                     {
                         console.log('No response object received!?');
-                        debugger;
+                        //debugger;
+                        return;
                     }
         
                     if (response.localStorage) {

@@ -88,7 +88,7 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
 
         for (String field : fields())
         {
-            out.add(getNgField(field));
+            out.add(getNgField(field,false,true));
         }
 
         Set<OnGetAllFields> interceptors = IGuiceContext.loaderToSet(ServiceLoader.load(OnGetAllFields.class));
@@ -115,13 +115,13 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
                 .getGlobalAnnotations(NgGlobalConstructorParameter.class);
         for (NgGlobalConstructorParameter global : allGlobals)
         {
-            NgConstructorParameter param = getNgConstructorParameter(global.value());
+            NgConstructorParameter param = getNgConstructorParameter(global.value(),false,true,false);
             out.add(param);
         }
 
         for (String constructorParameter : constructorParameters())
         {
-            out.add(getNgConstructorParameter(constructorParameter));
+            out.add(getNgConstructorParameter(constructorParameter,false,true,false));
         }
 
         Set<OnGetAllConstructorParameters> interceptors = IGuiceContext.loaderToSet(ServiceLoader.load(OnGetAllConstructorParameters.class));
@@ -162,7 +162,7 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
 
         for (String body : constructorBody())
         {
-            out.add(getNgConstructorBody(body));
+            out.add(getNgConstructorBody(body,false,true));
         }
 
         Set<OnGetAllConstructorBodies> interceptors = IGuiceContext.loaderToSet(ServiceLoader.load(OnGetAllConstructorBodies.class));
@@ -206,12 +206,12 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
 
         for (String componentMethod : componentMethods())
         {
-            out.add(getNgMethod(componentMethod.trim()));
+            out.add(getNgMethod(componentMethod.trim(),false,true));
         }
 
         for (String componentMethod : methods())
         {
-            out.add(getNgMethod(componentMethod.trim()));
+            out.add(getNgMethod(componentMethod.trim(),false,true));
         }
         return out;
     }
