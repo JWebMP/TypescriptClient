@@ -1,6 +1,6 @@
 package com.jwebmp.core.base.angular.client.services.spi;
 
-import com.guicedee.guicedinjection.interfaces.IDefaultService;
+import com.guicedee.client.services.IDefaultService;
 
 import java.util.Set;
 

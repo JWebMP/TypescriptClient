@@ -2,7 +2,7 @@ package com.jwebmp.core.base.angular.client.services.interfaces;
 
 import com.google.common.base.Strings;
 import com.guicedee.client.IGuiceContext;
-import com.guicedee.guicedinjection.interfaces.IDefaultService;
+import com.guicedee.client.services.IDefaultService;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgDataType;
 import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorBody;
 import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorParameter;

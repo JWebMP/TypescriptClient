@@ -1,6 +1,6 @@
 package com.jwebmp.core.base.angular.client.implementations;
 
-import com.guicedee.guicedinjection.interfaces.*;
+import com.guicedee.client.services.config.IGuiceScanModuleInclusions;
 
 import java.util.*;
 

@@ -1,7 +1,6 @@
 package com.jwebmp.core.base.angular.client;
 
 import com.guicedee.client.IGuiceContext;
-import com.guicedee.guicedinjection.properties.GlobalProperties;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgApp;
 import com.jwebmp.core.base.angular.client.services.interfaces.INgApp;
 import io.github.classgraph.ClassInfo;
@@ -15,6 +14,7 @@ import java.io.*;
 import java.util.*;
 import java.util.logging.Level;
 
+import static com.guicedee.client.Environment.getSystemPropertyOrEnvironment;
 import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getTsFilename;
 import static com.jwebmp.core.base.angular.client.services.interfaces.ImportsStatementsComponent.getClassLocationDirectory;
 
@@ -52,7 +52,7 @@ public class AppUtils
 		
 		static
 		{
-				String userDir = GlobalProperties.getSystemPropertyOrEnvironment("jwebmp", new File(System.getProperty("user.home"))
+				String userDir = getSystemPropertyOrEnvironment("jwebmp", new File(System.getProperty("user.home"))
 																																																																																.getPath());
 				// todo find the @NgApp and add as a subdirectory in AppUtils, the name of the app must be before the /webroot/
 				var ngApp = IGuiceContext

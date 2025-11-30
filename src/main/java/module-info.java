@@ -1,7 +1,7 @@
-import com.guicedee.guicedinjection.interfaces.IGuiceConfigurator;
-import com.guicedee.guicedinjection.interfaces.IGuiceModule;
-import com.guicedee.guicedinjection.interfaces.IGuicePostStartup;
-import com.guicedee.guicedinjection.interfaces.IGuiceScanModuleInclusions;
+import com.guicedee.client.services.lifecycle.IGuiceConfigurator;
+import com.guicedee.client.services.lifecycle.IGuiceModule;
+import com.guicedee.client.services.lifecycle.IGuicePostStartup;
+import com.guicedee.client.services.config.IGuiceScanModuleInclusions;
 import com.jwebmp.core.base.angular.client.implementations.AngularClientModule;
 import com.jwebmp.core.base.angular.client.implementations.AngularTypeScriptClientModuleInclusion;
 import com.jwebmp.core.base.angular.client.implementations.AngularTypeScriptPostStartup;
