@@ -3,6 +3,7 @@
 Use this file as the host index; topic glossaries override root definitions. Follow Glossary Precedence Policy: topic glossaries > root terms; duplicate only enforced prompt-language mappings.
 
 ## Topic Glossaries
+- JWebMP Typescript Client (canonical): `rules/generative/frontend/jwebmp/typescript/GLOSSARY.md`
 - Enterprise base: `rules/GLOSSARY.md`
 - Java 25/Maven: `rules/generative/language/java/java-25.rules.md`
 - TypeScript/Angular: `rules/generative/language/typescript/GLOSSARY.md`, `rules/generative/language/angular/GLOSSARY.md`, override: `rules/generative/language/angular/angular-20.rules.md`

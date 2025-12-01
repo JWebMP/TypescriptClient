@@ -8,7 +8,11 @@ All diagrams are text-first (Mermaid) and map to observed code in this repositor
 - Sequence — startup scan: `docs/architecture/sequence-startup-scan.md`
 - Sequence — component config build: `docs/architecture/sequence-component-config.md`
 - ERD — annotation to configuration: `docs/architecture/erd-angular-metadata.md`
+- Dependency map (trusted boundaries and external stacks): `rules/generative/frontend/jwebmp/typescript/dependency-map.md`
 
-Trust boundary (observed): Host app inputs (annotated components) cross into this library’s scan/render pipeline; Guice/Vert.x execution is trusted infrastructure; generated TypeScript is consumed by downstream builds and should not execute unvalidated runtime inputs.
+Trust boundary (observed)
+- Inputs: annotated host classes. Processing happens inside trusted library/Guice/Vert.x workers using ClassGraph.
+- Outputs: generated TypeScript is a build artifact for the Angular toolchain; do not treat it as runtime input.
+- Logging: Log4j2 inside the library; no external network calls are present.
 
 These diagrams are referenced by PACT/GLOSSARY/RULES/GUIDES/IMPLEMENTATION for traceability.

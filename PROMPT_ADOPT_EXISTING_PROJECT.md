@@ -171,7 +171,7 @@ Fill before running.
     - Angular (choose exactly one)
       - [ ] Angular 17
       - [ ] Angular 19
-      - [X] Angular 20
+      - [ ] Angular 20
     - Other frameworks
       - [ ] React
         - [ ] Next.js

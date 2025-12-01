@@ -22,9 +22,11 @@ Load this file before future AI runs. It captures selected stacks, glossary rout
 - Context: `docs/architecture/c4-context.md`
 - Container: `docs/architecture/c4-container.md`
 - Component (Angular metadata pipeline): `docs/architecture/c4-component-angular-metadata.md`
+- Dependency map: `rules/generative/frontend/jwebmp/typescript/dependency-map.md`
 - Sequences: `docs/architecture/sequence-startup-scan.md`, `docs/architecture/sequence-component-config.md`
 - ERD: `docs/architecture/erd-angular-metadata.md`
 
 ## Policies
 - Forward-only; documentation-first stage gates recorded (blanket approval active for this run).
 - Host docs stay outside `rules/` submodule.
+- Glossary composition (topic-first): root `GLOSSARY.md` links to topic glossaries; library topic glossary lives at `rules/generative/frontend/jwebmp/typescript/GLOSSARY.md` and should remain canonical for Ng* metadata terms and LLM alignment.

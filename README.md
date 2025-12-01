@@ -10,6 +10,16 @@ A Maven Java 25 library that exposes Ng* annotations and helpers so JWebMP compo
 - Architecture diagrams: `docs/architecture/README.md`
 - Prompt reference for future runs: `docs/PROMPT_REFERENCE.md`
 
+## How to use these rules
+- Library rules index: `rules/generative/frontend/jwebmp/typescript/README.md` (annotations, scanning/runtime, configuration/rendering, testing, CI/release).
+- Follow stage gates: Stage 1–3 are documentation; Stage 4 (implementation) is allowed because blanket approval is recorded in `PACT.md`.
+- Keep host docs outside `rules/`; reference diagrams under `docs/architecture/` and topic glossary under `rules/generative/frontend/jwebmp/typescript/GLOSSARY.md`.
+- Generated TypeScript is read-only; change Java annotations/configuration and rerun the generator instead of editing outputs.
+
+## Prompt language alignment & glossary
+- Canonical topic glossary: `rules/generative/frontend/jwebmp/typescript/GLOSSARY.md` (Ng* metadata, CRTP fluency, LLM guidance).
+- Root glossary router: `GLOSSARY.md` links to enterprise glossaries (`rules/`) and the topic glossary above. Host projects should copy only enforced prompt-language mappings and link back for everything else.
+
 ## Rules Repository
 - The enterprise rules live in the `rules/` submodule (`.gitmodules` already configured). Keep host project docs outside that directory.
 - Follow behavioral/technical/forward-only/modularity guidance from `rules/RULES.md` plus stack-specific rule links in `RULES.md`.
