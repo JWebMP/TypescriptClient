@@ -11,7 +11,8 @@ flowchart LR
     ClassAnnotationMapping --> References[AbstractReferences subclasses]
     References --> Configs[ComponentConfiguration / AbstractNgConfiguration]
     AnnotationUtils -.normalizes.-> References
-    Configs --> Renderers[Ng render helpers (fields/injects/hooks/imports)]
+    Configs --> Renderers[Ng render helpers 
+    fields/injects/hooks/imports]
     Renderers --> TSMetadata[TypeScript metadata consumed by host build]
 ```
 

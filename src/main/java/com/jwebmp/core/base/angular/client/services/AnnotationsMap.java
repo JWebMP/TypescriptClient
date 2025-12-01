@@ -35,7 +35,7 @@ public class AnnotationsMap
     );
 */
 
-    private static final Map<Class<? extends Annotation>, Class<? extends Annotation>> ngEvents
+    private static final Map<Class<? extends Annotation>, Class<? extends Annotation>> ngLifeCycleEvent
             = Map.of(
             NgOnDestroy.class, NgOnDestroys.class,
             NgOnInit.class, NgOnInits.class,
@@ -111,7 +111,7 @@ public class AnnotationsMap
     static
     {
         //   ngAllMultiples.putAll(ngConfigs);
-        ngAllMultiples.putAll(ngEvents);
+        ngAllMultiples.putAll(ngLifeCycleEvent);
         ngAllMultiples.putAll(ngReferences);
         ngAllMultiples.putAll(ngClassStructures);
         ngAllMultiples.putAll(ngComponents);

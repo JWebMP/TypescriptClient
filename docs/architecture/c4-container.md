@@ -7,10 +7,15 @@ flowchart TB
     end
 
     subgraph Library[Angular TS Client Library]
-        Scan[AnnotationHelper + AnnotationsMap (ClassGraph-based scan)]
-        ConfigBuilders[Configuration builders (ComponentConfiguration, AbstractNgConfiguration, *References classes)]
+        Scan[AnnotationHelper + AnnotationsMap ClassGraph-based scan]
+        ConfigBuilders[Configuration builders 
+        ComponentConfiguration
+        AbstractNgConfiguration
+        *References classes]
         Lifecycle[Guice module + Vert.x post-startup hooks]
-        SPI[Interfaces (INgComponent/Directive/DataService, TypescriptIndexPageConfigurator)]
+        SPI[Interfaces 
+        INgComponent/Directive/DataService
+        TypescriptIndexPageConfigurator]
     end
 
     Guice[GuicedEE Runtime]
