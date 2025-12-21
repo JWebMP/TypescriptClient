@@ -1471,7 +1471,7 @@ public interface AnnotationUtils
 
         public MyNgOnInit(String value)
         {
-            this.value = value;
+            this.value = value.trim();
         }
 
         @Override
@@ -1512,7 +1512,7 @@ public interface AnnotationUtils
                 return false;
             }
             MyNgOnInit that = (MyNgOnInit) o;
-            return onParent == that.onParent && onSelf == that.onSelf && Objects.equals(value, that.value);
+            return onParent == that.onParent && onSelf == that.onSelf && Objects.equals(value.trim(), that.value.trim());
         }
 
         @Override
@@ -1572,7 +1572,7 @@ public interface AnnotationUtils
                 return false;
             }
             MyNgOnDestroy that = (MyNgOnDestroy) o;
-            return onParent == that.onParent && onSelf == that.onSelf && Objects.equals(value, that.value);
+            return onParent == that.onParent && onSelf == that.onSelf && Objects.equals(value.trim(), that.value.trim());
         }
 
         @Override
