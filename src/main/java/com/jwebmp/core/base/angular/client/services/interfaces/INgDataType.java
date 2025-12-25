@@ -79,8 +79,12 @@ public interface INgDataType<J extends INgDataType<J>>
 
     default Class getGenericTypeForField(Field field)
     {
-        String genericType = StringUtils.substringBetween(field.getGenericType()
-                                                               .getTypeName(), "<", ">");
+        String typeName = field.getGenericType().getTypeName();
+        String genericType = typeName.substring(typeName.indexOf("<") + 1, typeName.lastIndexOf(">"));
+        if (genericType.contains("<"))
+        {
+            genericType = genericType.substring(0, genericType.indexOf("<"));
+        }
         try
         {
             Class c = Class.forName(genericType);
