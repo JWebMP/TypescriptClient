@@ -51,7 +51,7 @@ import java.util.List;
           private listenerReady$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
           private connectionState$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
         
-          private pendingListeners: Array<{ address: string; handlerId: string }> = [];
+          private pendingListeners: string[] = [];
           private stompSubscriptions: Map<string, StompSubscription> = new Map();
         
           private destroy$ = new Subject<void>();
@@ -69,14 +69,13 @@ import java.util.List;
                   if (isConnected) {
                       console.log('[EventBusService] Connection restored. Re-registering all listeners...');
                       // Requeue all existing listeners
-                      this.messageSubjects.forEach((handlers, address) => {
-                          handlers.forEach((_, handlerId) => {
-                              this.queueListener(address, handlerId);
-                          });
+                      this.messageSubjects.forEach((_, address) => {
+                          this.queueListener(address);
                       });
                       this.processQueuedMessages();
                   } else {
                       console.warn('[EventBusService] Connection lost. Waiting for reconnection...');
+                      this.stompSubscriptions.clear();
                   }
               });
         
@@ -94,20 +93,19 @@ import java.util.List;
                 this.currentContextId = newId;
 
                 // For all existing listeners, ensure subscriptions include new contextId
-                this.messageSubjects.forEach((handlers, address) => {
-                    handlers.forEach((_, handlerId) => {
-                        this.ensurePrivateSubscriptions(address, handlerId);
+                this.messageSubjects.forEach((_, address) => {
+                    this.ensurePrivateSubscriptions(address);
 
-                        // Clean up old contextId subscriptions if they exist and are not the GUID
-                        if (oldId && oldId !== this.guid) {
-                            const oldKey = `${oldId}.${address}:${handlerId}`;
-                            const oldSub = this.stompSubscriptions.get(oldKey);
-                            if (oldSub) {
-                                oldSub.unsubscribe();
-                                this.stompSubscriptions.delete(oldKey);
-                            }
+                    // Clean up old contextId subscriptions if they exist and are not the GUID
+                    if (oldId && oldId !== this.guid) {
+                        const oldPrivateAddress = `${oldId}.${address}`;
+                        const oldKey = this.privateSubscriptionKey(oldPrivateAddress);
+                        const oldSub = this.stompSubscriptions.get(oldKey);
+                        if (oldSub) {
+                            oldSub.unsubscribe();
+                            this.stompSubscriptions.delete(oldKey);
                         }
-                    });
+                    }
                 });
             });
         """)
@@ -168,32 +166,28 @@ import java.util.List;
         
                   //console.log('[EventBusService] Processing queued listeners...');
                   while (this.pendingListeners.length > 0) {
-                      const { address, handlerId } = this.pendingListeners.shift()!;
+                      const address = this.pendingListeners.shift()!;
+                      const addressKey = this.addressSubscriptionKey(address);
         
-                      // Subscribe to the address
-                      const subscription = this.stompClient.subscribe(`/toStomp/${address}`, (message) => {
-                          try {
-                            //  console.log(`[EventBusService] Message received on address "${address}":`, message.body);
+                      if (!this.stompSubscriptions.has(addressKey)) {
+                          // Subscribe once per address and fan out to all local handlers
+                          const subscription = this.stompClient.subscribe(`/toStomp/${address}`, (message) => {
+                              try {
+                                  // Parse the message body
+                                  const body = JSON.parse(message.body);
+                                  this.emitToHandlers(address, body);
+                              } catch (error) {
+                                  console.error(`[EventBusService] Error parsing message on address "${address}":`, error);
+                              }
+                          });
         
-                              // Parse the message body
-                              const body = JSON.parse(message.body);
-        
-                              // Emit the message to the relevant Subject
-                              const handlers = this.messageSubjects.get(address);
-                              const subject = handlers?.get(handlerId);
-                              subject?.next(body);
-                          } catch (error) {
-                              console.error(`[EventBusService] Error parsing message on address "${address}":`, error);
-                          }
-                      });
-        
-                      // Store the subscription for later unsubscribe
-                      this.stompSubscriptions.set(`${address}:${handlerId}`, subscription);
+                          // Store the subscription for later unsubscribe
+                          this.stompSubscriptions.set(addressKey, subscription);
+                          console.log(`[EventBusService] Listener registered for address: "${address}"`);
+                      }
         
                       // Ensure private subscriptions for both GUID and current ContextId
-                      this.ensurePrivateSubscriptions(address, handlerId);
-        
-                      console.log(`[EventBusService] Listener registered for address: "${address}", handler ID: "${handlerId}"`);
+                      this.ensurePrivateSubscriptions(address);
                   }
               }
         """)
@@ -203,7 +197,7 @@ import java.util.List;
             /**
              * Ensure that private subscriptions exist for both the generated GUID and the current ContextId.
              */
-            private ensurePrivateSubscriptions(address: string, handlerId: string): void {
+            private ensurePrivateSubscriptions(address: string): void {
                 const ids: Array<string> = [];
                 if (this.guid) {
                     ids.push(this.guid);
@@ -219,35 +213,31 @@ import java.util.List;
 
                 ids.forEach((id) => {
                     const privateAddress = `${id}.${address}`;
-                    const subKey = `${privateAddress}:${handlerId}`;
+                    const subKey = this.privateSubscriptionKey(privateAddress);
                     if (!this.stompSubscriptions.has(subKey)) {
                         const privateSubscription = this.stompClient!.subscribe(`/toStomp/${privateAddress}`, (message) => {
                             try {
                                 const body = JSON.parse(message.body);
-                                const handlers = this.messageSubjects.get(address);
-                                const subject = handlers?.get(handlerId);
-                                subject?.next(body);
+                                this.emitToHandlers(address, body);
                             } catch (error) {
                                 console.error(`[EventBusService] Error parsing message on private address "${privateAddress}":`, error);
                             }
                         });
                         this.stompSubscriptions.set(subKey, privateSubscription);
-                        // console.log(`[EventBusService] Private Listener registered for address: "${privateAddress}", handler ID: "${handlerId}"`);
+                        // console.log(`[EventBusService] Private Listener registered for address: "${privateAddress}"`);
                     }
                 });
             }
         """)
 
 @NgMethod("""
-        \tprivate queueListener(address: string, handlerId: string): void {
+        \tprivate queueListener(address: string): void {
                   // Check if the listener is already queued
-                  const isAlreadyQueued = this.pendingListeners.some(
-                      listener => listener.address === address && listener.handlerId === handlerId
-                  );
+                  const isAlreadyQueued = this.pendingListeners.includes(address);
         
                   if (!isAlreadyQueued) {
-                      //console.log(`[EventBusService] Queuing listener for address: "${address}", handler ID: "${handlerId}"`);
-                      this.pendingListeners.push({ address, handlerId });
+                      //console.log(`[EventBusService] Queuing listener for address: "${address}"`);
+                      this.pendingListeners.push(address);
                   }
         
                   // Process all queued listeners when the connection becomes ready
@@ -441,8 +431,26 @@ import java.util.List;
                 // Fallback: return address as-is
                 return address;
             }
-        
-        
+
+            private addressSubscriptionKey(address: string): string {
+                return `addr:${address}`;
+            }
+
+            private privateSubscriptionKey(privateAddress: string): string {
+                return `priv:${privateAddress}`;
+            }
+
+            private emitToHandlers(address: string, body: any): void {
+                const handlers = this.messageSubjects.get(address);
+                if (!handlers) {
+                    return;
+                }
+                handlers.forEach((subject) => {
+                    subject.next(body);
+                });
+            }
+
+
               /**
                   * Subscribe to an EventBus address with a unique ID.
                   * @param address The address to listen to.
@@ -463,7 +471,7 @@ import java.util.List;
                      const listenerSubject = handlers.get(handlerId)!;
         
                      // Add the listener to the pending queue
-                     this.queueListener(address, handlerId);
+                     this.queueListener(address);
         
                      return listenerSubject.asObservable();
                  }
@@ -711,38 +719,34 @@ import java.util.List;
                           listeners!.delete(handlerId);
                           console.log(`[EventBusService] Unregistered handler ID "${handlerId}" for address: "${normalizedAddress}"`);
         
-                          // Unsubscribe from STOMP
-                          const subscriptionKey = `${normalizedAddress}:${handlerId}`;
-                          if (this.stompSubscriptions.has(subscriptionKey)) {
-                              this.stompSubscriptions.get(subscriptionKey)!.unsubscribe();
-                              this.stompSubscriptions.delete(subscriptionKey);
-                              //console.log(`[EventBusService] STOMP subscription unregistered for address: "${normalizedAddress}", handler ID: "${handlerId}"`);
-                          }
-        
-                          // Also unsubscribe from private address if guid exists
-                          if (this.guid) {
-                              const privateSubscriptionKey = `${this.guid}.${normalizedAddress}:${handlerId}`;
-                              if (this.stompSubscriptions.has(privateSubscriptionKey)) {
-                                  this.stompSubscriptions.get(privateSubscriptionKey)!.unsubscribe();
-                                  this.stompSubscriptions.delete(privateSubscriptionKey);
-                                  //console.log(`[EventBusService] STOMP private subscription unregistered for address: "${this.guid}.${normalizedAddress}", handler ID: "${handlerId}"`);
-                              }
-                          }
-
-                          // Also unsubscribe from current ContextId-specific subscription if present
-                          const ctxId = this.currentContextId ?? this.contextIdService.contextId();
-                          if (ctxId) {
-                              const ctxSubscriptionKey = `${ctxId}.${normalizedAddress}:${handlerId}`;
-                              if (this.stompSubscriptions.has(ctxSubscriptionKey)) {
-                                  this.stompSubscriptions.get(ctxSubscriptionKey)!.unsubscribe();
-                                  this.stompSubscriptions.delete(ctxSubscriptionKey);
-                              }
-                          }
-        
                           // If no listeners remain for this address, clean up
                           if (listeners!.size === 0) {
                               this.messageSubjects.delete(normalizedAddress);
                               this.registeredListeners.delete(normalizedAddress);
+                              const addressKey = this.addressSubscriptionKey(normalizedAddress);
+                              const subscription = this.stompSubscriptions.get(addressKey);
+                              if (subscription) {
+                                  subscription.unsubscribe();
+                                  this.stompSubscriptions.delete(addressKey);
+                              }
+
+                              const ids: Array<string> = [];
+                              if (this.guid) {
+                                  ids.push(this.guid);
+                              }
+                              const ctxId = this.currentContextId ?? this.contextIdService.contextId();
+                              if (ctxId && !ids.includes(ctxId)) {
+                                  ids.push(ctxId);
+                              }
+
+                              ids.forEach((id) => {
+                                  const privateKey = this.privateSubscriptionKey(`${id}.${normalizedAddress}`);
+                                  const privateSub = this.stompSubscriptions.get(privateKey);
+                                  if (privateSub) {
+                                      privateSub.unsubscribe();
+                                      this.stompSubscriptions.delete(privateKey);
+                                  }
+                              });
                               console.log(`[EventBusService] All handlers removed for address: "${normalizedAddress}"`);
                           }
                       } else {

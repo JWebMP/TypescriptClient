@@ -44,6 +44,7 @@ public class AppUtils
 		private static final Map<String, File> baseDistDirectories = new HashMap<>();
 		private static final Map<String, File> baseDistAssetsDirectories = new HashMap<>();
 		public static File baseUserDirectory;
+		private static final boolean useOutputDirectoryOverride;
 		
 		private AppUtils()
 		{
@@ -52,21 +53,31 @@ public class AppUtils
 		
 		static
 		{
-				String userDir = getSystemPropertyOrEnvironment("jwebmp", new File(System.getProperty("user.home"))
-																																																																																.getPath());
-				// todo find the @NgApp and add as a subdirectory in AppUtils, the name of the app must be before the /webroot/
-				var ngApp = IGuiceContext
+				String outputDirectory = getSystemPropertyOrEnvironment("jwebmp.outputDirectory", null);
+				if (outputDirectory != null && !outputDirectory.trim().isEmpty())
+				{
+						useOutputDirectoryOverride = true;
+						baseUserDirectory = new File(outputDirectory.replaceAll("\\\\", "/"));
+				}
+				else
+				{
+						useOutputDirectoryOverride = false;
+						String userDir = getSystemPropertyOrEnvironment("jwebmp", new File(System.getProperty("user.home"))
+																																																																																		.getPath());
+						// todo find the @NgApp and add as a subdirectory in AppUtils, the name of the app must be before the /webroot/
+						var ngApp = IGuiceContext
 																	.instance()
 																	.getScanResult()
 																	.getClassesWithAnnotation(NgApp.class)
 																	.get(0)
 																	.loadClass()
 																	.getAnnotation(NgApp.class)
-					;
-				;
-				userDir = userDir + "/.jwebmp/" + ngApp.value();
-				
-				baseUserDirectory = new File(userDir.replaceAll("\\\\", "/"));
+							;
+						;
+						userDir = userDir + "/.jwebmp/" + ngApp.value();
+						
+						baseUserDirectory = new File(userDir.replaceAll("\\\\", "/"));
+				}
 				try
 				{
 						if (!baseUserDirectory.exists())
@@ -77,9 +88,16 @@ public class AppUtils
 				}
 				catch (IOException e)
 				{
-						log.log(Level.SEVERE, "Unable to create base directory for creating typescript! - " + userDir);
+						log.log(Level.SEVERE, "Unable to create base directory for creating typescript! - " + baseUserDirectory.getPath());
 				}
-				log.info("TypeScript base path is " + baseUserDirectory.getPath() + ". Change with env property \"jwebmp\"");
+				if (useOutputDirectoryOverride)
+				{
+						log.info("TypeScript base path is " + baseUserDirectory.getPath() + ". Change with env property \"jwebmp.outputDirectory\"");
+				}
+				else
+				{
+						log.info("TypeScript base path is " + baseUserDirectory.getPath() + ". Change with env property \"jwebmp\"");
+				}
 				
 		}
 		
@@ -252,8 +270,16 @@ public class AppUtils
 				{
 						try
 						{
-								// Place the app name before the /webroot/ as required
-								File appBaseDirectory = new File(baseUserDirectory.getCanonicalPath() + "/" + "webroot");
+								File appBaseDirectory;
+								if (useOutputDirectoryOverride)
+								{
+										appBaseDirectory = new File(baseUserDirectory.getCanonicalPath() + "/webroot/" + appName);
+								}
+								else
+								{
+										// Place the app name before the /webroot/ as required
+										appBaseDirectory = new File(baseUserDirectory.getCanonicalPath() + "/" + "webroot");
+								}
 								if (!appBaseDirectory.exists())
 								{
 										FileUtils.forceMkdirParent(appBaseDirectory);

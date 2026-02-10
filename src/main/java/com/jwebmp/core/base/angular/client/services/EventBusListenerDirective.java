@@ -115,12 +115,6 @@ import java.util.List;
               if (this.appEventHandler) {
                 // If a custom handler function is provided, invoke it.
                 this.appEventHandler(message.data, address);
-              } else {
-                // Otherwise, default to simply logging the message.
-                console.warn(
-                  `[EventBusListenerDirective] No handler provided for address "${address}". Message:`,
-                  message
-                );
               }
             }
         
