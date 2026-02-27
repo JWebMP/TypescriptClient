@@ -590,10 +590,6 @@ public interface INgDataType<J extends INgDataType<J>>
         }
         else if (Collection.class.isAssignableFrom(fieldType) || fieldType.isArray())
         {
-            if (fieldType.isArray())
-            {
-                System.out.print("field is array - ");
-            }
             if (field.getGenericType() instanceof ParameterizedType)
             {
                 var arguments = ((ParameterizedType) field.getGenericType()).getActualTypeArguments();
@@ -622,14 +618,6 @@ public interface INgDataType<J extends INgDataType<J>>
                 }
             }
         }
-   /*     else if (fieldType.isArray())
-        {
-            //get generic type
-            String genericType = fieldType.arrayType()
-                                          .getCanonicalName();
-            appendBasicFieldType();
-            renderFieldReference(fieldName, fieldType.arrayType(), field, true);
-        }*/
         return refs;
     }
 
