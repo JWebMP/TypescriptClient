@@ -1,24 +1,13 @@
 name: JWebMP Typescript Client
 on:
   workflow_dispatch:
-    inputs:
-      centralRelease:
-        type: boolean
-        description: Run a release to maven central
-        default: false
   push:
-env:
-  GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-  GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-permissions:
-  contents: read
-  packages: write
 jobs:
-  JWebMPCore:
+  TypescriptClient:
     uses: GuicedEE/Workflows/.github/workflows/projects.yml@master
     with:
       baseDir: ''
-      name: 'JWebMP Typescript Client'
+      name: 'Typescript Client'
       publishToCentral: ${{inputs.centralRelease}}
     secrets:
       USERNAME: ${{secrets.USERNAME}}

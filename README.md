@@ -1,6 +1,6 @@
 # Angular TypeScript Client
 
-[![Build](https://github.com/JWebMP/Plugins/TypescriptClient/actions/workflows/maven-package.yml/badge.svg)](https://github.com/JWebMP/Plugins/actions/workflows/maven-package.yml)
+[![Build](https://github.com/JWebMP/Plugins/TypescriptClient/actions/workflows/maven-publish.yml/badge.svg)](https://github.com/JWebMP/Plugins/actions/workflows/maven-package.yml)
 [![Maven Central](https://img.shields.io/maven-central/v/com.jwebmp.plugins/typescript-client)](https://central.sonatype.com/artifact/com.jwebmp.plugins/typescript-client)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue)](https://www.apache.org/licenses/LICENSE-2.0)
 
@@ -256,9 +256,6 @@ Example environment file: `.env.example`.
 | Document | Path |
 |---|---|
 | Architecture diagrams | `docs/architecture/README.md` |
-| Prompt reference | `docs/PROMPT_REFERENCE.md` |
-| Rules submodule | `rules/README.md` |
-| Topic glossary | `rules/generative/frontend/jwebmp/typescript/GLOSSARY.md` |
 
 ## 🤝 Contributing
 

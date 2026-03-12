@@ -1,3 +1,0 @@
-# Skill: angular-rest-client
-This skill helps users work with the `@NgRestClient` annotation and its generated Angular services.
-It includes common patterns for REST communication, polling, and state management.
