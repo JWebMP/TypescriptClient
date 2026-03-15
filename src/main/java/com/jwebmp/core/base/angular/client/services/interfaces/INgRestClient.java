@@ -113,9 +113,12 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
         }
 
         // Polling
-        fields.add("private pollingSubscription?: Subscription;");
-        fields.add("private pollingIntervalMs = " + rc.pollingIntervalMs() + ";");
-        fields.add("readonly polling: WritableSignal<boolean> = signal<boolean>(false);");
+        if (rc.pollingEnabled())
+        {
+            fields.add("private pollingSubscription?: Subscription;");
+            fields.add("private pollingIntervalMs = " + rc.pollingIntervalMs() + ";");
+            fields.add("readonly polling: WritableSignal<boolean> = signal<boolean>(false);");
+        }
 
         return fields;
     }
@@ -189,8 +192,11 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
         }
 
         // ── Polling ────────────────────────────────────────────────────
-        methods.add(buildStartPollingMethod());
-        methods.add(buildStopPollingMethod());
+        if (rc.pollingEnabled())
+        {
+            methods.add(buildStartPollingMethod());
+            methods.add(buildStopPollingMethod());
+        }
 
         // ── Cache helpers ──────────────────────────────────────────────
         if (rc.cachingEnabled())
@@ -697,7 +703,10 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
         sb.append("ngOnDestroy(): void {\n");
         sb.append("    this.destroy$.next();\n");
         sb.append("    this.destroy$.complete();\n");
-        sb.append("    this.stopPolling();\n");
+        if (rc.pollingEnabled())
+        {
+            sb.append("    this.stopPolling();\n");
+        }
         sb.append("}");
         return sb.toString();
     }

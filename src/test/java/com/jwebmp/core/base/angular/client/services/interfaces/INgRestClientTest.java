@@ -626,7 +626,7 @@ public class INgRestClientTest
         List<String> methods = client.methods();
         String joined = String.join("\n", methods);
 
-        assertTrue(joined.contains("startPolling(): void"),
+        assertTrue(joined.contains("startPolling(intervalMs?: number): void"),
                 "Should have startPolling method");
         assertTrue(joined.contains("stopPolling(): void"),
                 "Should have stopPolling method");
