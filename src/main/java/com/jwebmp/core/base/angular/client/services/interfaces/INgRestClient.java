@@ -39,20 +39,17 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
 
 @NgImportReference(value = "OnDestroy", reference = "@angular/core")
 
-public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
-{
+public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J> {
 
     @Override
-    default List<String> interfaces()
-    {
+    default List<String> interfaces() {
         List<String> out = IComponent.super.interfaces();
         out.add("OnDestroy");
         return out;
     }
 
     @Override
-    default List<String> decorators()
-    {
+    default List<String> decorators() {
         List<String> out = IComponent.super.decorators();
         NgRestClient rc = getAnnotation();
         String providedIn = rc.singleton() ? "root" : "any";
@@ -62,16 +59,14 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
 
     // ── Annotation accessor ────────────────────────────────────────────
 
-    default NgRestClient getAnnotation()
-    {
+    default NgRestClient getAnnotation() {
         return getClass().getAnnotation(NgRestClient.class);
     }
 
     // ── Fields ─────────────────────────────────────────────────────────
 
     @Override
-    default List<String> fields()
-    {
+    default List<String> fields() {
         List<String> fields = IComponent.super.fields();
         NgRestClient rc = getAnnotation();
 
@@ -100,21 +95,18 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
         fields.add("private readonly destroy$ = new Subject<void>();");
 
         // Deduplication
-        if (rc.deduplication())
-        {
+        if (rc.deduplication()) {
             fields.add("private inflightRequest$: Observable<" + signalType + "> | null = null;");
         }
 
         // Caching
-        if (rc.cachingEnabled())
-        {
+        if (rc.cachingEnabled()) {
             fields.add("private cacheTimestamp: number | null = null;");
             fields.add("private readonly cacheTtlMs = " + rc.cacheTtlMs() + ";");
         }
 
         // Polling
-        if (rc.pollingEnabled())
-        {
+        if (rc.pollingEnabled()) {
             fields.add("private pollingSubscription?: Subscription;");
             fields.add("private pollingIntervalMs = " + rc.pollingIntervalMs() + ";");
             fields.add("readonly polling: WritableSignal<boolean> = signal<boolean>(false);");
@@ -126,8 +118,7 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
     // ── Constructor body ───────────────────────────────────────────────
 
     @Override
-    default List<String> constructorBody()
-    {
+    default List<String> constructorBody() {
         List<String> body = IComponent.super.constructorBody();
         NgRestClient rc = getAnnotation();
 
@@ -139,13 +130,11 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
                 });
                 """);
 
-        if (rc.fetchOnCreate())
-        {
+        if (rc.fetchOnCreate()) {
             body.add("this.execute();");
         }
 
-        if (rc.pollingEnabled())
-        {
+        if (rc.pollingEnabled()) {
             body.add("this.startPolling();");
         }
 
@@ -155,8 +144,7 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
     // ── Methods ────────────────────────────────────────────────────────
 
     @Override
-    default List<String> methods()
-    {
+    default List<String> methods() {
         List<String> methods = IComponent.super.methods();
         NgRestClient rc = getAnnotation();
 
@@ -169,9 +157,8 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
 
         // ── executeWithBody() – for POST/PUT/PATCH ─────────────────────
         if (rc.method() == NgRestClient.HttpMethod.POST ||
-            rc.method() == NgRestClient.HttpMethod.PUT ||
-            rc.method() == NgRestClient.HttpMethod.PATCH)
-        {
+                rc.method() == NgRestClient.HttpMethod.PUT ||
+                rc.method() == NgRestClient.HttpMethod.PATCH) {
             methods.add(buildExecuteWithBodyMethod(rc, signalType));
         }
 
@@ -185,22 +172,19 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
         methods.add(buildHandleResponseMethod(rc, signalType));
 
         // ── Deep merge utility ─────────────────────────────────────────
-        if (rc.deepMerge())
-        {
+        if (rc.deepMerge()) {
             methods.add(buildDeepMergeMethod());
             methods.add(buildMergeArraysMethod());
         }
 
         // ── Polling ────────────────────────────────────────────────────
-        if (rc.pollingEnabled())
-        {
+        if (rc.pollingEnabled()) {
             methods.add(buildStartPollingMethod());
             methods.add(buildStopPollingMethod());
         }
 
         // ── Cache helpers ──────────────────────────────────────────────
-        if (rc.cachingEnabled())
-        {
+        if (rc.cachingEnabled()) {
             methods.add(buildIsCacheValidMethod());
             methods.add(buildInvalidateCacheMethod());
         }
@@ -216,33 +200,28 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
 
     // ── Private builder helpers ────────────────────────────────────────
 
-    private String resolveResponseTypeName()
-    {
+    private String resolveResponseTypeName() {
         NgRestClient rc = getAnnotation();
         Class<? extends INgDataType> responseType = rc.responseType();
-        if (responseType == INgDataType.class)
-        {
+        if (responseType == INgDataType.class) {
             return "any";
         }
         return getTsFilename(responseType);
     }
 
-    private String buildExecuteMethod(NgRestClient rc, String signalType)
-    {
+    private String buildExecuteMethod(NgRestClient rc, String signalType) {
         StringBuilder sb = new StringBuilder();
         sb.append("execute(params?: Record<string, string>, extraHeaders?: Record<string, string>): void {\n");
 
         // Caching check
-        if (rc.cachingEnabled())
-        {
+        if (rc.cachingEnabled()) {
             sb.append("    if (this.isCacheValid()) {\n");
             sb.append("        return;\n");
             sb.append("    }\n");
         }
 
         // Deduplication check
-        if (rc.deduplication())
-        {
+        if (rc.deduplication()) {
             sb.append("    if (this.inflightRequest$) {\n");
             sb.append("        this.inflightRequest$.pipe(takeUntil(this.destroy$)).subscribe();\n");
             sb.append("        return;\n");
@@ -255,16 +234,13 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
 
         sb.append("    const request$ = this.buildHttpRequest$(params, extraHeaders);\n");
 
-        if (rc.deduplication())
-        {
+        if (rc.deduplication()) {
             sb.append("    this.inflightRequest$ = request$.pipe(shareReplay(1));\n");
             sb.append("    this.inflightRequest$.pipe(\n");
             sb.append("        takeUntil(this.destroy$),\n");
             sb.append("        finalize(() => this.inflightRequest$ = null)\n");
             sb.append("    ).subscribe({\n");
-        }
-        else
-        {
+        } else {
             sb.append("    request$.pipe(takeUntil(this.destroy$)).subscribe({\n");
         }
 
@@ -280,13 +256,11 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
         return sb.toString();
     }
 
-    private String buildExecuteWithBodyMethod(NgRestClient rc, String signalType)
-    {
+    private String buildExecuteWithBodyMethod(NgRestClient rc, String signalType) {
         StringBuilder sb = new StringBuilder();
         sb.append("executeWithBody(body: any, params?: Record<string, string>, extraHeaders?: Record<string, string>): void {\n");
 
-        if (rc.deduplication())
-        {
+        if (rc.deduplication()) {
             sb.append("    if (this.inflightRequest$) {\n");
             sb.append("        this.inflightRequest$.pipe(takeUntil(this.destroy$)).subscribe();\n");
             sb.append("        return;\n");
@@ -299,16 +273,13 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
 
         sb.append("    const request$ = this.buildHttpRequest$(params, body, extraHeaders);\n");
 
-        if (rc.deduplication())
-        {
+        if (rc.deduplication()) {
             sb.append("    this.inflightRequest$ = request$.pipe(shareReplay(1));\n");
             sb.append("    this.inflightRequest$.pipe(\n");
             sb.append("        takeUntil(this.destroy$),\n");
             sb.append("        finalize(() => this.inflightRequest$ = null)\n");
             sb.append("    ).subscribe({\n");
-        }
-        else
-        {
+        } else {
             sb.append("    request$.pipe(takeUntil(this.destroy$)).subscribe({\n");
         }
 
@@ -324,16 +295,14 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
         return sb.toString();
     }
 
-    private String buildHttpRequestMethod(NgRestClient rc, String signalType)
-    {
+    private String buildHttpRequestMethod(NgRestClient rc, String signalType) {
         StringBuilder sb = new StringBuilder();
         boolean hasBody = rc.method() == NgRestClient.HttpMethod.POST ||
-                          rc.method() == NgRestClient.HttpMethod.PUT ||
-                          rc.method() == NgRestClient.HttpMethod.PATCH;
+                rc.method() == NgRestClient.HttpMethod.PUT ||
+                rc.method() == NgRestClient.HttpMethod.PATCH;
 
         sb.append("private buildHttpRequest$(params?: Record<string, string>");
-        if (hasBody)
-        {
+        if (hasBody) {
             sb.append(", body?: any");
         }
         sb.append(", extraHeaders?: Record<string, string>");
@@ -344,18 +313,14 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
 
         // Collect default query params from @NgRestClientQueryParam annotations
         NgRestClientQueryParam[] defaultParams = getClass().getAnnotationsByType(NgRestClientQueryParam.class);
-        if (defaultParams.length > 0)
-        {
+        if (defaultParams.length > 0) {
             sb.append("    const defaultParams: Record<string, string> = {\n");
-            for (NgRestClientQueryParam qp : defaultParams)
-            {
+            for (NgRestClientQueryParam qp : defaultParams) {
                 sb.append("        '").append(escapeTs(qp.name())).append("': '").append(escapeTs(qp.value())).append("',\n");
             }
             sb.append("    };\n");
             sb.append("    const mergedParams = { ...defaultParams, ...params };\n");
-        }
-        else
-        {
+        } else {
             sb.append("    const mergedParams = params;\n");
         }
 
@@ -371,8 +336,7 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
 
         // ── HTTP call ──────────────────────────────────────────────────
         String options;
-        switch (rc.method())
-        {
+        switch (rc.method()) {
             case POST:
                 options = "this.http.post<" + signalType + ">(url, body ?? {}, { headers })";
                 break;
@@ -393,10 +357,9 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
         sb.append("    let request$ = ").append(options).append(";\n");
 
         // Retry
-        if (rc.retryCount() > 0)
-        {
+        if (rc.retryCount() > 0) {
             sb.append("    request$ = request$.pipe(retry({ count: ").append(rc.retryCount())
-              .append(", delay: ").append(rc.retryDelayMs()).append(" }));\n");
+                    .append(", delay: ").append(rc.retryDelayMs()).append(" }));\n");
         }
 
         sb.append("    return request$;\n");
@@ -404,8 +367,7 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
         return sb.toString();
     }
 
-    private String buildHeadersMethod()
-    {
+    private String buildHeadersMethod() {
         NgRestClient rc = getAnnotation();
         NgRestClientHeader[] staticHeaders = getClass().getAnnotationsByType(NgRestClientHeader.class);
 
@@ -414,22 +376,19 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
         sb.append("    let headers = new HttpHeaders();\n");
 
         // Static headers from @NgRestClientHeader annotations
-        for (NgRestClientHeader h : staticHeaders)
-        {
+        for (NgRestClientHeader h : staticHeaders) {
             sb.append("    headers = headers.set('")
-              .append(escapeTs(h.name())).append("', '")
-              .append(escapeTs(h.value())).append("');\n");
+                    .append(escapeTs(h.name())).append("', '")
+                    .append(escapeTs(h.value())).append("');\n");
         }
 
         // Authentication
-        if (rc.authType() != NgRestClient.AuthType.NONE)
-        {
+        if (rc.authType() != NgRestClient.AuthType.NONE) {
             String tokenExpr = rc.authTokenField();
             sb.append("\n    const authToken = ").append(tokenExpr).append(";\n");
             sb.append("    if (authToken) {\n");
 
-            switch (rc.authType())
-            {
+            switch (rc.authType()) {
                 case BEARER:
                     sb.append("        headers = headers.set('Authorization', 'Bearer ' + authToken);\n");
                     break;
@@ -438,8 +397,8 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
                     break;
                 case CUSTOM:
                     sb.append("        headers = headers.set('")
-                      .append(escapeTs(rc.authHeaderName()))
-                      .append("', authToken);\n");
+                            .append(escapeTs(rc.authHeaderName()))
+                            .append("', authToken);\n");
                     break;
                 default:
                     break;
@@ -463,18 +422,15 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
     /**
      * Escapes a string for safe inclusion in a TypeScript single-quoted string literal.
      */
-    private String escapeTs(String value)
-    {
+    private String escapeTs(String value) {
         return value.replace("\\", "\\\\").replace("'", "\\'");
     }
 
-    private String buildHandleResponseMethod(NgRestClient rc, String signalType)
-    {
+    private String buildHandleResponseMethod(NgRestClient rc, String signalType) {
         StringBuilder sb = new StringBuilder();
         sb.append("private handleResponse(response: ").append(signalType).append("): void {\n");
 
-        if (rc.deepMerge())
-        {
+        if (rc.deepMerge()) {
             sb.append("    const current = this.data();\n");
             sb.append("    if (current !== undefined && current !== null && response !== undefined && response !== null) {\n");
             sb.append("        const merged = this.deepMergeInto(current, response);\n");
@@ -484,14 +440,11 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
             sb.append("    } else {\n");
             sb.append("        this.data.set(response);\n");
             sb.append("    }\n");
-        }
-        else
-        {
+        } else {
             sb.append("    this.data.set(response);\n");
         }
 
-        if (rc.cachingEnabled())
-        {
+        if (rc.cachingEnabled()) {
             sb.append("    this.cacheTimestamp = Date.now();\n");
         }
 
@@ -501,8 +454,7 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
         return sb.toString();
     }
 
-    private String buildDeepMergeMethod()
-    {
+    private String buildDeepMergeMethod() {
         return """
                 private deepMergeInto(target: any, source: any): boolean {
                     if (target === source) return false;
@@ -555,8 +507,7 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
                 }""";
     }
 
-    private String buildMergeArraysMethod()
-    {
+    private String buildMergeArraysMethod() {
         return """
                 private mergeArraysInPlace(targetArr: any, sourceArr: any[]): boolean {
                     if (!Array.isArray(sourceArr)) return false;
@@ -632,8 +583,7 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
                 }""";
     }
 
-    private String buildStartPollingMethod()
-    {
+    private String buildStartPollingMethod() {
         return """
                 startPolling(intervalMs?: number): void {
                     this.stopPolling();
@@ -647,8 +597,7 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
                 }""";
     }
 
-    private String buildStopPollingMethod()
-    {
+    private String buildStopPollingMethod() {
         return """
                 stopPolling(): void {
                     this.polling.set(false);
@@ -659,8 +608,7 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
                 }""";
     }
 
-    private String buildIsCacheValidMethod()
-    {
+    private String buildIsCacheValidMethod() {
         return """
                 private isCacheValid(): boolean {
                     if (this.cacheTimestamp === null) return false;
@@ -668,16 +616,14 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
                 }""";
     }
 
-    private String buildInvalidateCacheMethod()
-    {
+    private String buildInvalidateCacheMethod() {
         return """
                 invalidateCache(): void {
                     this.cacheTimestamp = null;
                 }""";
     }
 
-    private String buildResetMethod(NgRestClient rc, String signalType)
-    {
+    private String buildResetMethod(NgRestClient rc, String signalType) {
         String defaultVal = rc.responseArray() ? "[] as any" : "undefined";
         StringBuilder sb = new StringBuilder();
         sb.append("reset(): void {\n");
@@ -685,26 +631,22 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
         sb.append("    this.loading.set(false);\n");
         sb.append("    this.error.set(undefined);\n");
         sb.append("    this.success.set(false);\n");
-        if (rc.cachingEnabled())
-        {
+        if (rc.cachingEnabled()) {
             sb.append("    this.invalidateCache();\n");
         }
-        if (rc.deduplication())
-        {
+        if (rc.deduplication()) {
             sb.append("    this.inflightRequest$ = null;\n");
         }
         sb.append("}");
         return sb.toString();
     }
 
-    private String buildNgOnDestroyMethod(NgRestClient rc)
-    {
+    private String buildNgOnDestroyMethod(NgRestClient rc) {
         StringBuilder sb = new StringBuilder();
         sb.append("ngOnDestroy(): void {\n");
         sb.append("    this.destroy$.next();\n");
         sb.append("    this.destroy$.complete();\n");
-        if (rc.pollingEnabled())
-        {
+        if (rc.pollingEnabled()) {
             sb.append("    this.stopPolling();\n");
         }
         sb.append("}");
@@ -714,14 +656,12 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
     // ── Import resolution ──────────────────────────────────────────────
 
     @Override
-    default List<NgImportReference> getAllImportAnnotations()
-    {
+    default List<NgImportReference> getAllImportAnnotations() {
         List<NgImportReference> out = IComponent.super.getAllImportAnnotations();
         NgRestClient rc = getAnnotation();
 
         // Import response data type if it's not 'any'
-        if (rc.responseType() != INgDataType.class)
-        {
+        if (rc.responseType() != INgDataType.class) {
             @SuppressWarnings("unchecked")
             Class<? extends IComponent<?>> responseClass = (Class<? extends IComponent<?>>) (Class<?>) rc.responseType();
             NgComponentReference ref = AnnotationUtils.getNgComponentReference(responseClass);
@@ -732,8 +672,7 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
     }
 
     @Override
-    default String renderOnDestroyMethod()
-    {
+    default String renderOnDestroyMethod() {
         // ngOnDestroy is rendered via the methods() list – suppress the default rendering
         return "";
     }
