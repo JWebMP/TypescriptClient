@@ -105,12 +105,10 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
             fields.add("private readonly cacheTtlMs = " + rc.cacheTtlMs() + ";");
         }
 
-        // Polling
-        if (rc.pollingEnabled()) {
-            fields.add("private pollingSubscription?: Subscription;");
-            fields.add("private pollingIntervalMs = " + rc.pollingIntervalMs() + ";");
-            fields.add("readonly polling: WritableSignal<boolean> = signal<boolean>(false);");
-        }
+        // Polling (always available so consumers can call startPolling/stopPolling on demand)
+        fields.add("private pollingSubscription?: Subscription;");
+        fields.add("private pollingIntervalMs = " + rc.pollingIntervalMs() + ";");
+        fields.add("readonly polling: WritableSignal<boolean> = signal<boolean>(false);");
 
         return fields;
     }
@@ -177,11 +175,9 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
             methods.add(buildMergeArraysMethod());
         }
 
-        // ── Polling ────────────────────────────────────────────────────
-        if (rc.pollingEnabled()) {
-            methods.add(buildStartPollingMethod());
-            methods.add(buildStopPollingMethod());
-        }
+        // ── Polling (always available) ─────────────────────────────────
+        methods.add(buildStartPollingMethod());
+        methods.add(buildStopPollingMethod());
 
         // ── Cache helpers ──────────────────────────────────────────────
         if (rc.cachingEnabled()) {
@@ -193,7 +189,7 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
         methods.add(buildResetMethod(rc, signalType));
 
         // ── ngOnDestroy ────────────────────────────────────────────────
-        methods.add(buildNgOnDestroyMethod(rc));
+        methods.add(buildNgOnDestroyMethod());
 
         return methods;
     }
@@ -641,14 +637,12 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
         return sb.toString();
     }
 
-    private String buildNgOnDestroyMethod(NgRestClient rc) {
+    private String buildNgOnDestroyMethod() {
         StringBuilder sb = new StringBuilder();
         sb.append("ngOnDestroy(): void {\n");
         sb.append("    this.destroy$.next();\n");
         sb.append("    this.destroy$.complete();\n");
-        if (rc.pollingEnabled()) {
-            sb.append("    this.stopPolling();\n");
-        }
+        sb.append("    this.stopPolling();\n");
         sb.append("}");
         return sb.toString();
     }

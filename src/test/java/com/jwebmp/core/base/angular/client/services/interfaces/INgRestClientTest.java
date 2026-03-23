@@ -283,14 +283,14 @@ public class INgRestClientTest
     }
 
     @Test
-    void testFields_SimpleGet_NoPolling()
+    void testFields_SimpleGet_PollingFieldsAlwaysPresent()
     {
         SimpleGetClient client = new SimpleGetClient();
         List<String> fields = client.fields();
         String joined = String.join("\n", fields);
 
-        assertFalse(joined.contains("pollingSubscription"), "Should NOT have polling fields when polling disabled");
-        assertFalse(joined.contains("pollingIntervalMs"), "Should NOT have pollingIntervalMs when polling disabled");
+        assertTrue(joined.contains("pollingSubscription"), "Should always have polling fields for on-demand polling");
+        assertTrue(joined.contains("pollingIntervalMs"), "Should always have pollingIntervalMs for on-demand polling");
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -513,16 +513,16 @@ public class INgRestClientTest
     }
 
     @Test
-    void testMethods_SimpleGet_NoPollingMethods()
+    void testMethods_SimpleGet_PollingMethodsAlwaysPresent()
     {
         SimpleGetClient client = new SimpleGetClient();
         List<String> methods = client.methods();
         String joined = String.join("\n", methods);
 
-        assertFalse(joined.contains("startPolling"),
-                "Should NOT have startPolling when polling disabled");
-        assertFalse(joined.contains("stopPolling"),
-                "Should NOT have stopPolling when polling disabled");
+        assertTrue(joined.contains("startPolling"),
+                "Should always have startPolling for on-demand polling");
+        assertTrue(joined.contains("stopPolling"),
+                "Should always have stopPolling for on-demand polling");
     }
 
     @Test

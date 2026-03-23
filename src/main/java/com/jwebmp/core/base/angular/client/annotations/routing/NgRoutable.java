@@ -29,4 +29,12 @@ public @interface NgRoutable
 	int sortOrder() default 100;
 	
 	boolean ignoreComponent() default false;
+
+	/**
+	 * The named router-outlet this route targets.
+	 * When empty (default), the route renders in the primary (unnamed) outlet.
+	 *
+	 * @return the outlet name, or empty for the primary outlet
+	 */
+	String outlet() default "";
 }

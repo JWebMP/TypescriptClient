@@ -13,6 +13,7 @@ import com.jwebmp.core.base.angular.client.annotations.functions.*;
 import com.jwebmp.core.base.angular.client.annotations.references.*;
 import com.jwebmp.core.base.angular.client.annotations.structures.*;
 import com.jwebmp.core.base.angular.client.annotations.typescript.NgSourceDirectoryReference;
+import com.jwebmp.core.base.angular.client.annotations.typescript.TsDependency;
 import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
 import com.jwebmp.core.base.angular.client.services.tstypes.any;
 import com.jwebmp.core.databind.IConfiguration;
@@ -399,6 +400,21 @@ public interface AnnotationUtils
     {
         var ref = new MyNgComponent().setValue(value);
         return ref;
+    }
+
+    static MyTsDependency getTsDependency(String value, String version)
+    {
+        return new MyTsDependency(value, version, "", false);
+    }
+
+    static MyTsDependency getTsDependency(String value, String version, String name)
+    {
+        return new MyTsDependency(value, version, name, false);
+    }
+
+    static MyTsDependency getTsDependency(String value, String version, String name, boolean overrides)
+    {
+        return new MyTsDependency(value, version, name, overrides);
     }
 
     @Getter
@@ -1915,6 +1931,65 @@ public interface AnnotationUtils
         public int hashCode()
         {
             return Objects.hash(getValue(), getType(), getReferenceName(), isOnParent(), isOnSelf());
+        }
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @ToString
+    class MyTsDependency implements TsDependency, IConfiguration
+    {
+        private final String value;
+        private final String version;
+        private final String name;
+        private final boolean overrides;
+
+        @Override
+        public String value()
+        {
+            return value;
+        }
+
+        @Override
+        public String version()
+        {
+            return version;
+        }
+
+        @Override
+        public String name()
+        {
+            return name;
+        }
+
+        @Override
+        public boolean overrides()
+        {
+            return overrides;
+        }
+
+        @Override
+        public Class<? extends Annotation> annotationType()
+        {
+            return TsDependency.class;
+        }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyTsDependency that = (MyTsDependency) o;
+            return Objects.equals(getValue(), that.getValue()) && Objects.equals(getVersion(), that.getVersion());
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(getValue(), getVersion());
         }
     }
 }
