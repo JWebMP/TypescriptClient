@@ -37,4 +37,13 @@ public @interface NgRoutable
 	 * @return the outlet name, or empty for the primary outlet
 	 */
 	String outlet() default "";
+
+	/**
+	 * Marks this route as the default landing page.
+	 * When true, the boot component's empty-path redirect will target this route's path.
+	 * At most one route should be marked as default.
+	 *
+	 * @return true if this is the default route
+	 */
+	boolean isDefault() default false;
 }
