@@ -10,23 +10,23 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@TsDependency(value = "@angular/common", version = "^20.3.17")
-@TsDependency(value = "@angular/core", version = "^20.3.17")
-@TsDependency(value = "@angular/forms", version = "^20.3.17")
-@TsDependency(value = "@angular/animations", version = "^20.3.17")
+@TsDependency(value = "@angular/common", version = "^21.0.0")
+@TsDependency(value = "@angular/core", version = "^21.0.0")
+@TsDependency(value = "@angular/forms", version = "^21.0.0")
+@TsDependency(value = "@angular/animations", version = "^21.0.0")
+@TsDependency(value = "@angular/platform-browser", version = "^21.0.0")
+@TsDependency(value = "@angular/platform-browser-dynamic", version = "^21.0.0")
 
 @TsDependency(value = "uuid", version = "^11.1.0")
 
 @TsDependency(value = "@stomp/stompjs", version = "^7.0.0")
 
-@TsDevDependency(value = "@angular/build", version = "^20.3.19")
-@TsDevDependency(value = "@angular/cli", version = "^20.3.19")
-@TsDevDependency(value = "@angular/compiler-cli", version = "^20.3.17")
-@TsDevDependency(value = "@angular/platform-browser", version = "^20.3.17")
-@TsDevDependency(value = "@angular/platform-browser-dynamic", version = "^20.3.17")
+@TsDevDependency(value = "@angular/build", version = "^21.0.0")
+@TsDevDependency(value = "@angular/cli", version = "^21.0.0")
+@TsDevDependency(value = "@angular/compiler-cli", version = "^21.0.0")
 @TsDevDependency(value = "@eslint/js", version = "^9.0.0")
 @TsDevDependency(value = "@types/jasmine", version = "~5.1.0")
-@TsDevDependency(value = "angular-eslint", version = "^20.7.0")
+@TsDevDependency(value = "angular-eslint", version = "^21.0.0")
 @TsDevDependency(value = "eslint", version = "^9.0.0")
 @TsDevDependency(value = "jasmine-core", version = "~5.6.0")
 @TsDevDependency(value = "karma", version = "~6.4.0")
@@ -34,10 +34,10 @@ import java.util.List;
 @TsDevDependency(value = "karma-coverage", version = "~2.2.0")
 @TsDevDependency(value = "karma-jasmine", version = "~5.1.0")
 @TsDevDependency(value = "karma-jasmine-html-reporter", version = "~2.1.0")
-@TsDevDependency(value = "ng-packagr", version = "^20.3.2")
+@TsDevDependency(value = "ng-packagr", version = "^21.0.0")
 @TsDevDependency(value = "rxjs", version = "~7.8.0")
 @TsDevDependency(value = "tslib", version = "^2.3.0")
-@TsDevDependency(value = "typescript", version = "~5.9.3")
+@TsDevDependency(value = "typescript", version = "~5.9.0")
 @TsDevDependency(value = "typescript-eslint", version = "8.56.1")
 @TsDevDependency(value = "zone.js", version = "~0.15.0")
 
