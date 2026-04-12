@@ -12,6 +12,7 @@ import com.jwebmp.core.base.angular.client.annotations.references.NgImportRefere
 import com.jwebmp.core.base.angular.client.annotations.structures.NgField;
 import com.jwebmp.core.base.angular.client.annotations.structures.NgInterface;
 import com.jwebmp.core.base.angular.client.annotations.structures.NgMethod;
+import com.jwebmp.core.base.angular.client.annotations.structures.NgSignal;
 import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
 import com.jwebmp.core.base.angular.client.services.spi.*;
 
@@ -174,6 +175,33 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         return out;
     }
 
+    default List<NgSignal> getAllSignals()
+    {
+        List<NgSignal> out = new ArrayList<>();
+        for (NgSignal annotation : IGuiceContext.get(AnnotationHelper.class)
+                                                .getAnnotationFromClass(getClass(), NgSignal.class))
+        {
+            if (annotation.onSelf())
+            {
+                out.add(annotation);
+            }
+        }
+        for (NgComponentReference annotation : IGuiceContext.get(AnnotationHelper.class)
+                                                               .getAnnotationFromClass(getClass(), NgComponentReference.class))
+        {
+            Class<?> reference = annotation.value();
+            for (NgSignal ngField : IGuiceContext.get(AnnotationHelper.class)
+                                                   .getAnnotationFromClass(reference, NgSignal.class))
+            {
+                if (ngField.onParent())
+                {
+                    out.add(ngField);
+                }
+            }
+        }
+        return out;
+    }
+
     //***************************************************************************************
     //***************************************************************************************
     // Renderers
@@ -220,6 +248,14 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
     {
         StringBuilder sb = new StringBuilder();
         List<NgImportReference> refs = getAllImportAnnotations();
+        List<NgSignal> signals = getAllSignals();
+        if (!signals.isEmpty())
+        {
+            refs.add(getNgImportReference("signal", "@angular/core"));
+            refs.add(getNgImportReference("computed", "@angular/core"));
+            refs.add(getNgImportReference("WritableSignal", "@angular/core"));
+            refs.add(getNgImportReference("Signal", "@angular/core"));
+        }
         refs = clean(refs);
         refs.forEach((ref) -> {
             String refString = ref.reference();
@@ -395,6 +431,16 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         for (NgField ngField : fAnno)
         {
             fStrings.add(ngField.value());
+        }
+        List<NgSignal> sAnno = getAllSignals();
+        for (NgSignal signal : sAnno)
+        {
+            String type = signal.type();
+            if (!Strings.isNullOrEmpty(type))
+            {
+                type = " : WritableSignal<" + type + ">";
+            }
+            fStrings.add("public " + signal.referenceName() + type + " = signal(" + signal.value() + ")");
         }
         for (String field : fStrings.stream()
                 .distinct()

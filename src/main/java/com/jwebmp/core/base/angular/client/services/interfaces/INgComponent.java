@@ -149,59 +149,28 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
             styles.deleteCharAt(styles.length() - 2);
         }
 
-/*
-        StringBuilder cssString = chb.cast()
-                .asStyleBase()
-                .renderCss(1);
-*/
-
-        //CSSComposer cssComposer = new CSSComposer();
-        // cssComposer.addComponent(chb);
-        //styles.append("\"" + cssComposer.toString() + "\"");
-      /*  File cssFile = getFile(getClass(), ".scss");
-        try
+        if (me().asBase()
+                .getProperties()
+                .containsKey("AngularConfiguration"))
         {
-            FileUtils.writeStringToFile(cssFile, cssString.toString(), UTF_8);
-        } catch (IOException e)
+            ComponentConfiguration config = (ComponentConfiguration) me().asBase()
+                                                                         .getProperties()
+                                                                         .get("AngularConfiguration");
+            providers.append(config.renderImportProviders());
+            for (String p : providers()) {
+                if (providers.indexOf(p) == -1) {
+                    providers.append(p).append(",\n");
+                }
+            }
+        }
+        else
         {
-            e.printStackTrace();
-        }*/
-/*
-
-        providers().forEach((key) -> {
-            providers.append(key)
-                     .append(",")
-                     .append("\n");
-        });
-*/
-
-        if (this instanceof IComponentHierarchyBase<?, ?> componentHierarchyBase)
-        {
-            var refs = componentHierarchyBase.getConfigurations(NgImportProvider.class, false);
-            for (var ref : refs.stream()
-                               .map(NgImportProvider::value)
-                               .distinct()
-                               .toList())
-            {
-                providers.append(ref)
-                         .append(",")
-                         .append("\n");
+            for (String p : providers()) {
+                providers.append(p).append(",\n");
             }
         }
 
-        /*List<NgComponentReference> compRefs = IGuiceContext.get(AnnotationHelper.class)
-                                                           .getAnnotationFromClass(getClass(), NgComponentReference.class);
-        for (NgComponentReference compRef : compRefs)
-        {
-            if (compRef.provides())
-            {
-                providers.append(getTsFilename(compRef.value()))
-                         .append(",")
-                         .append("\n");
-            }
-        }*/
-
-        if (providers.length() > 1)
+        if (providers.length() > 1 && providers.toString().endsWith(",\n"))
         {
             providers.deleteCharAt(providers.length() - 2);
         }
