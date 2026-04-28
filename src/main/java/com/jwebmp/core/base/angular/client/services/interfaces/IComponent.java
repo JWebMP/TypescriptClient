@@ -463,30 +463,6 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
                     .append("\n");
         }
 
-        //check for any fields on the component references
-        var refs = AnnotationUtils.getAnnotation(getClass(), NgComponentReference.class);
-        if (refs != null)
-        {
-            for (NgComponentReference ref : refs)
-            {
-                Class<?> refClass = ref.value();
-                if (INgProvider.class.isAssignableFrom(refClass))
-                {
-                    var fields = AnnotationUtils.getAnnotation(refClass, NgField.class);
-                    for (NgField field : fields)
-                    {
-                        if (field.onParent())
-                        {
-
-                        }
-                    }
-
-                    //check for fields with onParent
-
-                }
-            }
-
-        }
 
         //ng output event emitter
         return out;

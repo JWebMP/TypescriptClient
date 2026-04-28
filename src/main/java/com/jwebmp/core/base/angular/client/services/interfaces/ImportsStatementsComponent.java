@@ -59,6 +59,20 @@ public interface ImportsStatementsComponent<J extends ImportsStatementsComponent
             refs.addAll(comp.getConfigurations(NgImportReference.class, false));
         }
 
+        // Collect onParent=true @NgImportReference from @NgComponentReference targets
+        for (NgComponentReference moduleRef : moduleRefs)
+        {
+            Class<?> refClass = moduleRef.value();
+            for (NgImportReference importRef : IGuiceContext.get(AnnotationHelper.class)
+                    .getAnnotationFromClass(refClass, NgImportReference.class))
+            {
+                if (importRef.onParent())
+                {
+                    refs.add(importRef);
+                }
+            }
+        }
+
         Set<OnGetAllImports> interceptors = IGuiceContext.loaderToSet(ServiceLoader.load(OnGetAllImports.class));
         for (OnGetAllImports interceptor : interceptors)
         {
