@@ -17,4 +17,8 @@ public @interface NgSignalComputed
     String value();
 
     String referenceName();
+
+    boolean onParent() default false;
+
+    boolean onSelf() default true;
 }

@@ -371,6 +371,8 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
             sb.append(config.renderInjects());
             sb.append(config.renderModels());
             sb.append(config.renderSignals());
+            sb.append(config.renderSignalComputeds());
+            sb.append(config.renderSignalEffects());
             sb.append(config.renderInputs());
             sb.append(config.renderOutputs());
             sb.append(config.renderFields());

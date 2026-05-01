@@ -21,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.experimental.Accessors;
 import org.apache.logging.log4j.LogManager;
 
 import java.lang.annotation.Annotation;
@@ -374,6 +375,20 @@ public interface AnnotationUtils
         var ref = new MyNgSignal().setReferenceName(referenceName)
                                   .setValue(value)
                                   .setType(type);
+        return ref;
+    }
+
+    static MyNgSignalComputed getNgSignalComputed(String referenceName, String value)
+    {
+        var ref = new MyNgSignalComputed().setReferenceName(referenceName)
+                                          .setValue(value);
+        return ref;
+    }
+
+    static MyNgSignalEffect getNgSignalEffect(String referenceName, String value)
+    {
+        var ref = new MyNgSignalEffect().setReferenceName(referenceName)
+                                        .setValue(value);
         return ref;
     }
 
@@ -1990,6 +2005,124 @@ public interface AnnotationUtils
         public int hashCode()
         {
             return Objects.hash(getValue(), getVersion());
+        }
+    }
+
+    @Getter
+    @Setter
+    @Accessors(chain = true)
+    @ToString
+    class MyNgSignalComputed implements NgSignalComputed, IConfiguration
+    {
+        private String value;
+        private String referenceName;
+        private boolean onParent = false;
+        private boolean onSelf = true;
+
+        @Override
+        public String value()
+        {
+            return value;
+        }
+
+        @Override
+        public String referenceName()
+        {
+            return referenceName;
+        }
+
+        @Override
+        public boolean onParent()
+        {
+            return onParent;
+        }
+
+        @Override
+        public boolean onSelf()
+        {
+            return onSelf;
+        }
+
+        @Override
+        public Class<? extends Annotation> annotationType()
+        {
+            return NgSignalComputed.class;
+        }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgSignalComputed that = (MyNgSignalComputed) o;
+            return Objects.equals(getValue(), that.getValue()) && Objects.equals(getReferenceName(), that.getReferenceName());
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(getValue(), getReferenceName());
+        }
+    }
+
+    @Getter
+    @Setter
+    @Accessors(chain = true)
+    @ToString
+    class MyNgSignalEffect implements NgSignalEffect, IConfiguration
+    {
+        private String value;
+        private String referenceName;
+        private boolean onParent = false;
+        private boolean onSelf = true;
+
+        @Override
+        public String value()
+        {
+            return value;
+        }
+
+        @Override
+        public String referenceName()
+        {
+            return referenceName;
+        }
+
+        @Override
+        public boolean onParent()
+        {
+            return onParent;
+        }
+
+        @Override
+        public boolean onSelf()
+        {
+            return onSelf;
+        }
+
+        @Override
+        public Class<? extends Annotation> annotationType()
+        {
+            return NgSignalEffect.class;
+        }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (o == null || getClass() != o.getClass())
+            {
+                return false;
+            }
+            MyNgSignalEffect that = (MyNgSignalEffect) o;
+            return Objects.equals(getValue(), that.getValue()) && Objects.equals(getReferenceName(), that.getReferenceName());
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(getValue(), getReferenceName());
         }
     }
 }

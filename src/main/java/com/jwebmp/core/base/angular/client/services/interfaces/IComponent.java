@@ -112,6 +112,22 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
                 out.add(annotation);
             }
         }
+
+        //check references for constructor parameters with onParent
+        for (NgComponentReference annotation : IGuiceContext.get(AnnotationHelper.class)
+                .getAnnotationFromClass(getClass(), NgComponentReference.class))
+        {
+            Class<?> reference = annotation.value();
+            for (NgConstructorParameter ngParam : IGuiceContext.get(AnnotationHelper.class)
+                    .getAnnotationFromClass(reference, NgConstructorParameter.class))
+            {
+                if (ngParam.onParent())
+                {
+                    out.add(ngParam);
+                }
+            }
+        }
+
         List<NgGlobalConstructorParameter> allGlobals = IGuiceContext.get(AnnotationHelper.class)
                 .getGlobalAnnotations(NgGlobalConstructorParameter.class);
         for (NgGlobalConstructorParameter global : allGlobals)
@@ -463,6 +479,30 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
                     .append("\n");
         }
 
+        //check for any fields on the component references
+        var refs = AnnotationUtils.getAnnotation(getClass(), NgComponentReference.class);
+        if (refs != null)
+        {
+            for (NgComponentReference ref : refs)
+            {
+                Class<?> refClass = ref.value();
+                if (INgProvider.class.isAssignableFrom(refClass))
+                {
+                    var fields = AnnotationUtils.getAnnotation(refClass, NgField.class);
+                    for (NgField field : fields)
+                    {
+                        if (field.onParent())
+                        {
+
+                        }
+                    }
+
+                    //check for fields with onParent
+
+                }
+            }
+
+        }
 
         //ng output event emitter
         return out;

@@ -1,244 +1,278 @@
 package com.jwebmp.core.base.angular.client.services.interfaces;
 
 import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
-import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
-import com.jwebmp.core.base.angular.client.annotations.structures.NgField;
-import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
-import org.junit.jupiter.api.BeforeAll;
+import com.jwebmp.core.base.angular.client.annotations.structures.*;
+import com.jwebmp.core.base.angular.client.services.ComponentConfiguration;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests that @NgField(onParent=true) and @NgImportReference(onParent=true)
- * from a referenced class (via @NgComponentReference) are propagated to the
- * parent (referencing) component.
- * <p>
- * This replicates the bug where CapabilitiesPage references App.class via
- * {@code @NgComponentReference(App.class)}, and App declares:
- * <pre>
- * @NgImportReference(value = "inject", reference = "@angular/core", onParent = true, onSelf = false)
- * @NgField(value = "app: App = inject(App);", onParent = true, onSelf = false)
- * </pre>
- * but the generated TypeScript for CapabilitiesPage is missing both.
- */
 class OnParentPropagationTest
 {
-    // ── Simulated referenced class (like App) ──────────────────────
-    @NgImportReference(value = "inject", reference = "@angular/core", onParent = true, onSelf = false)
-    @NgImportReference(value = "Injectable", reference = "@angular/core")
-    @NgField(value = "app: MockDataType = inject(MockDataType);", onParent = true, onSelf = false)
-    @NgField(value = "selfOnlyField: string = 'hello';") // default onSelf=true, onParent=false
-    static class MockDataType
+
+    @NgSignal(value = "'initialValue'", referenceName = "parentSignal", type = "string", onParent = true, onSelf = false)
+    @NgSignalComputed(value = "() => this.parentSignal().toUpperCase()", referenceName = "parentComputed", onParent = true, onSelf = false)
+    @NgSignalEffect(value = "() => { console.log(this.parentSignal()); }", referenceName = "parentEffect", onParent = true, onSelf = false)
+    static class ChildProvider
     {
     }
 
-    // ── Simulated parent component (like CapabilitiesPage) ─────────
-    @NgComponentReference(MockDataType.class)
-    @NgField("ownField: number = 42;")
-    @NgImportReference(value = "Component", reference = "@angular/core")
-    static class MockParentComponent
+    @NgSignal(value = "'selfValue'", referenceName = "selfSignal", type = "string")
+    @NgSignalComputed(value = "() => this.selfSignal().length", referenceName = "selfComputed")
+    @NgSignalEffect(value = "() => { console.log(this.selfSignal()); }", referenceName = "selfEffect")
+    @NgComponentReference(ChildProvider.class)
+    static class ParentComponent
     {
     }
 
-    // ── Simulated intermediate base class (like WebsitePage) ───────
-    @NgComponentReference(MockDataType.class)
-    static class MockBasePage
+    @NgSignal(value = "'both'", referenceName = "bothSignal", type = "string", onParent = true, onSelf = true)
+    @NgSignalComputed(value = "() => this.bothSignal()", referenceName = "bothComputed", onParent = true, onSelf = true)
+    @NgSignalEffect(value = "() => { console.log('both'); }", referenceName = "bothEffect", onParent = true, onSelf = true)
+    static class BothComponent
     {
-    }
-
-    // ── Simulated child that inherits from base ────────────────────
-    @NgComponentReference(MockDataType.class)
-    static class MockChildPage extends MockBasePage
-    {
-    }
-
-    @BeforeAll
-    static void setup()
-    {
-        // Ensure AnnotationHelper has scanned our test classes
-        AnnotationHelper helper = AnnotationHelper.instance;
-        helper.scanClass(MockDataType.class);
-        helper.scanClass(MockParentComponent.class);
-        helper.scanClass(MockBasePage.class);
-        helper.scanClass(MockChildPage.class);
-    }
-
-    // ─── Field propagation tests ──────────────────────────────────
-
-    @Test
-    void onParentField_shouldBeCollectedByReferencingComponent()
-    {
-        AnnotationHelper helper = AnnotationHelper.instance;
-
-        // Get @NgField annotations from MockDataType
-        List<NgField> dataTypeFields = helper.getAnnotationFromClass(MockDataType.class, NgField.class);
-        assertNotNull(dataTypeFields);
-
-        // There should be 2 fields on MockDataType
-        assertEquals(2, dataTypeFields.size(), "MockDataType should have 2 @NgField annotations");
-
-        // Verify one has onParent=true
-        long onParentCount = dataTypeFields.stream().filter(NgField::onParent).count();
-        assertEquals(1, onParentCount, "MockDataType should have exactly 1 @NgField with onParent=true");
-
-        // Now simulate what getAllFields() does for MockParentComponent:
-        // It should collect onParent=true fields from @NgComponentReference targets
-        List<NgComponentReference> compRefs = helper.getAnnotationFromClass(MockParentComponent.class, NgComponentReference.class);
-        assertFalse(compRefs.isEmpty(), "MockParentComponent should have @NgComponentReference");
-
-        // Collect onParent fields from the reference
-        List<NgField> parentFields = new java.util.ArrayList<>();
-        for (NgComponentReference ref : compRefs)
-        {
-            for (NgField field : helper.getAnnotationFromClass(ref.value(), NgField.class))
-            {
-                if (field.onParent())
-                {
-                    parentFields.add(field);
-                }
-            }
-        }
-        assertEquals(1, parentFields.size(), "Should collect 1 onParent field from MockDataType");
-        assertTrue(parentFields.get(0).value().contains("inject(MockDataType)"),
-                "The propagated field should be the inject(MockDataType) field");
     }
 
     @Test
-    void onParentField_shouldNotIncludeSelfOnlyFields()
+    void testNgSignalOnSelfDefaultsTrue()
     {
-        AnnotationHelper helper = AnnotationHelper.instance;
-
-        List<NgComponentReference> compRefs = helper.getAnnotationFromClass(MockParentComponent.class, NgComponentReference.class);
-
-        List<NgField> parentFields = new java.util.ArrayList<>();
-        for (NgComponentReference ref : compRefs)
-        {
-            for (NgField field : helper.getAnnotationFromClass(ref.value(), NgField.class))
-            {
-                if (field.onParent())
-                {
-                    parentFields.add(field);
-                }
-            }
-        }
-
-        // selfOnlyField should NOT be collected (onParent defaults to false)
-        boolean hasSelfOnlyField = parentFields.stream().anyMatch(f -> f.value().contains("selfOnlyField"));
-        assertFalse(hasSelfOnlyField, "selfOnlyField should not be propagated to parent");
-    }
-
-    // ─── Import reference propagation tests ───────────────────────
-
-    @Test
-    void onParentImportReference_shouldBeCollectedByReferencingComponent()
-    {
-        AnnotationHelper helper = AnnotationHelper.instance;
-
-        // Get @NgImportReference annotations from MockDataType
-        List<NgImportReference> dataTypeImports = helper.getAnnotationFromClass(MockDataType.class, NgImportReference.class);
-        assertNotNull(dataTypeImports);
-
-        // Verify there's one with onParent=true ("inject")
-        long onParentCount = dataTypeImports.stream().filter(NgImportReference::onParent).count();
-        assertEquals(1, onParentCount, "MockDataType should have exactly 1 @NgImportReference with onParent=true");
-
-        // Now simulate what getAllImportAnnotations() SHOULD do:
-        // It should collect onParent=true imports from @NgComponentReference targets
-        List<NgComponentReference> compRefs = helper.getAnnotationFromClass(MockParentComponent.class, NgComponentReference.class);
-        assertFalse(compRefs.isEmpty(), "MockParentComponent should have @NgComponentReference");
-
-        List<NgImportReference> parentImports = new java.util.ArrayList<>();
-        for (NgComponentReference ref : compRefs)
-        {
-            for (NgImportReference importRef : helper.getAnnotationFromClass(ref.value(), NgImportReference.class))
-            {
-                if (importRef.onParent())
-                {
-                    parentImports.add(importRef);
-                }
-            }
-        }
-
-        // THIS IS THE BUG: getAllImportAnnotations() does NOT do this collection
-        assertEquals(1, parentImports.size(),
-                "Should collect 1 onParent import reference from MockDataType");
-        assertEquals("inject", parentImports.get(0).value(),
-                "The propagated import should be 'inject'");
-        assertEquals("@angular/core", parentImports.get(0).reference(),
-                "The propagated import reference should be '@angular/core'");
+        NgSignal[] signals = ParentComponent.class.getAnnotationsByType(NgSignal.class);
+        assertEquals(1, signals.length);
+        assertTrue(signals[0].onSelf());
+        assertFalse(signals[0].onParent());
     }
 
     @Test
-    void onParentImportReference_shouldNotIncludeSelfOnlyImports()
+    void testNgSignalOnParentOnly()
     {
-        AnnotationHelper helper = AnnotationHelper.instance;
-
-        List<NgComponentReference> compRefs = helper.getAnnotationFromClass(MockParentComponent.class, NgComponentReference.class);
-
-        List<NgImportReference> parentImports = new java.util.ArrayList<>();
-        for (NgComponentReference ref : compRefs)
-        {
-            for (NgImportReference importRef : helper.getAnnotationFromClass(ref.value(), NgImportReference.class))
-            {
-                if (importRef.onParent())
-                {
-                    parentImports.add(importRef);
-                }
-            }
-        }
-
-        // "Injectable" has onParent=false (default), should NOT be collected
-        boolean hasInjectable = parentImports.stream().anyMatch(i -> i.value().contains("Injectable"));
-        assertFalse(hasInjectable, "Injectable import should not be propagated to parent (onParent is false)");
+        NgSignal[] signals = ChildProvider.class.getAnnotationsByType(NgSignal.class);
+        assertEquals(1, signals.length);
+        assertTrue(signals[0].onParent());
+        assertFalse(signals[0].onSelf());
     }
 
-    // ─── Integration-style test: verify the gap in getAllImportAnnotations ───
+    @Test
+    void testNgSignalComputedOnSelfDefaultsTrue()
+    {
+        NgSignalComputed[] annotations = ParentComponent.class.getAnnotationsByType(NgSignalComputed.class);
+        assertEquals(1, annotations.length);
+        assertTrue(annotations[0].onSelf());
+        assertFalse(annotations[0].onParent());
+    }
 
     @Test
-    void getAllImportAnnotations_shouldIncludeOnParentImportsFromComponentReferences()
+    void testNgSignalComputedOnParentOnly()
     {
-        // This test documents the EXPECTED behavior after the fix.
-        // getAllImportAnnotations() should collect onParent=true @NgImportReference
-        // from classes referenced via @NgComponentReference, similar to how
-        // getAllFields() already collects onParent=true @NgField.
-        //
-        // Currently, getAllImportAnnotations() in ImportsStatementsComponent.java
-        // only collects:
-        //   1. The relative import path for the referenced class itself
-        //   2. @NgImportReference annotations directly on the current class
-        //
-        // It does NOT collect onParent=true @NgImportReference from the referenced class.
-        //
-        // The fix should add logic parallel to IComponent.getAllFields() lines 76-88:
-        //   for each @NgComponentReference → get @NgImportReference from target → if onParent → add
+        NgSignalComputed[] annotations = ChildProvider.class.getAnnotationsByType(NgSignalComputed.class);
+        assertEquals(1, annotations.length);
+        assertTrue(annotations[0].onParent());
+        assertFalse(annotations[0].onSelf());
+    }
 
-        AnnotationHelper helper = AnnotationHelper.instance;
+    @Test
+    void testNgSignalEffectOnSelfDefaultsTrue()
+    {
+        NgSignalEffect[] annotations = ParentComponent.class.getAnnotationsByType(NgSignalEffect.class);
+        assertEquals(1, annotations.length);
+        assertTrue(annotations[0].onSelf());
+        assertFalse(annotations[0].onParent());
+    }
 
-        // Get all imports that SHOULD be on MockParentComponent
-        List<NgImportReference> allSelfImports = helper.getAnnotationFromClass(MockParentComponent.class, NgImportReference.class);
+    @Test
+    void testNgSignalEffectOnParentOnly()
+    {
+        NgSignalEffect[] annotations = ChildProvider.class.getAnnotationsByType(NgSignalEffect.class);
+        assertEquals(1, annotations.length);
+        assertTrue(annotations[0].onParent());
+        assertFalse(annotations[0].onSelf());
+    }
 
-        // Filter to onSelf (what the component itself declares)
-        long selfImports = allSelfImports.stream().filter(NgImportReference::onSelf).count();
-        assertEquals(1, selfImports, "MockParentComponent has 1 direct @NgImportReference (Component)");
+    @Test
+    void testBothOnParentAndOnSelf()
+    {
+        NgSignal[] signals = BothComponent.class.getAnnotationsByType(NgSignal.class);
+        NgSignalComputed[] computeds = BothComponent.class.getAnnotationsByType(NgSignalComputed.class);
+        NgSignalEffect[] effects = BothComponent.class.getAnnotationsByType(NgSignalEffect.class);
 
-        // Now collect what should ALSO be present from @NgComponentReference(MockDataType.class)
-        List<NgComponentReference> refs = helper.getAnnotationFromClass(MockParentComponent.class, NgComponentReference.class);
-        List<NgImportReference> propagated = new java.util.ArrayList<>();
-        for (NgComponentReference ref : refs)
+        assertTrue(signals[0].onParent());
+        assertTrue(signals[0].onSelf());
+        assertTrue(computeds[0].onParent());
+        assertTrue(computeds[0].onSelf());
+        assertTrue(effects[0].onParent());
+        assertTrue(effects[0].onSelf());
+    }
+
+    @Test
+    void testParentPropagationFiltering()
+    {
+        NgSignalComputed[] childAnnotations = ChildProvider.class.getAnnotationsByType(NgSignalComputed.class);
+        NgSignalComputed[] parentAnnotations = ParentComponent.class.getAnnotationsByType(NgSignalComputed.class);
+
+        List<NgSignalComputed> selfComputeds = new ArrayList<>();
+        for (NgSignalComputed a : parentAnnotations)
         {
-            for (NgImportReference imp : helper.getAnnotationFromClass(ref.value(), NgImportReference.class))
+            if (a.onSelf())
             {
-                if (imp.onParent())
-                {
-                    propagated.add(imp);
-                }
+                selfComputeds.add(a);
             }
         }
-        assertEquals(1, propagated.size(), "1 import should be propagated from MockDataType via onParent");
-        assertEquals("inject", propagated.get(0).value());
+        assertEquals(1, selfComputeds.size());
+        assertEquals("selfComputed", selfComputeds.get(0).referenceName());
+
+        List<NgSignalComputed> parentComputeds = new ArrayList<>();
+        for (NgSignalComputed a : childAnnotations)
+        {
+            if (a.onParent())
+            {
+                parentComputeds.add(a);
+            }
+        }
+        assertEquals(1, parentComputeds.size());
+        assertEquals("parentComputed", parentComputeds.get(0).referenceName());
+    }
+
+    @Test
+    void testParentPropagationFilteringForEffects()
+    {
+        NgSignalEffect[] childAnnotations = ChildProvider.class.getAnnotationsByType(NgSignalEffect.class);
+        NgSignalEffect[] parentAnnotations = ParentComponent.class.getAnnotationsByType(NgSignalEffect.class);
+
+        List<NgSignalEffect> selfEffects = new ArrayList<>();
+        for (NgSignalEffect a : parentAnnotations)
+        {
+            if (a.onSelf())
+            {
+                selfEffects.add(a);
+            }
+        }
+        assertEquals(1, selfEffects.size());
+        assertEquals("selfEffect", selfEffects.get(0).referenceName());
+
+        List<NgSignalEffect> parentEffects = new ArrayList<>();
+        for (NgSignalEffect a : childAnnotations)
+        {
+            if (a.onParent())
+            {
+                parentEffects.add(a);
+            }
+        }
+        assertEquals(1, parentEffects.size());
+        assertEquals("parentEffect", parentEffects.get(0).referenceName());
+    }
+
+    @Test
+    void testMyNgSignalComputedFactory()
+    {
+        var computed = AnnotationUtils.getNgSignalComputed("myRef", "() => 42");
+        assertEquals("myRef", computed.referenceName());
+        assertEquals("() => 42", computed.value());
+        assertTrue(computed.onSelf());
+        assertFalse(computed.onParent());
+        assertEquals(NgSignalComputed.class, computed.annotationType());
+    }
+
+    @Test
+    void testMyNgSignalEffectFactory()
+    {
+        var effect = AnnotationUtils.getNgSignalEffect("myEffect", "() => { }");
+        assertEquals("myEffect", effect.referenceName());
+        assertEquals("() => { }", effect.value());
+        assertTrue(effect.onSelf());
+        assertFalse(effect.onParent());
+        assertEquals(NgSignalEffect.class, effect.annotationType());
+    }
+
+    @Test
+    void testMyNgSignalComputedEquality()
+    {
+        var a = AnnotationUtils.getNgSignalComputed("ref1", "() => 1");
+        var b = AnnotationUtils.getNgSignalComputed("ref1", "() => 1");
+        var c = AnnotationUtils.getNgSignalComputed("ref2", "() => 1");
+
+        assertEquals(a, b);
+        assertEquals(a.hashCode(), b.hashCode());
+        assertNotEquals(a, c);
+    }
+
+    @Test
+    void testMyNgSignalEffectEquality()
+    {
+        var a = AnnotationUtils.getNgSignalEffect("eff1", "() => {}");
+        var b = AnnotationUtils.getNgSignalEffect("eff1", "() => {}");
+        var c = AnnotationUtils.getNgSignalEffect("eff2", "() => {}");
+
+        assertEquals(a, b);
+        assertEquals(a.hashCode(), b.hashCode());
+        assertNotEquals(a, c);
+    }
+
+    @Test
+    void testRenderSignals()
+    {
+        ComponentConfiguration<?> config = new ComponentConfiguration<>();
+        config.getSignals().add(AnnotationUtils.getNgSignal("mySignal", "'hello'", "string"));
+        StringBuilder output = config.renderSignals();
+        assertTrue(output.toString().contains("readonly mySignal = signal<string>('hello');"));
+    }
+
+    @Test
+    void testRenderSignalComputeds()
+    {
+        ComponentConfiguration<?> config = new ComponentConfiguration<>();
+        config.getSignalComputeds().add(AnnotationUtils.getNgSignalComputed("upperName", "() => this.name().toUpperCase()"));
+        StringBuilder output = config.renderSignalComputeds();
+        String result = output.toString();
+        assertTrue(result.contains("readonly upperName = computed(() => this.name().toUpperCase());"), "Got: " + result);
+    }
+
+    @Test
+    void testRenderSignalEffects()
+    {
+        ComponentConfiguration<?> config = new ComponentConfiguration<>();
+        config.getSignalEffects().add(AnnotationUtils.getNgSignalEffect("logEffect", "() => { console.log('hi'); }"));
+        StringBuilder output = config.renderSignalEffects();
+        String result = output.toString();
+        assertTrue(result.contains("readonly logEffect = effect(() => { console.log('hi'); });"), "Got: " + result);
+    }
+
+    @Test
+    void testRenderSignalComputedsEmpty()
+    {
+        ComponentConfiguration<?> config = new ComponentConfiguration<>();
+        assertEquals(0, config.renderSignalComputeds().length());
+    }
+
+    @Test
+    void testRenderSignalEffectsEmpty()
+    {
+        ComponentConfiguration<?> config = new ComponentConfiguration<>();
+        assertEquals(0, config.renderSignalEffects().length());
+    }
+
+    @Test
+    void testRenderMultipleSignalComputeds()
+    {
+        ComponentConfiguration<?> config = new ComponentConfiguration<>();
+        config.getSignalComputeds().add(AnnotationUtils.getNgSignalComputed("comp1", "() => 1"));
+        config.getSignalComputeds().add(AnnotationUtils.getNgSignalComputed("comp2", "() => 2"));
+        String result = config.renderSignalComputeds().toString();
+        assertTrue(result.contains("readonly comp1 = computed(() => 1);"));
+        assertTrue(result.contains("readonly comp2 = computed(() => 2);"));
+    }
+
+    @Test
+    void testRenderMultipleSignalEffects()
+    {
+        ComponentConfiguration<?> config = new ComponentConfiguration<>();
+        config.getSignalEffects().add(AnnotationUtils.getNgSignalEffect("eff1", "() => {}"));
+        config.getSignalEffects().add(AnnotationUtils.getNgSignalEffect("eff2", "() => { x(); }"));
+        String result = config.renderSignalEffects().toString();
+        assertTrue(result.contains("readonly eff1 = effect(() => {});"));
+        assertTrue(result.contains("readonly eff2 = effect(() => { x(); });"));
     }
 }
+
+
 

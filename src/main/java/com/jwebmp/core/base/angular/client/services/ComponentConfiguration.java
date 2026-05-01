@@ -55,6 +55,8 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
     private final Set<NgInject> injects = new LinkedHashSet<>();
     private final Set<NgModel> models = new LinkedHashSet<>();
     private final Set<NgSignal> signals = new LinkedHashSet<>();
+    private final Set<NgSignalComputed> signalComputeds = new LinkedHashSet<>();
+    private final Set<NgSignalEffect> signalEffects = new LinkedHashSet<>();
 
 
     public ComponentConfiguration<T> setRootComponent(IComponentHierarchyBase<GlobalChildren, ?> rootComponent)
@@ -237,6 +239,42 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
               .append(!Strings.isNullOrEmpty(inject.type()) ? "<" + inject.type() + ">" : "")
               .append("(")
               .append(inject.value())
+              .append(");\n");
+        }
+        return sb;
+    }
+
+    public StringBuilder renderSignalComputeds()
+    {
+        if (signalComputeds.isEmpty())
+        {
+            return new StringBuilder();
+        }
+        StringBuilder sb = new StringBuilder();
+        for (var computed : signalComputeds)
+        {
+            sb.append("\treadonly ")
+              .append(computed.referenceName())
+              .append(" = computed(")
+              .append(computed.value())
+              .append(");\n");
+        }
+        return sb;
+    }
+
+    public StringBuilder renderSignalEffects()
+    {
+        if (signalEffects.isEmpty())
+        {
+            return new StringBuilder();
+        }
+        StringBuilder sb = new StringBuilder();
+        for (var eff : signalEffects)
+        {
+            sb.append("\treadonly ")
+              .append(eff.referenceName())
+              .append(" = effect(")
+              .append(eff.value())
               .append(");\n");
         }
         return sb;
