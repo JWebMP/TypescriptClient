@@ -45,9 +45,7 @@
 
 
     </dependencies>
-    <scm>
-        <url>https://github.com/GedMarc/JWebMP-AngularJS.git</url>
-    </scm>
+
 
     <dependencyManagement>
         <dependencies>
