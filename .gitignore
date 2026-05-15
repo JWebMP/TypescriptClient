@@ -21,3 +21,4 @@ flatter.pom**/*.classpath
 /.idea/
 /.vscode/
 /logs/
+/dependency-reduced-pom.xml
