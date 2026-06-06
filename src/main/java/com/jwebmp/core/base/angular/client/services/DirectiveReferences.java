@@ -10,7 +10,7 @@ import java.util.List;
 
 public class DirectiveReferences extends AbstractReferences<DirectiveConfiguration<?>>
 {
-    private static final ThreadLocal<DirectiveConfiguration> DirectiveConfigurations = ThreadLocal.withInitial(() -> new DirectiveConfiguration<>());
+    private static final ThreadLocal<DirectiveConfiguration> DirectiveConfigurations = ThreadLocal.withInitial(DirectiveConfiguration::new);
 
     public void onDirectiveConfigure(INgDirective<?> directive, IComponent<?> component)
     {

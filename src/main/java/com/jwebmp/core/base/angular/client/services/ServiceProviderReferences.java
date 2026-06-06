@@ -10,7 +10,7 @@ import java.util.List;
 
 public class ServiceProviderReferences extends AbstractReferences<ServiceProviderConfiguration<?>>
 {
-    private static final ThreadLocal<ServiceProviderConfiguration> ServiceProviderConfigurations = ThreadLocal.withInitial(() -> new ServiceProviderConfiguration<>());
+    private static final ThreadLocal<ServiceProviderConfiguration> ServiceProviderConfigurations = ThreadLocal.withInitial(ServiceProviderConfiguration::new);
 
     public void onServiceProviderRender(INgServiceProvider<?> dataService, IComponent<?> component)
     {

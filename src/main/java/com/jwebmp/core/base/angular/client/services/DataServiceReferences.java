@@ -13,7 +13,7 @@ import java.util.List;
 
 public class DataServiceReferences extends AbstractReferences<DataServiceConfiguration<?>>
 {
-    private static final ThreadLocal<DataServiceConfiguration> DataServiceConfigurations = ThreadLocal.withInitial(() -> new DataServiceConfiguration<>());
+    private static final ThreadLocal<DataServiceConfiguration> DataServiceConfigurations = ThreadLocal.withInitial(DataServiceConfiguration::new);
 
     public void onDirectiveConfigure(INgDataService<?> dataService, IComponent<?> component)
     {

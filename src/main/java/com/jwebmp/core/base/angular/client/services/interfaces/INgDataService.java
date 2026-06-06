@@ -206,7 +206,7 @@ public interface INgDataService<J extends INgDataService<J>> extends IComponent<
         else
         {
             var firstReference = dtReferences.stream()
-                                             .filter(a -> a.primary())
+                                             .filter(NgDataTypeReference::primary)
                                              .findFirst()
                                              .orElse(null);
 
