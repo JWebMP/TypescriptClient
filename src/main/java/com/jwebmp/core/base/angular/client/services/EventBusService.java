@@ -132,7 +132,7 @@ import java.util.List;
 @NgConstructorParameter("private route: ActivatedRoute")
 @NgImportReference(value = "RouterModule, ParamMap,Router", reference = "@angular/router")
 @NgImportReference(value = "ActivatedRoute", reference = "@angular/router")
-@NgComponentReference(ContextIdService.class)
+@NgComponentReference(value = ContextIdService.class)
 @NgOnDestroy("""
         // ngOnDestroy(): void {
              this.destroy$.next(); // Notify all subscriptions to terminate

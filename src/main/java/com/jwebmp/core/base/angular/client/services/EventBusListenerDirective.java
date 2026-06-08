@@ -148,7 +148,7 @@ import java.util.List;
            }""")
 
 @NgComponentReference(EventBusService.class)
-@NgComponentReference(ContextIdService.class)
+@NgComponentReference(value = ContextIdService.class)
 @NgConstructorParameter("private router: Router")
 @NgImportReference(value = "RouterModule, ParamMap,Router", reference = "@angular/router")
 public class EventBusListenerDirective implements INgDirective<EventBusListenerDirective>

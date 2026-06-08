@@ -63,7 +63,7 @@ import java.util.List;
                 return sessionStorage.getItem(this.storageKey);
              }
         """)
-@NgConstructorParameter(value = "private contextIdService : ContextIdService", onParent = true, onSelf = false)
+//@NgConstructorParameter(value = "private contextIdService : ContextIdService", onParent = true, onSelf = false)
 public class ContextIdService implements INgProvider<ContextIdService>
 {
     @Override
