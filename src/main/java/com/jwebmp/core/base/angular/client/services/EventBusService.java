@@ -14,21 +14,12 @@ import com.jwebmp.core.base.angular.client.services.interfaces.INgProvider;
 
 import java.util.List;
 
-//@NgScript("sockjs-client/dist/sockjs.js")
-//@NgScript("@vertx/event-bridge-client.js/vertx-eventbus.js")
 
 @NgImportReference(value = "Client, IMessage, IFrame, StompSubscription", reference = "@stomp/stompjs")
 //@NgImportReference(value = "!SockJS", reference = "sockjs-client")
 @NgImportReference(value = "ElementRef", reference = "@angular/core")
 @NgImportReference(value = "Location", reference = "@angular/common")
 @NgBootEntryComponent()
-
-//@NgField(value = "private readonly eventBusService = inject(EventBusService);", onSelf = false, onParent = true)
-//@NgImportReference(value = "inject", reference = "@angular/core", onSelf = false, onParent = true)
-
-//@NgConstructorParameter(value = "private eventBusService : EventBusService", onParent = true, onSelf = false)
-
-
 @NgImportReference(value = "Injectable", reference = "@angular/core")
 @NgImportReference(value = "BehaviorSubject", reference = "rxjs")
 @NgImportReference(value = "take", reference = "rxjs")
@@ -141,10 +132,7 @@ import java.util.List;
 @NgConstructorParameter("private route: ActivatedRoute")
 @NgImportReference(value = "RouterModule, ParamMap,Router", reference = "@angular/router")
 @NgImportReference(value = "ActivatedRoute", reference = "@angular/router")
-
 @NgComponentReference(ContextIdService.class)
-@NgConstructorParameter("private contextIdService : ContextIdService")
-
 @NgOnDestroy("""
         // ngOnDestroy(): void {
              this.destroy$.next(); // Notify all subscriptions to terminate
