@@ -130,6 +130,7 @@ import java.util.List;
 @NgConstructorParameter("private routeLocation: Location")
 @NgConstructorParameter("private router: Router")
 @NgConstructorParameter("private route: ActivatedRoute")
+@NgConstructorParameter("private contextIdService: ContextIdService")
 @NgImportReference(value = "RouterModule, ParamMap,Router", reference = "@angular/router")
 @NgImportReference(value = "ActivatedRoute", reference = "@angular/router")
 @NgComponentReference(value = ContextIdService.class)

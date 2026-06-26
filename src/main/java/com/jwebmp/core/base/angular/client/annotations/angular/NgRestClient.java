@@ -20,7 +20,8 @@ import static java.lang.annotation.RetentionPolicy.*;
  *   <li>Optional caching with configurable TTL</li>
  *   <li>Request deduplication (prevents duplicate in-flight requests)</li>
  *   <li>Deep-merge support for incoming data</li>
- *   <li>Retry with configurable attempts and delay</li>
+ *   <li>Retry with configurable attempts and delay (optional exponential backoff)</li>
+ *   <li>Optional per-attempt request timeout</li>
  * </ul>
  */
 @Target({TYPE})
@@ -151,10 +152,44 @@ public @interface NgRestClient
 
     /**
      * Delay between retries in milliseconds.
+     * <p>
+     * When {@link #retryBackoff()} is {@code false} this is a fixed delay applied
+     * before every retry. When {@link #retryBackoff()} is {@code true} this is the
+     * <em>base</em> delay – the effective delay for attempt {@code n} is
+     * {@code retryDelayMs * 2^(n-1)} (optionally capped by {@link #retryMaxDelayMs()}).
      *
      * @return delay in ms
      */
     int retryDelayMs() default 1_000;
+
+    /**
+     * Enable exponential backoff between retries. When {@code true}, the delay grows
+     * exponentially per attempt ({@code retryDelayMs * 2^(n-1)}) instead of staying
+     * fixed. Only used when {@link #retryCount()} is greater than 0.
+     *
+     * @return true to enable exponential backoff
+     */
+    boolean retryBackoff() default false;
+
+    /**
+     * Upper bound (in milliseconds) for the exponential backoff delay. A value of
+     * {@code 0} means no cap. Only used when {@link #retryBackoff()} is {@code true}.
+     *
+     * @return maximum backoff delay in ms, or 0 for no cap
+     */
+    int retryMaxDelayMs() default 0;
+
+    // ── Timeout ────────────────────────────────────────────────────────
+
+    /**
+     * Per-attempt request timeout in milliseconds. When greater than 0, each HTTP
+     * attempt that does not emit within this window fails with a timeout error
+     * (which then participates in {@link #retryCount() retry} if configured). A
+     * value of {@code 0} disables the timeout.
+     *
+     * @return timeout in ms, or 0 to disable
+     */
+    int timeoutMs() default 0;
 
     // ── Authentication ─────────────────────────────────────────────────
 

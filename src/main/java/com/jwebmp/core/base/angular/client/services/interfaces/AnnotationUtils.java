@@ -30,6 +30,132 @@ import java.util.*;
 public interface AnnotationUtils
 {
 
+    /**
+     * Extracts the declared parameter name from a constructor parameter expression so that
+     * duplicate {@code @NgConstructorParameter} declarations can be detected and collapsed
+     * regardless of access modifiers, decorators, type or whitespace.
+     * <p>
+     * Handles forms such as {@code private router: Router}, {@code public foo : Bar<any>},
+     * {@code data?: any}, {@code childParam1 : string} and decorated parameters such as
+     * {@code @Inject(TOKEN) public data: any}.
+     *
+     * @param value the raw {@code @NgConstructorParameter} value
+     * @return the parameter identifier, or {@code null} if it cannot be determined
+     */
+    static String extractConstructorParameterName(String value)
+    {
+        if (value == null)
+        {
+            return null;
+        }
+        String v = stripConstructorParameterDecorators(value.trim());
+
+        // The parameter name is the last token before the type annotation colon (after modifiers).
+        int colon = v.indexOf(':');
+        String head = (colon >= 0 ? v.substring(0, colon) : v).trim();
+        if (head.isEmpty())
+        {
+            return null;
+        }
+        String[] tokens = head.split("\\s+");
+        String name = tokens[tokens.length - 1];
+        if (name.endsWith("?"))
+        {
+            name = name.substring(0, name.length() - 1);
+        }
+        return name.isEmpty() ? null : name;
+    }
+
+    /**
+     * Returns a visibility rank for a constructor parameter so that, when the same parameter name is
+     * declared more than once, the most visible declaration can be retained. A {@code public}
+     * parameter-property is preferred over {@code protected}, which is preferred over {@code private}
+     * or a plain (modifier-less) parameter.
+     *
+     * @param value the raw {@code @NgConstructorParameter} value
+     * @return {@code 3} for {@code public}, {@code 2} for {@code protected}, {@code 1} for
+     * {@code private}, otherwise {@code 0}
+     */
+    static int constructorParameterVisibilityRank(String value)
+    {
+        if (value == null)
+        {
+            return 0;
+        }
+        String v = stripConstructorParameterDecorators(value.trim());
+        int colon = v.indexOf(':');
+        String head = (colon >= 0 ? v.substring(0, colon) : v).trim();
+        String[] tokens = head.split("\\s+");
+        // Modifiers precede the parameter name (the final token), e.g. "public readonly foo".
+        for (int i = 0; i < tokens.length - 1; i++)
+        {
+            switch (tokens[i])
+            {
+                case "public":
+                    return 3;
+                case "protected":
+                    return 2;
+                case "private":
+                    return 1;
+                default:
+                    // keep scanning (e.g. skip "readonly")
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Strips leading Angular parameter decorators (e.g. {@code @Inject(TOKEN)}, {@code @Optional()},
+     * {@code @Self()}) from a constructor parameter expression. Decorators are removed before locating
+     * the type colon because a decorator argument may itself contain a {@code ':'} inside a string token.
+     *
+     * @param value an already-trimmed constructor parameter value
+     * @return the value with any leading decorators removed
+     */
+    private static String stripConstructorParameterDecorators(String value)
+    {
+        String v = value;
+        while (v.startsWith("@"))
+        {
+            int idx = 1;
+            while (idx < v.length() && (Character.isLetterOrDigit(v.charAt(idx)) || v.charAt(idx) == '_'
+                    || v.charAt(idx) == '$' || v.charAt(idx) == '.'))
+            {
+                idx++;
+            }
+            if (idx < v.length() && v.charAt(idx) == '(')
+            {
+                int depth = 0;
+                while (idx < v.length())
+                {
+                    char c = v.charAt(idx);
+                    if (c == '(')
+                    {
+                        depth++;
+                    }
+                    else if (c == ')')
+                    {
+                        depth--;
+                        if (depth == 0)
+                        {
+                            idx++;
+                            break;
+                        }
+                    }
+                    idx++;
+                }
+            }
+            String next = v.substring(idx)
+                           .trim();
+            if (next.equals(v))
+            {
+                break;
+            }
+            v = next;
+        }
+        return v;
+    }
+
     static boolean hasAnnotation(Class<?> object, Class<? extends Annotation> annotation)
     {
         return checkAnnotation(object, annotation, new HashSet<>());

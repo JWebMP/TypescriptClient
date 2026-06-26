@@ -15,7 +15,6 @@ import java.util.List;
 @TsDependency(value = "@angular/forms", version = "^21.0.0")
 @TsDependency(value = "@angular/animations", version = "^21.0.0")
 @TsDependency(value = "@angular/platform-browser", version = "^21.0.0")
-@TsDependency(value = "@angular/platform-browser-dynamic", version = "^21.0.0")
 
 @TsDependency(value = "uuid", version = "^11.1.0")
 

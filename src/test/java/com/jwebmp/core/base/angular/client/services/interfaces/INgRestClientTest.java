@@ -190,6 +190,45 @@ public class INgRestClientTest
     {
     }
 
+    /**
+     * GET client with a per-attempt request timeout.
+     */
+    @NgRestClient(
+            url = "/api/slow",
+            timeoutMs = 5_000
+    )
+    static class TimeoutClient implements INgRestClient<TimeoutClient>
+    {
+    }
+
+    /**
+     * GET client with retry + exponential backoff, capped at a max delay.
+     */
+    @NgRestClient(
+            url = "/api/flaky",
+            retryCount = 4,
+            retryDelayMs = 250,
+            retryBackoff = true,
+            retryMaxDelayMs = 5_000
+    )
+    static class BackoffClient implements INgRestClient<BackoffClient>
+    {
+    }
+
+    /**
+     * GET client with retry + exponential backoff (uncapped) and a per-attempt timeout.
+     */
+    @NgRestClient(
+            url = "/api/resilient",
+            retryCount = 3,
+            retryDelayMs = 1_000,
+            retryBackoff = true,
+            timeoutMs = 8_000
+    )
+    static class ResilientClient implements INgRestClient<ResilientClient>
+    {
+    }
+
     // ═══════════════════════════════════════════════════════════════════
     // ANNOTATION ACCESSOR
     // ═══════════════════════════════════════════════════════════════════
@@ -975,6 +1014,109 @@ public class INgRestClientTest
                                     .orElse("");
         assertFalse(buildMethod.contains("retry("),
                 "Should NOT have retry operator when retryCount is 0");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // TIMEOUT – per-attempt request timeout
+    // ═══════════════════════════════════════════════════════════════════
+
+    @Test
+    void testMethods_Timeout_AppliesTimeoutOperator()
+    {
+        TimeoutClient client = new TimeoutClient();
+        String buildMethod = client.methods().stream()
+                                   .filter(m -> m.startsWith("private buildHttpRequest"))
+                                   .findFirst()
+                                   .orElse("");
+        assertTrue(buildMethod.contains("timeout(5000)"),
+                "Should apply timeout operator with configured timeoutMs. Content:\n" + buildMethod);
+    }
+
+    @Test
+    void testMethods_NoTimeout_WhenZero()
+    {
+        SimpleGetClient client = new SimpleGetClient();
+        String buildMethod = client.methods().stream()
+                                   .filter(m -> m.startsWith("private buildHttpRequest"))
+                                   .findFirst()
+                                   .orElse("");
+        assertFalse(buildMethod.contains("timeout("),
+                "Should NOT apply timeout operator when timeoutMs is 0 (default)");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // RETRY – exponential backoff
+    // ═══════════════════════════════════════════════════════════════════
+
+    @Test
+    void testMethods_Backoff_UsesDelayFunctionWithTimer()
+    {
+        BackoffClient client = new BackoffClient();
+        String buildMethod = client.methods().stream()
+                                   .filter(m -> m.startsWith("private buildHttpRequest"))
+                                   .findFirst()
+                                   .orElse("");
+        assertTrue(buildMethod.contains("retry({ count: 4, delay: (error: any, retryCount: number) =>"),
+                "Backoff should emit a delay function. Content:\n" + buildMethod);
+        assertTrue(buildMethod.contains("250 * Math.pow(2, retryCount - 1)"),
+                "Backoff should compute exponential delay from base retryDelayMs. Content:\n" + buildMethod);
+    }
+
+    @Test
+    void testMethods_Backoff_CapsAtMaxDelay()
+    {
+        BackoffClient client = new BackoffClient();
+        String buildMethod = client.methods().stream()
+                                   .filter(m -> m.startsWith("private buildHttpRequest"))
+                                   .findFirst()
+                                   .orElse("");
+        assertTrue(buildMethod.contains("timer(Math.min(backoffMs, 5000))"),
+                "Backoff should cap delay at retryMaxDelayMs. Content:\n" + buildMethod);
+    }
+
+    @Test
+    void testMethods_Backoff_NoCap_WhenMaxDelayZero()
+    {
+        ResilientClient client = new ResilientClient();
+        String buildMethod = client.methods().stream()
+                                   .filter(m -> m.startsWith("private buildHttpRequest"))
+                                   .findFirst()
+                                   .orElse("");
+        assertTrue(buildMethod.contains("return timer(backoffMs);"),
+                "Backoff should not cap delay when retryMaxDelayMs is 0. Content:\n" + buildMethod);
+        assertFalse(buildMethod.contains("Math.min"),
+                "Backoff should not use Math.min when retryMaxDelayMs is 0");
+    }
+
+    @Test
+    void testMethods_Resilient_CombinesTimeoutAndBackoff()
+    {
+        ResilientClient client = new ResilientClient();
+        String buildMethod = client.methods().stream()
+                                   .filter(m -> m.startsWith("private buildHttpRequest"))
+                                   .findFirst()
+                                   .orElse("");
+        assertTrue(buildMethod.contains("timeout(8000)"),
+                "Resilient client should apply timeout. Content:\n" + buildMethod);
+        assertTrue(buildMethod.contains("1000 * Math.pow(2, retryCount - 1)"),
+                "Resilient client should apply exponential backoff. Content:\n" + buildMethod);
+        // Timeout must be applied before retry so each attempt is bounded
+        assertTrue(buildMethod.indexOf("timeout(8000)") < buildMethod.indexOf("retry({"),
+                "Timeout should be applied before retry. Content:\n" + buildMethod);
+    }
+
+    @Test
+    void testMethods_FixedDelay_WhenBackoffDisabled()
+    {
+        PostOrderClient client = new PostOrderClient();
+        String buildMethod = client.methods().stream()
+                                   .filter(m -> m.startsWith("private buildHttpRequest"))
+                                   .findFirst()
+                                   .orElse("");
+        assertTrue(buildMethod.contains("retry({ count: 3, delay: 2000 })"),
+                "Without backoff, retry should use a fixed numeric delay. Content:\n" + buildMethod);
+        assertFalse(buildMethod.contains("Math.pow"),
+                "Fixed-delay retry should NOT compute an exponential backoff");
     }
 
     // ═══════════════════════════════════════════════════════════════════

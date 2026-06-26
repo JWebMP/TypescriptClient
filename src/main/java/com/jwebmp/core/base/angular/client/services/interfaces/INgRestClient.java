@@ -24,7 +24,8 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
  *   <li><b>Caching</b> – skip HTTP call when cached data is still fresh</li>
  *   <li><b>Deduplication</b> – share in-flight requests</li>
  *   <li><b>Deep merge</b> – merge partial updates into existing signal value</li>
- *   <li><b>Retry</b> – automatic retry with configurable count &amp; delay</li>
+ *   <li><b>Retry</b> – automatic retry with configurable count &amp; delay (optional exponential backoff)</li>
+ *   <li><b>Timeout</b> – optional per-attempt request timeout</li>
  * </ul>
  *
  * @param <J> self-referencing generic
@@ -35,7 +36,7 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
 @NgImportReference(value = "DestroyRef", reference = "@angular/core")
 @NgImportReference(value = "HttpClient", reference = "@angular/common/http")
 @NgImportReference(value = "HttpHeaders", reference = "@angular/common/http")
-@NgImportReference(value = "Subscription, Subject, Observable, of, shareReplay, timer, switchMap, tap, retry, delay, catchError, EMPTY, finalize, takeUntil", reference = "rxjs")
+@NgImportReference(value = "Subscription, Subject, Observable, of, shareReplay, timer, switchMap, tap, retry, delay, timeout, catchError, EMPTY, finalize, takeUntil", reference = "rxjs")
 
 @NgImportReference(value = "OnDestroy", reference = "@angular/core")
 
@@ -352,10 +353,29 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
 
         sb.append("    let request$ = ").append(options).append(";\n");
 
+        // Per-attempt timeout (applied before retry so each attempt is bounded independently)
+        if (rc.timeoutMs() > 0) {
+            sb.append("    request$ = request$.pipe(timeout(").append(rc.timeoutMs()).append("));\n");
+        }
+
         // Retry
         if (rc.retryCount() > 0) {
-            sb.append("    request$ = request$.pipe(retry({ count: ").append(rc.retryCount())
-                    .append(", delay: ").append(rc.retryDelayMs()).append(" }));\n");
+            if (rc.retryBackoff()) {
+                // Exponential backoff: delay grows as base * 2^(attempt-1), optionally capped.
+                sb.append("    request$ = request$.pipe(retry({ count: ").append(rc.retryCount())
+                        .append(", delay: (error: any, retryCount: number) => {\n");
+                sb.append("        const backoffMs = ").append(rc.retryDelayMs())
+                        .append(" * Math.pow(2, retryCount - 1);\n");
+                if (rc.retryMaxDelayMs() > 0) {
+                    sb.append("        return timer(Math.min(backoffMs, ").append(rc.retryMaxDelayMs()).append("));\n");
+                } else {
+                    sb.append("        return timer(backoffMs);\n");
+                }
+                sb.append("    } }));\n");
+            } else {
+                sb.append("    request$ = request$.pipe(retry({ count: ").append(rc.retryCount())
+                        .append(", delay: ").append(rc.retryDelayMs()).append(" }));\n");
+            }
         }
 
         sb.append("    return request$;\n");

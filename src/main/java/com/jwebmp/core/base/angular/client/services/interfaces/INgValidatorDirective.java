@@ -1,6 +1,6 @@
 package com.jwebmp.core.base.angular.client.services.interfaces;
 
-import com.fasterxml.jackson.databind.introspect.*;
+import tools.jackson.databind.introspect.*;
 import com.jwebmp.core.base.angular.client.annotations.angular.*;
 import com.jwebmp.core.base.angular.client.annotations.references.*;
 import com.jwebmp.core.base.angular.client.annotations.structures.*;

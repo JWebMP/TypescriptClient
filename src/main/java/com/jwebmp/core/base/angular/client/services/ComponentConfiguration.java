@@ -390,19 +390,52 @@ public class ComponentConfiguration<T extends IComponentHierarchyBase<?, T> & IN
             return new StringBuilder();
         }
 
-        StringBuilder sb = new StringBuilder();
-        int size = constructorParameters.size();
-        int index = 0;
-
+        // Deduplicate by the declared parameter NAME so the same injectable isn't declared twice.
+        // The same parameter can be contributed by several sources (self + multiple
+        // @NgComponentReference parents) and may differ only by whitespace (e.g. "foo: Bar" vs
+        // "foo : Bar"); a duplicate identifier is invalid in a TypeScript constructor. When the same
+        // name is declared with different visibility, the most visible declaration wins
+        // (public > protected > private/none) so the injected member stays accessible.
+        java.util.LinkedHashMap<String, String> byName = new java.util.LinkedHashMap<>();
+        java.util.List<String> positional = new java.util.ArrayList<>();
         for (NgConstructorParameter parameter : constructorParameters)
         {
-            sb.append(parameter.value()
-                               .trim());
-            if (index < size - 1)
+            String value = parameter.value()
+                                    .trim();
+            if (value.isEmpty())
+            {
+                continue;
+            }
+            String name = AnnotationUtils.extractConstructorParameterName(value);
+            if (name == null)
+            {
+                positional.add(value);
+                continue;
+            }
+            String existing = byName.get(name);
+            if (existing == null)
+            {
+                byName.put(name, value);
+            }
+            else if (AnnotationUtils.constructorParameterVisibilityRank(value)
+                    > AnnotationUtils.constructorParameterVisibilityRank(existing))
+            {
+                // keep the more visible declaration in its original position
+                byName.put(name, value);
+            }
+        }
+
+        java.util.List<String> values = new java.util.ArrayList<>(byName.values());
+        values.addAll(positional);
+
+        StringBuilder sb = new StringBuilder();
+        for (int index = 0; index < values.size(); index++)
+        {
+            sb.append(values.get(index));
+            if (index < values.size() - 1)
             {
                 sb.append(",");
             }
-            index++;
         }
         return sb;
     }

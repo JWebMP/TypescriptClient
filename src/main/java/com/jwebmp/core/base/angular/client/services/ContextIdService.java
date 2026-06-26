@@ -11,7 +11,7 @@ import com.jwebmp.core.base.angular.client.services.interfaces.INgProvider;
 
 import java.util.List;
 
-@NgProvider
+@NgProvider(singleton = true)
 @NgImportReference(value = "BehaviorSubject,Observable", reference = "rxjs")
 @NgImportReference(value = "Injectable", reference = "@angular/core")
 @NgField("private readonly storageKey = 'contextId';")
@@ -55,17 +55,14 @@ import java.util.List;
                  this.contextIdSubject.next(event.newValue); // Emit updated value to subscribers
                }
              }
-        
-        
         """)
 @NgMethod("""
              contextId() : string | null {
                 return sessionStorage.getItem(this.storageKey);
              }
         """)
-//@NgConstructorParameter(value = "private contextIdService : ContextIdService", onParent = true, onSelf = false)
-public class ContextIdService implements INgProvider<ContextIdService>
-{
+@NgConstructorParameter(value = "public contextIdService: ContextIdService", onParent = true, onSelf = false)
+public class ContextIdService implements INgProvider<ContextIdService> {
     @Override
     public List<String> decorators()
     {

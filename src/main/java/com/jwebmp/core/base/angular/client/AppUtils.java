@@ -714,9 +714,18 @@ public class AppUtils {
                 throw new UnsupportedOperationException(e);
             }
         }
-        try (FileOutputStream fos = new FileOutputStream(assetFile)) {
+        try {
             byte[] fileBytes = IOUtils.toByteArray(inputStream);
-            IOUtils.write(fileBytes, fos);
+            // Skip writing when the destination already contains identical content.
+            // Re-writing large/identical assets is expensive and needlessly triggers
+            // file-watcher rebuilds, so only touch the file when the bytes differ.
+            if (isFileContentIdentical(assetFile, fileBytes)) {
+                log.fine("Skipping unchanged file: " + assetFilePath);
+                return;
+            }
+            try (FileOutputStream fos = new FileOutputStream(assetFile)) {
+                IOUtils.write(fileBytes, fos);
+            }
         } catch (IOException e) {
             throw new UnsupportedOperationException(e);
         } finally {
@@ -725,6 +734,30 @@ public class AppUtils {
             } catch (IOException e) {
                 log.fine("Failed to close input stream for file: " + assetFilePath);
             }
+        }
+    }
+
+    /**
+     * Determines whether the given file already exists on disk with content
+     * identical to the supplied bytes. Length is checked first as a cheap guard
+     * before performing a full byte comparison.
+     *
+     * @param file    the destination file
+     * @param newData the bytes that would be written
+     * @return true when the file exists and its content matches newData
+     */
+    private static boolean isFileContentIdentical(File file, byte[] newData) {
+        if (!file.exists() || !file.isFile()) {
+            return false;
+        }
+        if (file.length() != newData.length) {
+            return false;
+        }
+        try (InputStream existing = new BufferedInputStream(new FileInputStream(file))) {
+            return IOUtils.contentEquals(existing, new ByteArrayInputStream(newData));
+        } catch (IOException e) {
+            log.log(Level.FINE, "Unable to compare existing file content, will overwrite: " + file, e);
+            return false;
         }
     }
 

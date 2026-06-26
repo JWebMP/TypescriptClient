@@ -56,10 +56,10 @@ module com.jwebmp.core.base.angular.client {
     provides IGuiceConfigurator with GuicedConfig;
     provides IGuicePostStartup with AngularTypeScriptPostStartup;
 
-    opens com.jwebmp.core.base.angular.client.services.spi to com.google.guice, com.fasterxml.jackson.databind;
-    opens com.jwebmp.core.base.angular.client to com.google.guice, com.fasterxml.jackson.databind;
-    opens com.jwebmp.core.base.angular.client.implementations to com.google.guice, com.fasterxml.jackson.databind;
-    opens com.jwebmp.core.base.angular.client.services to com.google.guice, com.fasterxml.jackson.databind;
+    opens com.jwebmp.core.base.angular.client.services.spi to com.google.guice, tools.jackson.databind;
+    opens com.jwebmp.core.base.angular.client to com.google.guice, tools.jackson.databind;
+    opens com.jwebmp.core.base.angular.client.implementations to com.google.guice, tools.jackson.databind;
+    opens com.jwebmp.core.base.angular.client.services to com.google.guice, tools.jackson.databind;
     exports com.jwebmp.core.base.angular.client.services.tstypes;
-    opens com.jwebmp.core.base.angular.client.services.tstypes to com.fasterxml.jackson.databind, com.google.guice;
+    opens com.jwebmp.core.base.angular.client.services.tstypes to tools.jackson.databind, com.google.guice;
 }

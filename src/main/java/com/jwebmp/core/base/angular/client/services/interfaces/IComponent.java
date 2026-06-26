@@ -512,11 +512,40 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
     {
         StringBuilder out = new StringBuilder();
         List<NgConstructorParameter> allParameters = getAllConstructorParameters();
-        Set<String> constructorParameters = new LinkedHashSet<>();
+        // Deduplicate by the declared parameter NAME (not the raw text) so the same injectable is
+        // never declared twice. The same parameter can arrive from multiple sources (self, several
+        // @NgComponentReference parents, globals) and may differ only by whitespace
+        // (e.g. "foo: Bar" vs "foo : Bar"), which a raw-string set would not collapse - and a
+        // duplicate identifier is invalid in a TypeScript constructor. When the same name is
+        // declared with different visibility, the most visible declaration wins
+        // (public > protected > private/none) so the injected member stays accessible.
+        java.util.LinkedHashMap<String, String> byName = new java.util.LinkedHashMap<>();
+        List<String> positional = new ArrayList<>();
         for (NgConstructorParameter allParameter : allParameters)
         {
-            constructorParameters.add(allParameter.value());
+            String value = allParameter.value()
+                    .trim();
+            if (value.isEmpty())
+            {
+                continue;
+            }
+            String name = AnnotationUtils.extractConstructorParameterName(value);
+            if (name == null)
+            {
+                positional.add(value);
+                continue;
+            }
+            String existing = byName.get(name);
+            if (existing == null
+                    || AnnotationUtils.constructorParameterVisibilityRank(value)
+                    > AnnotationUtils.constructorParameterVisibilityRank(existing))
+            {
+                byName.put(name, value);
+            }
         }
+
+        List<String> constructorParameters = new ArrayList<>(byName.values());
+        constructorParameters.addAll(positional);
 
         if (!constructorParameters.isEmpty())
         {
