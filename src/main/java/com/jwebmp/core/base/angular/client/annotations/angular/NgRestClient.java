@@ -1,5 +1,6 @@
 package com.jwebmp.core.base.angular.client.annotations.angular;
 
+import com.jwebmp.core.base.angular.client.annotations.functions.NgRestClients;
 import com.jwebmp.core.base.angular.client.services.interfaces.INgDataType;
 
 import java.lang.annotation.*;
@@ -27,6 +28,7 @@ import static java.lang.annotation.RetentionPolicy.*;
 @Target({TYPE})
 @Retention(RUNTIME)
 @Inherited
+@Repeatable(NgRestClients.class)
 public @interface NgRestClient
 {
     /**
@@ -44,12 +46,12 @@ public @interface NgRestClient
     HttpMethod method() default HttpMethod.GET;
 
     /**
-     * A friendly name for this client service – used as the base for the generated
-     * TypeScript class name when not derived from the Java class name.
+     * The TypeScript field name to use when this REST client is injected into
+     * a generated component via {@code @NgComponentReference}.
      *
-     * @return the service name
+     * @return the injected field name
      */
-    String value() default "";
+    String value();
 
     // ── Response type ──────────────────────────────────────────────────
 

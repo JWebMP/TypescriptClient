@@ -5,6 +5,7 @@ import com.jwebmp.core.base.angular.client.annotations.angular.NgRestClientHeade
 import com.jwebmp.core.base.angular.client.annotations.angular.NgRestClientQueryParam;
 import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
+import com.jwebmp.core.base.angular.client.annotations.structures.NgField;
 
 import java.util.*;
 
@@ -39,7 +40,6 @@ import static com.jwebmp.core.base.angular.client.services.interfaces.Annotation
 @NgImportReference(value = "Subscription, Subject, Observable, of, shareReplay, timer, switchMap, tap, retry, delay, timeout, catchError, EMPTY, finalize, takeUntil", reference = "rxjs")
 
 @NgImportReference(value = "OnDestroy", reference = "@angular/core")
-
 public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J> {
 
     @Override
@@ -666,6 +666,7 @@ public interface INgRestClient<J extends INgRestClient<J>> extends IComponent<J>
         sb.append("}");
         return sb.toString();
     }
+
 
     // ── Import resolution ──────────────────────────────────────────────
 

@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import com.guicedee.client.IGuiceContext;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgApp;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgComponent;
+import com.jwebmp.core.base.angular.client.annotations.angular.NgRestClient;
 import com.jwebmp.core.base.angular.client.annotations.components.NgComponentTagAttribute;
 import com.jwebmp.core.base.angular.client.annotations.components.NgInput;
 import com.jwebmp.core.base.angular.client.annotations.components.NgOutput;
@@ -316,6 +317,31 @@ public interface AnnotationUtils
         tsName = tsName.substring(0, 1)
                        .toLowerCase() + tsName.substring(1);
         return tsName;
+    }
+
+    static String getNgRestClientFieldName(Class<?> clazz)
+    {
+        NgRestClient restClient = clazz.getAnnotation(NgRestClient.class);
+        if (restClient == null || Strings.isNullOrEmpty(restClient.value()))
+        {
+            throw new IllegalStateException("@NgRestClient.value() must specify the injected field name for " + clazz.getName());
+        }
+        return restClient.value();
+    }
+
+    static MyNgField getNgRestClientField(Class<?> clazz, boolean onParent, boolean onSelf)
+    {
+        return getNgField("readonly " + getNgRestClientFieldName(clazz) + " = inject(" + getTsFilename(clazz) + ");", onParent, onSelf);
+    }
+
+    static MyNgField getNgDataTypeField(Class<?> clazz, boolean onParent, boolean onSelf)
+    {
+        return getNgField(getTsVarName(clazz) + " = new " + getTsFilename(clazz) + "();", onParent, onSelf);
+    }
+
+    static MyNgField getNgDataTypeInjectField(Class<?> clazz, boolean onParent, boolean onSelf)
+    {
+        return getNgField("readonly " + getTsVarName(clazz) + " = inject(" + getTsFilename(clazz) + ");", onParent, onSelf);
     }
 
     static MyNgField getNgField(String value, boolean onParent, boolean onSelf)

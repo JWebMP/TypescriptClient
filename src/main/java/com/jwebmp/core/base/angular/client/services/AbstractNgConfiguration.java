@@ -2,6 +2,7 @@ package com.jwebmp.core.base.angular.client.services;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgDataService;
+import com.jwebmp.core.base.angular.client.annotations.angular.NgDataType;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgProvider;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgServiceProvider;
 import com.jwebmp.core.base.angular.client.annotations.constructors.NgConstructorBody;
@@ -72,9 +73,26 @@ public abstract class AbstractNgConfiguration<T extends IComponent<?>>
 										getImportReferences().add(importReference);
 								}
 						}
+						else if (INgRestClient.class.isAssignableFrom(classReference))
+						{
+								getImportReferences().add(AnnotationUtils.getNgImportReference("inject", "@angular/core", true, false, false, true));
+								getFields().add(AnnotationUtils.getNgRestClientField(classReference, true, false));
+								getImportReferences().add(importReference);
+						}
 						else if (INgDataType.class.isAssignableFrom(classReference))
 						{
-						
+								List<NgDataType> dataTypeAnnotations = AnnotationUtils.getAnnotation(classReference, NgDataType.class);
+								if (dataTypeAnnotations.stream().anyMatch(NgDataType::injectable))
+								{
+										getImportReferences().add(AnnotationUtils.getNgImportReference("inject", "@angular/core", true, false, false, true));
+										getFields().add(AnnotationUtils.getNgDataTypeInjectField(classReference, true, false));
+										getImportReferences().add(importReference);
+								}
+								else if (dataTypeAnnotations.isEmpty() || dataTypeAnnotations.stream().anyMatch(ngAnno -> ngAnno.value() == NgDataType.DataTypeClass.Class))
+								{
+										getFields().add(AnnotationUtils.getNgDataTypeField(classReference, true, false));
+										getImportReferences().add(importReference);
+								}
 						}
 						else if (INgProvider.class.isAssignableFrom(classReference))
 						{

@@ -59,6 +59,11 @@ public class ServiceProviderReferences extends AbstractReferences<ServiceProvide
             }
 
         }
+
+        if (dataService == null)
+        {
+            ServiceProviderConfigurations.get().splitComponentReferences();
+        }
     }
 
     public ServiceProviderConfiguration getConfiguration()

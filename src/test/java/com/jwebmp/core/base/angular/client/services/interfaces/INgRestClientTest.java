@@ -3,6 +3,7 @@ package com.jwebmp.core.base.angular.client.services.interfaces;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgRestClient;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgRestClientHeader;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgRestClientQueryParam;
+import com.jwebmp.core.base.angular.client.annotations.structures.NgField;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public class INgRestClientTest
     /**
      * Minimal GET client – defaults for everything except url.
      */
-    @NgRestClient(url = "/api/users")
+    @NgRestClient(value = "simpleGetRestClient", url = "/api/users")
     static class SimpleGetClient implements INgRestClient<SimpleGetClient>
     {
     }
@@ -30,6 +31,7 @@ public class INgRestClientTest
      * POST client with body support, caching, retry, and deduplication.
      */
     @NgRestClient(
+            value = "postOrderRestClient",
             url = "/api/orders",
             method = NgRestClient.HttpMethod.POST,
             singleton = true,
@@ -48,6 +50,7 @@ public class INgRestClientTest
      * GET client with polling, deep merge, and array response.
      */
     @NgRestClient(
+            value = "pollingNotificationsRestClient",
             url = "/api/notifications",
             method = NgRestClient.HttpMethod.GET,
             responseArray = true,
@@ -65,6 +68,7 @@ public class INgRestClientTest
      * PUT client – non-singleton, no dedup, no cache.
      */
     @NgRestClient(
+            value = "putProfileRestClient",
             url = "/api/profiles/{id}",
             method = NgRestClient.HttpMethod.PUT,
             singleton = false,
@@ -78,6 +82,7 @@ public class INgRestClientTest
      * DELETE client – minimal config.
      */
     @NgRestClient(
+            value = "deleteItemRestClient",
             url = "/api/items/{id}",
             method = NgRestClient.HttpMethod.DELETE,
             singleton = true
@@ -90,6 +95,7 @@ public class INgRestClientTest
      * PATCH client with all features enabled.
      */
     @NgRestClient(
+            value = "patchSettingsRestClient",
             url = "/api/settings",
             method = NgRestClient.HttpMethod.PATCH,
             singleton = true,
@@ -110,7 +116,7 @@ public class INgRestClientTest
     /**
      * GET client with static headers.
      */
-    @NgRestClient(url = "/api/data")
+    @NgRestClient(value = "headersRestClient", url = "/api/data")
     @NgRestClientHeader(name = "Accept", value = "application/json")
     @NgRestClientHeader(name = "X-Custom-Header", value = "my-value")
     static class HeadersClient implements INgRestClient<HeadersClient>
@@ -121,6 +127,7 @@ public class INgRestClientTest
      * GET client with Bearer auth.
      */
     @NgRestClient(
+            value = "bearerAuthRestClient",
             url = "/api/protected",
             authType = NgRestClient.AuthType.BEARER,
             authTokenField = "localStorage.getItem('access_token')"
@@ -133,6 +140,7 @@ public class INgRestClientTest
      * GET client with Basic auth.
      */
     @NgRestClient(
+            value = "basicAuthRestClient",
             url = "/api/basic",
             authType = NgRestClient.AuthType.BASIC,
             authTokenField = "btoa('user:pass')"
@@ -145,6 +153,7 @@ public class INgRestClientTest
      * GET client with Custom auth header.
      */
     @NgRestClient(
+            value = "customAuthRestClient",
             url = "/api/custom-auth",
             authType = NgRestClient.AuthType.CUSTOM,
             authTokenField = "this.apiKey",
@@ -158,6 +167,7 @@ public class INgRestClientTest
      * GET client with no auth (explicit).
      */
     @NgRestClient(
+            value = "noAuthRestClient",
             url = "/api/public",
             authType = NgRestClient.AuthType.NONE
     )
@@ -168,7 +178,7 @@ public class INgRestClientTest
     /**
      * GET client with default query params.
      */
-    @NgRestClient(url = "/api/search")
+    @NgRestClient(value = "queryParamsRestClient", url = "/api/search")
     @NgRestClientQueryParam(name = "format", value = "json")
     @NgRestClientQueryParam(name = "version", value = "2")
     static class QueryParamsClient implements INgRestClient<QueryParamsClient>
@@ -179,6 +189,7 @@ public class INgRestClientTest
      * POST client with headers + auth + query params combined.
      */
     @NgRestClient(
+            value = "combinedRestClient",
             url = "/api/combined",
             method = NgRestClient.HttpMethod.POST,
             authType = NgRestClient.AuthType.BEARER,
@@ -194,6 +205,7 @@ public class INgRestClientTest
      * GET client with a per-attempt request timeout.
      */
     @NgRestClient(
+            value = "timeoutRestClient",
             url = "/api/slow",
             timeoutMs = 5_000
     )
@@ -205,6 +217,7 @@ public class INgRestClientTest
      * GET client with retry + exponential backoff, capped at a max delay.
      */
     @NgRestClient(
+            value = "backoffRestClient",
             url = "/api/flaky",
             retryCount = 4,
             retryDelayMs = 250,
@@ -219,6 +232,7 @@ public class INgRestClientTest
      * GET client with retry + exponential backoff (uncapped) and a per-attempt timeout.
      */
     @NgRestClient(
+            value = "resilientRestClient",
             url = "/api/resilient",
             retryCount = 3,
             retryDelayMs = 1_000,
@@ -226,6 +240,16 @@ public class INgRestClientTest
             timeoutMs = 8_000
     )
     static class ResilientClient implements INgRestClient<ResilientClient>
+    {
+    }
+
+    @NgRestClient(value = "sessionLinesRestClient", url = "/api/session-lines")
+    static class SessionLinesRestClient implements INgRestClient<SessionLinesRestClient>
+    {
+    }
+
+    @NgRestClient(value = "linesListRestClient", url = "/api/lines")
+    static class LinesListService implements INgRestClient<LinesListService>
     {
     }
 
@@ -276,6 +300,26 @@ public class INgRestClientTest
         SimpleGetClient client = new SimpleGetClient();
         List<String> interfaces = client.interfaces();
         assertTrue(interfaces.contains("OnDestroy"), "Should implement OnDestroy");
+    }
+
+    @Test
+    void testRestClientReferenceField_UsesRequiredNgRestClientValue()
+    {
+        NgField field = AnnotationUtils.getNgRestClientField(SessionLinesRestClient.class, true, false);
+
+        assertEquals("readonly sessionLinesRestClient = inject(SessionLinesRestClient);", field.value());
+        assertTrue(field.onParent());
+        assertFalse(field.onSelf());
+    }
+
+    @Test
+    void testRestClientReferenceField_UsesRequiredNgRestClientValueExactly()
+    {
+        NgField field = AnnotationUtils.getNgRestClientField(LinesListService.class, true, false);
+
+        assertEquals("readonly linesListRestClient = inject(LinesListService);", field.value());
+        assertTrue(field.onParent());
+        assertFalse(field.onSelf());
     }
 
     // ═══════════════════════════════════════════════════════════════════

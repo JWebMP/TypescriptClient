@@ -6,6 +6,7 @@ import com.guicedee.client.IGuiceContext;
 import com.guicedee.modules.services.jsonrepresentation.IJsonRepresentation;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgDataType;
 import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
+import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
 import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
 import com.jwebmp.core.base.angular.client.services.tstypes.any;
 import com.jwebmp.core.base.interfaces.ICSSImpl;
@@ -31,12 +32,62 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getNgComponentReference;
+import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getNgImportReference;
 import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getTsFilename;
 
 
 public interface INgDataType<J extends INgDataType<J>>
         extends IComponent<J>, IJsonRepresentation<J>
 {
+    @Override
+    default List<NgImportReference> getAllImportAnnotations()
+    {
+        List<NgImportReference> out = IComponent.super.getAllImportAnnotations();
+        if (isInjectableDataType())
+        {
+            out.add(getNgImportReference("Injectable", "@angular/core"));
+        }
+        return out;
+    }
+
+    @Override
+    default List<String> decorators()
+    {
+        List<String> out = IComponent.super.decorators();
+        if (isInjectableDataType())
+        {
+            String providedIn = injectableProvidedIn();
+            if (Strings.isNullOrEmpty(providedIn))
+            {
+                out.add("@Injectable()");
+            }
+            else
+            {
+                out.add("@Injectable({\n  providedIn: '" + providedIn + "'\n})");
+            }
+        }
+        return out;
+    }
+
+    default boolean isInjectableDataType()
+    {
+        return IGuiceContext.get(AnnotationHelper.class)
+                            .getAnnotationFromClass(getClass(), NgDataType.class)
+                            .stream()
+                            .anyMatch(NgDataType::injectable);
+    }
+
+    default String injectableProvidedIn()
+    {
+        return IGuiceContext.get(AnnotationHelper.class)
+                            .getAnnotationFromClass(getClass(), NgDataType.class)
+                            .stream()
+                            .filter(NgDataType::injectable)
+                            .map(NgDataType::providedIn)
+                            .findFirst()
+                            .orElse("root");
+    }
+
 
     @Override
     default List<String> fields()

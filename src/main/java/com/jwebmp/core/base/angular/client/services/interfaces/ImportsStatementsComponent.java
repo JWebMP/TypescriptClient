@@ -44,9 +44,12 @@ public interface ImportsStatementsComponent<J extends ImportsStatementsComponent
         moduleRefs.addAll(getComponentReferences());
         for (NgComponentReference moduleRef : moduleRefs)
         {
-            refs.addAll(putRelativeLinkInMap(getClass(), moduleRef));
             //check for import references with onParent on the referenced class
             Class<?> refClass = moduleRef.value();
+            if (!INgConfig.class.isAssignableFrom(refClass))
+            {
+                refs.addAll(putRelativeLinkInMap(getClass(), moduleRef));
+            }
             for (NgImportReference importRef : IGuiceContext.get(AnnotationHelper.class)
                     .getAnnotationFromClass(refClass, NgImportReference.class))
             {

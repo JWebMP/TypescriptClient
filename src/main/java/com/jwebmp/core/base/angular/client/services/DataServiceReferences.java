@@ -62,6 +62,11 @@ public class DataServiceReferences extends AbstractReferences<DataServiceConfigu
             }
 
         }
+
+        if (dataService == null)
+        {
+            DataServiceConfigurations.get().splitComponentReferences();
+        }
     }
 
     public DataServiceConfiguration<?> getConfiguration()

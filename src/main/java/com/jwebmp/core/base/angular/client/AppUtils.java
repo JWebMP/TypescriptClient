@@ -720,7 +720,7 @@ public class AppUtils {
             // Re-writing large/identical assets is expensive and needlessly triggers
             // file-watcher rebuilds, so only touch the file when the bytes differ.
             if (isFileContentIdentical(assetFile, fileBytes)) {
-                log.fine("Skipping unchanged file: " + assetFilePath);
+                //log.finest("Skipping unchanged file: " + assetFilePath);
                 return;
             }
             try (FileOutputStream fos = new FileOutputStream(assetFile)) {

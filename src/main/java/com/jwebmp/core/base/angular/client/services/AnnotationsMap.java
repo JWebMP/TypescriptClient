@@ -52,7 +52,8 @@ public class AnnotationsMap
             NgOutput.class, NgOutputs.class,
             NgGlobalComponentConstructorParameter.class, NgGlobalComponentConstructorParameters.class,
             NgGlobalConstructorParameter.class, NgGlobalConstructorParameters.class,
-            NgGlobalComponentImportReference.class, NgGlobalComponentImportReferences.class
+            NgGlobalComponentImportReference.class, NgGlobalComponentImportReferences.class,
+            NgRestClient.class, NgRestClients.class
     );
 
     private static final Map<Class<? extends Annotation>, Class<? extends Annotation>> ngGlobals
@@ -154,6 +155,7 @@ public class AnnotationsMap
             NgServiceProvider.class,
             NgRoutable.class,
             NgRouteData.class,
+            NgRestClient.class,
 
             NgOnInit.class,
             NgOnDestroy.class,

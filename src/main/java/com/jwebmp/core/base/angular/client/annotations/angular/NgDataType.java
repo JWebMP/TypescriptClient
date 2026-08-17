@@ -16,6 +16,10 @@ public @interface NgDataType
 
     String name() default "";
 
+    boolean injectable() default false;
+
+    String providedIn() default "root";
+
     enum DataTypeClass
     {
         Class,

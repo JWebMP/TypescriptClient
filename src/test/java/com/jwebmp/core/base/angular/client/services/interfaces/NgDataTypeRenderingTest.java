@@ -52,6 +52,18 @@ class NgDataTypeRenderingTest
     {
     }
 
+    @NgDataType(value = NgDataType.DataTypeClass.Class, injectable = true)
+    static class InjectableClassDataType implements INgDataType<InjectableClassDataType>
+    {
+        private String value;
+    }
+
+    @NgDataType(value = NgDataType.DataTypeClass.Class, injectable = true, providedIn = "any")
+    static class AnyScopedInjectableClassDataType implements INgDataType<AnyScopedInjectableClassDataType>
+    {
+        private String value;
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     // Data type with all supported Java field types
     // ═══════════════════════════════════════════════════════════════════════════
@@ -582,6 +594,32 @@ class NgDataTypeRenderingTest
         assertTrue(combined.contains("string"), "Name should be string type. Got:\n" + combined);
         assertTrue(combined.contains("age"), "Should contain 'age' field. Got:\n" + combined);
         assertTrue(combined.contains("number"), "Age (Integer) should be number type. Got:\n" + combined);
+    }
+
+    @Test
+    void testInjectableDataTypeRendersInjectableDecoratorAndImport()
+    {
+        var dt = new InjectableClassDataType();
+        String rendered = dt.renderClassTs()
+                            .toString();
+
+        assertTrue(rendered.contains("import { Injectable } from '@angular/core';"), "Got:\n" + rendered);
+        assertTrue(rendered.contains("@Injectable({\n  providedIn: 'root'\n})"), "Got:\n" + rendered);
+        assertTrue(rendered.contains("export class InjectableClassDataType"), "Got:\n" + rendered);
+        assertTrue(rendered.indexOf("import { Injectable } from '@angular/core';")
+                < rendered.indexOf("@Injectable({"), "Import should render before decorator. Got:\n" + rendered);
+        assertTrue(rendered.indexOf("@Injectable({")
+                < rendered.indexOf("export class InjectableClassDataType"), "Decorator should render before class. Got:\n" + rendered);
+    }
+
+    @Test
+    void testInjectableDataTypeUsesProvidedInAnnotationValue()
+    {
+        var dt = new AnyScopedInjectableClassDataType();
+        String rendered = dt.renderClassTs()
+                            .toString();
+
+        assertTrue(rendered.contains("@Injectable({\n  providedIn: 'any'\n})"), "Got:\n" + rendered);
     }
 
     @Test
