@@ -165,7 +165,7 @@ public interface INgDataType<J extends INgDataType<J>>
         Class actualFieldType = field.getType();
         if (fieldType.isArray())
         {
-            actualFieldType = fieldType.arrayType();
+            return typeField(fieldType.getComponentType(), field) + "[]";
         }
         else if (Collection.class.isAssignableFrom(fieldType))
         {
@@ -320,6 +320,12 @@ public interface INgDataType<J extends INgDataType<J>>
             return;
         }
 
+        if (fieldType.isArray())
+        {
+            out.append(fieldDeclaration + " : " + typeField + (array ? "[]" : "") + " = [];\n");
+            return;
+        }
+
         boolean added = appendBasicFieldType(out, fieldType, array, fieldDeclaration);
 
 
@@ -380,29 +386,6 @@ public interface INgDataType<J extends INgDataType<J>>
                 {
                     Logger.getLogger("INgDataType")
                           .log(Level.SEVERE, " Unable to generate generic based class - ", ipe);
-                }
-            }
-        }
-        else if (fieldType.isArray())
-        {
-            if (fieldType.arrayType()
-                         .isPrimitive())
-            {
-                appendBasicFieldType(out, fieldType.arrayType(), true, fieldDeclaration);
-            }
-            else
-            {
-                //get generic type
-                String genericType = fieldType.arrayType()
-                                              .getCanonicalName();
-                try
-                {
-                    appendBasicFieldType(out, Class.forName(genericType), true, fieldDeclaration);
-                    //renderFieldTS(out, fieldName, Class.forName(genericType), field, true);
-                }
-                catch (ClassNotFoundException e)
-                {
-                    e.printStackTrace();
                 }
             }
         }

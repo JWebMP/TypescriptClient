@@ -15,7 +15,7 @@ import com.jwebmp.core.base.angular.client.services.interfaces.INgProvider;
 import java.util.List;
 
 
-@NgImportReference(value = "Client, IMessage, IFrame, StompSubscription", reference = "@stomp/stompjs")
+@NgImportReference(value = "Client, IMessage, IFrame, StompSubscription, ReconnectionTimeMode, TickerStrategy", reference = "@stomp/stompjs")
 //@NgImportReference(value = "!SockJS", reference = "sockjs-client")
 @NgImportReference(value = "ElementRef", reference = "@angular/core")
 @NgImportReference(value = "Location", reference = "@angular/common")
@@ -32,10 +32,9 @@ import java.util.List;
 @NgField("""
         private stompClient?: Client;
           private readonly eventBusUrl: string = '/eventbus'; // Update as needed
-          private reconnectAttempts: number = 0;
           private readonly reconnectDelay: number = 5000;
-          private readonly maxReconnectAttempts: number = 99999;
           private readonly maxReconnectDelay: number = 30000;
+          private disconnected = false;
         
           private registeredListeners = new Set<string>();
           private totalExpectedListeners = 0;
@@ -88,7 +87,7 @@ import java.util.List;
                     this.ensurePrivateSubscriptions(address);
 
                     // Clean up old contextId subscriptions if they exist and are not the GUID
-                    if (oldId && oldId !== this.guid) {
+                    if (oldId && oldId !== newId && oldId !== this.guid) {
                         const oldPrivateAddress = `${oldId}.${address}`;
                         const oldKey = this.privateSubscriptionKey(oldPrivateAddress);
                         const oldSub = this.stompSubscriptions.get(oldKey);
@@ -135,15 +134,7 @@ import java.util.List;
 @NgImportReference(value = "ActivatedRoute", reference = "@angular/router")
 @NgComponentReference(value = ContextIdService.class)
 @NgOnDestroy("""
-        // ngOnDestroy(): void {
-             this.destroy$.next(); // Notify all subscriptions to terminate
-             this.destroy$.complete();
-        
-             // Optionally unregister all listeners (if necessary)
-             this.registeredListeners.forEach((address) => {
-                 this.unregisterListener(address);
-             });
-         //}
+        this.disconnect();
         """)
 
 @NgMethod("""
@@ -156,6 +147,9 @@ import java.util.List;
                   //console.log('[EventBusService] Processing queued listeners...');
                   while (this.pendingListeners.length > 0) {
                       const address = this.pendingListeners.shift()!;
+                      if (!this.messageSubjects.has(address)) {
+                          continue;
+                      }
                       const addressKey = this.addressSubscriptionKey(address);
         
                       if (!this.stompSubscriptions.has(addressKey)) {
@@ -229,161 +223,54 @@ import java.util.List;
                       this.pendingListeners.push(address);
                   }
         
-                  // Process all queued listeners when the connection becomes ready
-                  this.connectionState$
-                      .pipe(
-                          takeUntil(this.destroy$),
-                          filter(isConnected => isConnected), // Wait for a true (connected) state
-                          take(1) // Process the queue on the first successful connection
-                      )
-                      .subscribe(() => this.processPendingListeners());
+                  // The connection callback drains the queue after each successful handshake.
+                  if (this.connectionState$.value && this.stompClient?.connected) {
+                      this.processPendingListeners();
+                  }
               }
         """)
 
 @NgMethod("""
           /**
-           * Initializes the EventBus connection.
+           * One STOMP client owns retries and the timeout for every connection attempt.
            */
           private initializeEventBus(): void {
-            //this.connect(); // Connect to the EventBus
-            this.connectWithTimeout(); // Connect to the EventBus
-        
-            // Set up a listener to monitor the connection state
-           /* if (this.eventBus) {
-                this.eventBus.onopen = () => {
-                    console.log('[EventBusService] Connection to EventBus established.');
-                    this.connectionState$.next(true); // Connection is open
-                    this.reconnectAttempts = 0;
-                };
-        
-                this.eventBus.onclose = () => {
-                    console.warn('[EventBusService] Connection to EventBus lost.');
-                    this.connectionState$.next(false); // Connection is closed
-                    this.reconnect(); // Attempt to reconnect
-                };
-            }*/
-        
-            // Handle connection state updates
-            this.connectionState$.pipe(takeUntil(this.destroy$)).subscribe((isConnected) => {
-                if (!isConnected) {
-                    console.warn('[EventBusService] EventBus is disconnected. Trying to reconnect...');
-                }
-            });
-        }
-        
-          /**
-           * Connect to the Vert.x EventBus using STOMP.
-           */
-          private connect(): void {
-            this.stompClient = new Client({
-              brokerURL: `${window.location.protocol === 'https:' ? 'wss://' : 'ws://'}${window.location.host}${this.eventBusUrl}`,
-              reconnectDelay: this.reconnectDelay,
-              heartbeatIncoming: 10000,
-              heartbeatOutgoing: 10000,
-              onConnect: () => {
-                console.log('[EventBus] Connected via STOMP.');
-                this.reconnectAttempts = 0;
-                this.connectionState$.next(true); // Notify successful connection
-              },
-              onDisconnect: () => {
-                console.warn('[EventBus] Disconnected.');
-                this.connectionState$.next(false); // Notify disconnection
-              },
-              onStompError: (frame) => {
-                console.error('[EventBus] Error:', frame.headers['message']);
-                this.connectionState$.next(false); // Notify disconnection on error
+              if (this.disconnected || this.stompClient) {
+                  return;
               }
-            });
-        
-            this.stompClient.activate();
-          }
-        
-        /**
-             * Connects to the EventBus with a timeout using STOMP.
-             * If the connection is not established within the defined timeout, it triggers a reconnect attempt.
-             */
-            private connectWithTimeout(): void {
-              const connectionTimeout = 10000; // 10 seconds
-        
-              let connectionEstablished = false;
-        
-              const timeout = setTimeout(() => {
-                if (!connectionEstablished) {
-                  console.error('[EventBusService] Connection timed out. Retrying...');
-                  this.stompClient?.deactivate(); // Ensure the STOMP client is deactivated
-                  this.scheduleReconnect(); // Trigger a reconnect attempt
-                }
-              }, connectionTimeout);
-        
-              // Create STOMP client instance
               this.stompClient = new Client({
-                brokerURL: `${window.location.protocol === 'https:' ? 'wss://' : 'ws://'}${window.location.host}${this.eventBusUrl}`,
-                reconnectDelay: this.reconnectDelay,
-                heartbeatIncoming: 10000,
-                heartbeatOutgoing: 10000,
-                onConnect: () => {
-                  console.log('[EventBusService] Connection to STOMP established.');
-                  connectionEstablished = true; // Mark connection as established
-                  clearTimeout(timeout); // Clear the timeout
-                  this.connectionState$.next(true); // Update connection state
-                  this.reconnectAttempts = 0; // Reset reconnect attempts
-                },
-                onDisconnect: () => {
-                  console.warn('[EventBusService] Connection lost. Retrying...');
-                  this.connectionState$.next(false);
-                  if (!connectionEstablished) {
-                    clearTimeout(timeout); // Ensure timeout is cleared
+                  brokerURL: `${window.location.protocol === 'https:' ? 'wss://' : 'ws://'}${window.location.host}${this.eventBusUrl}`,
+                  connectionTimeout: 10000,
+                  reconnectDelay: this.reconnectDelay,
+                  reconnectTimeMode: ReconnectionTimeMode.EXPONENTIAL,
+                  maxReconnectDelay: this.maxReconnectDelay,
+                  heartbeatIncoming: 10000,
+                  heartbeatOutgoing: 10000,
+                  heartbeatStrategy: TickerStrategy.Worker,
+                  discardWebsocketOnCommFailure: true,
+                  onConnect: () => {
+                      if (this.disconnected) {
+                          return;
+                      }
+                      // Subscription handles belong to the previous socket, even if no close was observed.
+                      this.stompSubscriptions.clear();
+                      this.pendingListeners = [];
+                      this.connectionState$.next(true);
+                  },
+                  onWebSocketClose: () => {
+                      // onDisconnect only covers a graceful STOMP DISCONNECT receipt.
+                      this.connectionState$.next(false);
+                  },
+                  onDisconnect: () => this.connectionState$.next(false),
+                  onStompError: (frame) => {
+                      console.error('[EventBusService] STOMP Error:', frame.headers['message']);
+                      this.connectionState$.next(false);
+                      this.stompClient?.forceDisconnect();
                   }
-                  this.scheduleReconnect(); // Trigger a reconnect attempt
-                },
-                onStompError: (frame) => {
-                  console.error('[EventBusService] STOMP Error:', frame.headers['message']);
-                  this.connectionState$.next(false);
-                }
               });
-        
               this.stompClient.activate();
-            }
-        
-            private scheduleReconnect(): void {
-                  if (this.reconnectAttempts < this.maxReconnectAttempts) {
-                    const delay = Math.min(
-                      this.reconnectDelay * Math.pow(2, this.reconnectAttempts), // Exponential backoff
-                      this.maxReconnectDelay
-                    );
-        
-                    setTimeout(() => {
-                      console.log(`[EventBusService] Reconnecting... Attempt ${this.reconnectAttempts + 1}`);
-                      this.reconnectAttempts++;
-                      this.connectWithTimeout(); // Retry connection
-                    }, delay);
-                  } else {
-                    console.error('[EventBusService] Maximum reconnect attempts reached. Connection failed.');
-                  }
-                }
-        
-          /**
-           * Reconnect to the EventBus with a backoff strategy using STOMP.
-           */
-          private reconnect(): void {
-            if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-              console.error(
-                `[EventBus] Maximum reconnect attempts (${this.maxReconnectAttempts}) reached.`
-              );
-              return;
-            }
-        
-            this.reconnectAttempts++;
-            console.log(`[EventBus] Reconnecting via STOMP... (Attempt #${this.reconnectAttempts})`);
-        
-            // Ensure the old client is deactivated
-            if (this.stompClient?.active) {
-              this.stompClient.deactivate();
-            }
-        
-            setTimeout(() => this.connect(), this.reconnectDelay);
           }
-        
+
           /**
            * Wait for all listeners (directives) to be ready before processing sends.
            */
@@ -482,8 +369,11 @@ import java.util.List;
           send(action: string, data: object, eventType: string, event?: any, component?: ElementRef<any>): void {
                   const message = { action, data, eventType, event, component };
         
-                  // Check connection state
-                  if (!this.connectionState$.value) {
+                  if (this.disconnected) {
+                      return;
+                  }
+                  // A close event can lag behind the actual socket state.
+                  if (!this.connectionState$.value || !this.stompClient?.connected) {
                       console.warn('[EventBus] Connection is not ready. Message queued.');
                       this.messageQueue.push(message);
                       return;
@@ -494,8 +384,12 @@ import java.util.List;
               }
         
               private sendMessageNow(message: { action: string; data: object; eventType: string; event?: any; component?: ElementRef<any> }) {
+                  if (!this.stompClient?.connected) {
+                      this.messageQueue.push(message);
+                      return;
+                  }
                   const news: any = {};
-                  news.data = message.data;
+                  news.data = { ...message.data };
                   news.action = message.action;
                   news.data.guid = this.guid;
                   news.data.url = window.location;
@@ -544,7 +438,7 @@ import java.util.List;
               }
         
               private processQueuedMessages(): void {
-                  while (this.messageQueue.length > 0) {
+                  while (this.messageQueue.length > 0 && this.connectionState$.value && this.stompClient?.connected) {
                       const message = this.messageQueue.shift(); // Remove the first message from the queue
                       if (message) {
                           this.sendMessageNow(message);
@@ -588,12 +482,18 @@ import java.util.List;
            * Disconnect the service and clean up resources.
            */
           public disconnect(): void {
-            if (this.stompClient?.connected) {
-              this.stompClient.deactivate();
-            }
-            console.log('[EventBus] Disconnected.');
-            this.destroy$.next();
-            this.destroy$.complete();
+              if (this.disconnected) {
+                  return;
+              }
+              this.disconnected = true;
+              this.connectionState$.next(false);
+              // Deactivate even during connection attempts or reconnect backoff.
+              void this.stompClient?.deactivate({ force: true });
+              this.unregisterAllListeners();
+              this.pendingListeners = [];
+              this.messageQueue = [];
+              this.destroy$.next();
+              this.destroy$.complete();
           }
         
         """)
@@ -711,6 +611,7 @@ import java.util.List;
                           // If no listeners remain for this address, clean up
                           if (listeners!.size === 0) {
                               this.messageSubjects.delete(normalizedAddress);
+                              this.pendingListeners = this.pendingListeners.filter(address => address !== normalizedAddress);
                               this.registeredListeners.delete(normalizedAddress);
                               const addressKey = this.addressSubscriptionKey(normalizedAddress);
                               const subscription = this.stompSubscriptions.get(addressKey);

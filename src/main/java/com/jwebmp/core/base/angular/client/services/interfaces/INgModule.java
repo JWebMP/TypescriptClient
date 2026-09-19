@@ -18,7 +18,7 @@ import java.util.List;
 
 @TsDependency(value = "uuid", version = "^11.1.0")
 
-@TsDependency(value = "@stomp/stompjs", version = "^7.0.0")
+@TsDependency(value = "@stomp/stompjs", version = "^7.2.1")
 
 @TsDevDependency(value = "@angular/build", version = "^21.0.0")
 @TsDevDependency(value = "@angular/cli", version = "^21.0.0")
