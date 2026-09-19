@@ -15,202 +15,190 @@ import com.jwebmp.core.base.angular.client.annotations.structures.NgMethod;
 import com.jwebmp.core.base.angular.client.annotations.structures.NgSignal;
 import com.jwebmp.core.base.angular.client.services.AnnotationHelper;
 import com.jwebmp.core.base.angular.client.services.spi.*;
+import org.apache.commons.io.IOUtils;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.*;
 
-public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>, ImportsStatementsComponent<J>
-{
+public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>, ImportsStatementsComponent<J> {
     ThreadLocal<INgApp<?>> app = ThreadLocal.withInitial(() -> null);
 
     ThreadLocal<File> currentAppFile = ThreadLocal.withInitial(() -> null);
 
-    static ThreadLocal<File> getCurrentAppFile()
-    {
+    static ThreadLocal<File> getCurrentAppFile() {
         return currentAppFile;
     }
 
-
-    default J me()
-    {
+    /**
+     * @return a typesafe instance of myself cast as J
+     */
+    @SuppressWarnings("unchecked")
+    default J me() {
         return (J) this;
     }
 
+    static String readResource(Class<?> reference, String name) {
+        try (var ref = reference.getResourceAsStream(name)) {
+            if (ref == null) {
+                return "not found";
+            }
+            return IOUtils.toString(ref, StandardCharsets.UTF_8);
+        } catch (IOException _) {
+            return "not found";
+        }
+    }
+
     // Component Reference Location Assists
-    static String getClassDirectory(Class<?> clazz)
-    {
-        return clazz.getPackageName()
-                .replace('\\', '/');
+    static String getClassDirectory(Class<?> clazz) {
+        return clazz.getPackageName().replace('\\', '/');
     }
 
-    default String renderBeforeClass()
-    {
+    default String renderBeforeClass() {
         return "";
     }
 
-    default String renderAfterClass()
-    {
+    default String renderAfterClass() {
         return "";
     }
 
-    default boolean exportsClass()
-    {
+    default boolean exportsClass() {
         return true;
     }
 
-    default List<NgField> getAllFields()
-    {
+    default List<NgField> getAllFields() {
         List<NgField> out = new ArrayList<>();
         for (NgField annotation : IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgField.class))
-        {
-            if (annotation.onSelf())
-            {
+                                               .getAnnotationFromClass(getClass(), NgField.class)) {
+            if (annotation.onSelf()) {
                 out.add(annotation);
             }
         }
 
 
         for (NgComponentReference annotation : IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgComponentReference.class))
-        {
+                                                            .getAnnotationFromClass(getClass(),
+                                                                                    NgComponentReference.class)) {
             Class<?> reference = annotation.value();
             for (NgField ngField : IGuiceContext.get(AnnotationHelper.class)
-                    .getAnnotationFromClass(reference, NgField.class))
-            {
-                if (ngField.onParent())
-                {
+                                                .getAnnotationFromClass(reference, NgField.class)) {
+                if (ngField.onParent()) {
                     out.add(ngField);
                 }
             }
         }
 
-        for (String field : fields())
-        {
-            out.add(getNgField(field,false,true));
+        for (String field : fields()) {
+            out.add(getNgField(field, false, true));
         }
 
         Set<OnGetAllFields> interceptors = IGuiceContext.loaderToSet(ServiceLoader.load(OnGetAllFields.class));
-        for (OnGetAllFields interceptor : interceptors)
-        {
+        for (OnGetAllFields interceptor : interceptors) {
             interceptor.perform(out, this);
         }
         return out;
     }
 
-    default List<NgConstructorParameter> getAllConstructorParameters()
-    {
+    default List<NgConstructorParameter> getAllConstructorParameters() {
         List<NgConstructorParameter> out = new ArrayList<>();
 
-        for (NgConstructorParameter annotation : IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgConstructorParameter.class))
-        {
-            if (annotation.onSelf())
-            {
+        for (NgConstructorParameter annotation : IGuiceContext.get(AnnotationHelper.class).getAnnotationFromClass(
+                getClass(),
+                NgConstructorParameter.class)) {
+            if (annotation.onSelf()) {
                 out.add(annotation);
             }
         }
 
         //check references for constructor parameters with onParent
         for (NgComponentReference annotation : IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgComponentReference.class))
-        {
+                                                            .getAnnotationFromClass(getClass(),
+                                                                                    NgComponentReference.class)) {
             Class<?> reference = annotation.value();
-            for (NgConstructorParameter ngParam : IGuiceContext.get(AnnotationHelper.class)
-                    .getAnnotationFromClass(reference, NgConstructorParameter.class))
-            {
-                if (ngParam.onParent())
-                {
+            for (NgConstructorParameter ngParam : IGuiceContext.get(AnnotationHelper.class).getAnnotationFromClass(
+                    reference,
+                    NgConstructorParameter.class)) {
+                if (ngParam.onParent()) {
                     out.add(ngParam);
                 }
             }
         }
 
         List<NgGlobalConstructorParameter> allGlobals = IGuiceContext.get(AnnotationHelper.class)
-                .getGlobalAnnotations(NgGlobalConstructorParameter.class);
-        for (NgGlobalConstructorParameter global : allGlobals)
-        {
-            NgConstructorParameter param = getNgConstructorParameter(global.value(),false,true,false);
+                                                                     .getGlobalAnnotations(NgGlobalConstructorParameter.class);
+        for (NgGlobalConstructorParameter global : allGlobals) {
+            NgConstructorParameter param = getNgConstructorParameter(global.value(), false, true, false);
             out.add(param);
         }
 
-        for (String constructorParameter : constructorParameters())
-        {
-            out.add(getNgConstructorParameter(constructorParameter,false,true,false));
+        for (String constructorParameter : constructorParameters()) {
+            out.add(getNgConstructorParameter(constructorParameter, false, true, false));
         }
 
-        Set<OnGetAllConstructorParameters> interceptors = IGuiceContext.loaderToSet(ServiceLoader.load(OnGetAllConstructorParameters.class));
-        for (OnGetAllConstructorParameters interceptor : interceptors)
-        {
+        Set<OnGetAllConstructorParameters> interceptors = IGuiceContext.loaderToSet(ServiceLoader.load(
+                OnGetAllConstructorParameters.class));
+        for (OnGetAllConstructorParameters interceptor : interceptors) {
             interceptor.perform(out, this);
         }
 
         return out;
     }
 
-    default List<NgConstructorBody> getAllConstructorBodies()
-    {
+    default List<NgConstructorBody> getAllConstructorBodies() {
         List<NgConstructorBody> out = new ArrayList<>();
         for (NgConstructorBody annotation : IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgConstructorBody.class))
-        {
-            if (annotation.onSelf())
-            {
+                                                         .getAnnotationFromClass(getClass(), NgConstructorBody.class)) {
+            if (annotation.onSelf()) {
                 out.add(annotation);
             }
         }
 
         //check references for constructors needed
         for (NgComponentReference annotation : IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgComponentReference.class))
-        {
+                                                            .getAnnotationFromClass(getClass(),
+                                                                                    NgComponentReference.class)) {
             Class<?> clazz = annotation.value();
-            for (NgConstructorBody ngConstructorBody : IGuiceContext.get(AnnotationHelper.class)
-                    .getAnnotationFromClass(clazz, NgConstructorBody.class))
-            {
-                if (ngConstructorBody.onParent())
-                {
+            for (NgConstructorBody ngConstructorBody : IGuiceContext.get(AnnotationHelper.class).getAnnotationFromClass(
+                    clazz,
+                    NgConstructorBody.class)) {
+                if (ngConstructorBody.onParent()) {
                     out.add(ngConstructorBody);
                 }
             }
         }
 
-        for (String body : constructorBody())
-        {
-            out.add(getNgConstructorBody(body,false,true));
+        for (String body : constructorBody()) {
+            out.add(getNgConstructorBody(body, false, true));
         }
 
-        Set<OnGetAllConstructorBodies> interceptors = IGuiceContext.loaderToSet(ServiceLoader.load(OnGetAllConstructorBodies.class));
-        for (OnGetAllConstructorBodies interceptor : interceptors)
-        {
+        Set<OnGetAllConstructorBodies> interceptors = IGuiceContext.loaderToSet(ServiceLoader.load(
+                OnGetAllConstructorBodies.class));
+        for (OnGetAllConstructorBodies interceptor : interceptors) {
             interceptor.perform(out, this);
         }
 
         return out;
     }
 
-    default List<NgSignal> getAllSignals()
-    {
+    default List<NgSignal> getAllSignals() {
         List<NgSignal> out = new ArrayList<>();
         for (NgSignal annotation : IGuiceContext.get(AnnotationHelper.class)
-                                                .getAnnotationFromClass(getClass(), NgSignal.class))
-        {
-            if (annotation.onSelf())
-            {
+                                                .getAnnotationFromClass(getClass(), NgSignal.class)) {
+            if (annotation.onSelf()) {
                 out.add(annotation);
             }
         }
         for (NgComponentReference annotation : IGuiceContext.get(AnnotationHelper.class)
-                                                               .getAnnotationFromClass(getClass(), NgComponentReference.class))
-        {
+                                                            .getAnnotationFromClass(getClass(),
+                                                                                    NgComponentReference.class)) {
             Class<?> reference = annotation.value();
             for (NgSignal ngField : IGuiceContext.get(AnnotationHelper.class)
-                                                   .getAnnotationFromClass(reference, NgSignal.class))
-            {
-                if (ngField.onParent())
-                {
+                                                 .getAnnotationFromClass(reference, NgSignal.class)) {
+                if (ngField.onParent()) {
                     out.add(ngField);
                 }
             }
@@ -223,50 +211,41 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
     // Renderers
     //***************************************************************************************
 
-    default List<NgMethod> renderAllMethods()
-    {
+    default List<NgMethod> renderAllMethods() {
         List<NgMethod> out = new ArrayList<>();
         for (NgMethod annotation : IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgMethod.class))
-        {
-            if (annotation.onSelf())
-            {
+                                                .getAnnotationFromClass(getClass(), NgMethod.class)) {
+            if (annotation.onSelf()) {
                 out.add(annotation);
             }
         }
         for (NgComponentReference annotation : IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgComponentReference.class))
-        {
+                                                            .getAnnotationFromClass(getClass(),
+                                                                                    NgComponentReference.class)) {
             Class<?> reference = annotation.value();
             for (NgMethod ngMethod : IGuiceContext.get(AnnotationHelper.class)
-                    .getAnnotationFromClass(reference, NgMethod.class))
-            {
-                if (ngMethod.onParent())
-                {
+                                                  .getAnnotationFromClass(reference, NgMethod.class)) {
+                if (ngMethod.onParent()) {
                     out.add(ngMethod);
                 }
             }
         }
 
-        for (String componentMethod : componentMethods())
-        {
-            out.add(getNgMethod(componentMethod.trim(),false,true));
+        for (String componentMethod : componentMethods()) {
+            out.add(getNgMethod(componentMethod.trim(), false, true));
         }
 
-        for (String componentMethod : methods())
-        {
-            out.add(getNgMethod(componentMethod.trim(),false,true));
+        for (String componentMethod : methods()) {
+            out.add(getNgMethod(componentMethod.trim(), false, true));
         }
         return out;
     }
 
-    default StringBuilder renderImports()
-    {
+    default StringBuilder renderImports() {
         StringBuilder sb = new StringBuilder();
         List<NgImportReference> refs = getAllImportAnnotations();
         List<NgSignal> signals = getAllSignals();
-        if (!signals.isEmpty())
-        {
+        if (!signals.isEmpty()) {
             refs.add(getNgImportReference("signal", "@angular/core"));
             refs.add(getNgImportReference("computed", "@angular/core"));
             refs.add(getNgImportReference("WritableSignal", "@angular/core"));
@@ -276,100 +255,67 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         refs.forEach((ref) -> {
             String refString = ref.reference();
             //refString = ImportsStatementsComponent.removeFirstParentDirectoryAsString(refString.replace('\\', '/'));
-            if (ref.direct())
-            {
+            if (ref.direct()) {
                 sb.append(String.format(importDirectString, ref.value()));
-            }
-            else if (!ref.value()
-                    .startsWith("!"))
-            {
+            } else if (!ref.value().startsWith("!")) {
                 sb.append(String.format(importString, ref.value(), refString));
-            }
-            else
-            {
-                sb.append(String.format(importPlainString, ref.value()
-                        .substring(1), refString));
+            } else {
+                sb.append(String.format(importPlainString, ref.value().substring(1), refString));
             }
         });
         return sb;
     }
 
-    default StringBuilder renderClassTs()
-    {
+    default StringBuilder renderClassTs() {
         StringBuilder out = new StringBuilder();
         out.append(renderImports());
-        @SuppressWarnings("unchecked")
-        J component = (J) this;
+        @SuppressWarnings("unchecked") J component = (J) this;
 
-        if (!Strings.isNullOrEmpty(component.renderBeforeClass()))
-        {
+        if (!Strings.isNullOrEmpty(component.renderBeforeClass())) {
             out.append(component.renderBeforeClass());
         }
 
-        for (String globalField : globalFields())
-        {
-            out.append(globalField)
-                    .append("\n");
+        for (String globalField : globalFields()) {
+            out.append(globalField).append("\n");
         }
 
-        for (String decorator : decorators())
-        {
-            out.append(decorator)
-                    .append("\n");
+        for (String decorator : decorators()) {
+            out.append(decorator).append("\n");
         }
 
         out.append(renderClassDefinition());
 
-        if (!Strings.isNullOrEmpty(component.renderAfterClass()))
-        {
-            out.append(";")
-                    .append(component.renderAfterClass());
+        if (!Strings.isNullOrEmpty(component.renderAfterClass())) {
+            out.append(";").append(component.renderAfterClass());
         }
 
         return out;
     }
 
-    default StringBuilder renderClassDefinition()
-    {
+    default StringBuilder renderClassDefinition() {
         StringBuilder out = new StringBuilder();
         out.append(exportsClass() ? "export " : "");
 
         List<NgDataType> cType = IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgDataType.class);
-        if (!cType.isEmpty())
-        {
-            out.append(cType.getFirst()
-                            .value()
-                            .description())
-                    .append(" ");
-            String functionName = cType.getFirst()
-                    .name();
-            if (!Strings.isNullOrEmpty(cType.getFirst()
-                    .returnType()))
-            {
-                if (!Strings.isNullOrEmpty(functionName))
-                {
+                                              .getAnnotationFromClass(getClass(), NgDataType.class);
+        if (!cType.isEmpty()) {
+            out.append(cType.getFirst().value().description()).append(" ");
+            String functionName = cType.getFirst().name();
+            if (!Strings.isNullOrEmpty(cType.getFirst().returnType())) {
+                if (!Strings.isNullOrEmpty(functionName)) {
                     out.append(" " + functionName + " ");
-                }
-                else
-                {
+                } else {
                     out.append(" " + getTsFilename(getClass()) + " ");
                 }
-                out.append("() :  ")
-                        .append(cType.getFirst()
-                                .returnType());
+                out.append("() :  ").append(cType.getFirst().returnType());
             }
-        }
-        else
-        {
+        } else {
             out.append("class ");
         }
         out.append(getTsFilename(getClass()));
 
-        if (!Strings.isNullOrEmpty(ofType()))
-        {
-            out.append(" ")
-                    .append(ofType());
+        if (!Strings.isNullOrEmpty(ofType())) {
+            out.append(" ").append(ofType());
         }
 
         out.append(renderInterfaces());
@@ -384,20 +330,17 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
      *
      * @return
      */
-    default StringBuilder renderAfterClassEntry()
-    {
+    default StringBuilder renderAfterClassEntry() {
         StringBuilder out = new StringBuilder();
         return out;
     }
 
-    default StringBuilder renderBeforeClassBodyEnd()
-    {
+    default StringBuilder renderBeforeClassBodyEnd() {
         StringBuilder out = new StringBuilder();
         return out;
     }
 
-    default StringBuilder renderClassBody()
-    {
+    default StringBuilder renderClassBody() {
         StringBuilder out = new StringBuilder();
         out.append("{\n");
         out.append(renderAfterClassEntry());
@@ -410,28 +353,22 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         return out;
     }
 
-    default StringBuilder renderInterfaces()
-    {
+    default StringBuilder renderInterfaces() {
         StringBuilder out = new StringBuilder();
         Set<String> ints = new HashSet<>(interfaces());
         List<NgInterface> interfacs = IGuiceContext.get(AnnotationHelper.class)
-                .getAnnotationFromClass(getClass(), NgInterface.class);
-        for (NgInterface interfac : interfacs)
-        {
-            if (interfac.onSelf())
-            {
+                                                   .getAnnotationFromClass(getClass(), NgInterface.class);
+        for (NgInterface interfac : interfacs) {
+            if (interfac.onSelf()) {
                 ints.add(interfac.value());
             }
         }
 
-        if (!ints.isEmpty())
-        {
+        if (!ints.isEmpty()) {
             StringBuilder sbInterfaces = new StringBuilder();
             sbInterfaces.append(" implements ");
-            for (String interf : ints)
-            {
-                sbInterfaces.append(interf)
-                        .append(",");
+            for (String interf : ints) {
+                sbInterfaces.append(interf).append(",");
             }
             sbInterfaces.deleteCharAt(sbInterfaces.length() - 1);
             out.append(sbInterfaces);
@@ -439,60 +376,43 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         return out;
     }
 
-    default StringBuilder renderFields()
-    {
+    default StringBuilder renderFields() {
         StringBuilder out = new StringBuilder();
         Set<String> fStrings = new LinkedHashSet<>();
         List<NgField> fAnno = getAllFields();
-        for (NgField ngField : fAnno)
-        {
+        for (NgField ngField : fAnno) {
             fStrings.add(ngField.value());
         }
         List<NgSignal> sAnno = getAllSignals();
-        for (NgSignal signal : sAnno)
-        {
+        for (NgSignal signal : sAnno) {
             String type = signal.type();
-            if (!Strings.isNullOrEmpty(type))
-            {
+            if (!Strings.isNullOrEmpty(type)) {
                 type = " : WritableSignal<" + type + ">";
             }
             fStrings.add("public " + signal.referenceName() + type + " = signal(" + signal.value() + ")");
         }
-        for (String field : fStrings.stream()
-                .distinct()
-                .toList())
-        {
-            if (Strings.isNullOrEmpty(field))
-            {
+        for (String field : fStrings.stream().distinct().toList()) {
+            if (Strings.isNullOrEmpty(field)) {
                 continue;
             }
-            if (field.endsWith("\n"))
-            {
+            if (field.endsWith("\n")) {
                 field = field.substring(0, field.length() - 1);
             }
-            if (!field.endsWith(";"))
-            {
+            if (!field.endsWith(";")) {
                 field += ";";
             }
-            out.append("\t")
-                    .append(field)
-                    .append("\n");
+            out.append("\t").append(field).append("\n");
         }
 
         //check for any fields on the component references
         var refs = AnnotationUtils.getAnnotation(getClass(), NgComponentReference.class);
-        if (refs != null)
-        {
-            for (NgComponentReference ref : refs)
-            {
+        if (refs != null) {
+            for (NgComponentReference ref : refs) {
                 Class<?> refClass = ref.value();
-                if (INgProvider.class.isAssignableFrom(refClass))
-                {
+                if (INgProvider.class.isAssignableFrom(refClass)) {
                     var fields = AnnotationUtils.getAnnotation(refClass, NgField.class);
-                    for (NgField field : fields)
-                    {
-                        if (field.onParent())
-                        {
+                    for (NgField field : fields) {
+                        if (field.onParent()) {
 
                         }
                     }
@@ -508,8 +428,7 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         return out;
     }
 
-    default StringBuilder renderConstructorParameters()
-    {
+    default StringBuilder renderConstructorParameters() {
         StringBuilder out = new StringBuilder();
         List<NgConstructorParameter> allParameters = getAllConstructorParameters();
         // Deduplicate by the declared parameter NAME (not the raw text) so the same injectable is
@@ -521,25 +440,19 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         // (public > protected > private/none) so the injected member stays accessible.
         java.util.LinkedHashMap<String, String> byName = new java.util.LinkedHashMap<>();
         List<String> positional = new ArrayList<>();
-        for (NgConstructorParameter allParameter : allParameters)
-        {
-            String value = allParameter.value()
-                    .trim();
-            if (value.isEmpty())
-            {
+        for (NgConstructorParameter allParameter : allParameters) {
+            String value = allParameter.value().trim();
+            if (value.isEmpty()) {
                 continue;
             }
             String name = AnnotationUtils.extractConstructorParameterName(value);
-            if (name == null)
-            {
+            if (name == null) {
                 positional.add(value);
                 continue;
             }
             String existing = byName.get(name);
-            if (existing == null
-                    || AnnotationUtils.constructorParameterVisibilityRank(value)
-                    > AnnotationUtils.constructorParameterVisibilityRank(existing))
-            {
+            if (existing == null || AnnotationUtils.constructorParameterVisibilityRank(value) > AnnotationUtils.constructorParameterVisibilityRank(
+                    existing)) {
                 byName.put(name, value);
             }
         }
@@ -547,57 +460,46 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         List<String> constructorParameters = new ArrayList<>(byName.values());
         constructorParameters.addAll(positional);
 
-        if (!constructorParameters.isEmpty())
-        {
-            for (String constructorParameter : constructorParameters)
-            {
+        if (!constructorParameters.isEmpty()) {
+            for (String constructorParameter : constructorParameters) {
                 String param = constructorParameter.trim();
-                if (!param.endsWith(","))
-                {
+                if (!param.endsWith(",")) {
                     param += ",";
                 }
                 param += " ";
                 out.append(param);
             }
-            if (out.length() > 1)
-            {
+            if (out.length() > 1) {
                 out.deleteCharAt(out.lastIndexOf(", "));
             }
         }
         return out;
     }
 
-    default StringBuilder renderConstructorBody()
-    {
+    default StringBuilder renderConstructorBody() {
         StringBuilder out = new StringBuilder();
         List<NgConstructorBody> allConstructorBodies = getAllConstructorBodies();
         Set<String> constructorBodies = new LinkedHashSet<>();
-        for (NgConstructorBody allConstructorBody : allConstructorBodies)
-        {
-            constructorBodies.add(allConstructorBody.value()
-                    .trim());
+        for (NgConstructorBody allConstructorBody : allConstructorBodies) {
+            constructorBodies.add(allConstructorBody.value().trim());
         }
 
-        for (String constructorBody : constructorBodies)
-        {
-            out.append("\t")
-                    .append(constructorBody)
-                    .append("\n");
+        for (String constructorBody : constructorBodies) {
+            out.append("\t").append(constructorBody).append("\n");
         }
 
 
         return out;
     }
 
-    default StringBuilder renderConstructor()
-    {
+    default StringBuilder renderConstructor() {
         StringBuilder out = new StringBuilder();
 
         String constructorParametersString = renderConstructorParameters().toString();
         String constructorBodyString = renderConstructorBody().toString();
 
-        if (!Strings.isNullOrEmpty(constructorParametersString.toString()) || !Strings.isNullOrEmpty(constructorBodyString))
-        {
+        if (!Strings.isNullOrEmpty(constructorParametersString.toString()) || !Strings.isNullOrEmpty(
+                constructorBodyString)) {
             out.append("\tconstructor( ");
             out.append(constructorParametersString);
             out.append(")\n");
@@ -610,47 +512,38 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
         return out;
     }
 
-    default StringBuilder renderMethods()
-    {
+    default StringBuilder renderMethods() {
         StringBuilder out = new StringBuilder();
         List<NgMethod> allMethods = renderAllMethods();
         allMethods = new ArrayList<>(new HashSet<>(allMethods));
         Set<String> methodStrings = new LinkedHashSet<>();
         Set<OnGetAllMethods> interceptors = IGuiceContext.loaderToSet(ServiceLoader.load(OnGetAllMethods.class));
-        for (OnGetAllMethods interceptor : interceptors)
-        {
+        for (OnGetAllMethods interceptor : interceptors) {
             interceptor.perform(allMethods, this);
         }
-        for (NgMethod allMethod : allMethods)
-        {
+        for (NgMethod allMethod : allMethods) {
             methodStrings.add(allMethod.value());
         }
-        for (String methods : methodStrings)
-        {
-            out.append(methods)
-                    .append("\n");
+        for (String methods : methodStrings) {
+            out.append(methods).append("\n");
         }
         return out;
     }
 
-    default List<String> constructorParameters()
-    {
+    default List<String> constructorParameters() {
         List<String> parms = new ArrayList<>();
         return parms;
     }
 
-    default List<Class<? extends NgDataType>> types()
-    {
+    default List<Class<? extends NgDataType>> types() {
         return new ArrayList<>();
     }
 
-    default List<String> constructorBody()
-    {
+    default List<String> constructorBody() {
         return new ArrayList<>();
     }
 
-    default List<String> componentMethods()
-    {
+    default List<String> componentMethods() {
         List<String> list = new ArrayList<>();
         list.add(renderOnInitMethod());
         list.add(renderOnDestroyMethod());
@@ -658,14 +551,12 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
     }
 
 
-    default String renderOnInitMethod()
-    {
+    default String renderOnInitMethod() {
         StringBuilder out = new StringBuilder();
         return out.toString();
     }
 
-    default String renderOnDestroyMethod()
-    {
+    default String renderOnDestroyMethod() {
         StringBuilder out = new StringBuilder();
         return out.toString();
     }
@@ -674,52 +565,42 @@ public interface IComponent<J extends IComponent<J>> extends IDefaultService<J>,
     // The lifecycle of angular objects
     //***********************************************************
 
-    default List<String> onInit()
-    {
+    default List<String> onInit() {
         return new ArrayList<>();
     }
 
-    default List<String> onDestroy()
-    {
+    default List<String> onDestroy() {
         return new ArrayList<>();
     }
 
-    default List<String> methods()
-    {
+    default List<String> methods() {
         return new ArrayList<>();
     }
 
-    default List<String> globalFields()
-    {
+    default List<String> globalFields() {
         return new ArrayList<>();
     }
 
-    default List<String> fields()
-    {
+    default List<String> fields() {
         return new ArrayList<>();
     }
 
-    default String ofType()
-    {
+    default String ofType() {
         return "";
     }
 
-    default List<String> interfaces()
-    {
+    default List<String> interfaces() {
         return new ArrayList<>();
     }
 
-    default List<String> decorators()
-    {
+    default List<String> decorators() {
         return new ArrayList<>();
     }
 
-    default Set<String> moduleImports()
-    {
+    default Set<String> moduleImports() {
         Set<String> list = new LinkedHashSet<>();
         ServiceLoader<OnGetAllModuleImports> load = ServiceLoader.load(OnGetAllModuleImports.class);
-        for (OnGetAllModuleImports onGetAllModuleImports : load)
-        {
+        for (OnGetAllModuleImports onGetAllModuleImports : load) {
             onGetAllModuleImports.perform(list, this);
         }
         return list;
