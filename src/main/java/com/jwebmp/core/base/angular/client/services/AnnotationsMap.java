@@ -116,6 +116,7 @@ public class AnnotationsMap
         ngAllMultiples.putAll(ngReferences);
         ngAllMultiples.putAll(ngClassStructures);
         ngAllMultiples.putAll(ngComponents);
+        ngAllMultiples.put(NgTranslationSource.class, NgTranslationSources.class);
 
         ngAllGlobals.putAll(ngGlobals);
         ngAllGlobals.putAll(ngBootConfigs);
@@ -138,6 +139,7 @@ public class AnnotationsMap
             NgBootGlobalField.class,
             NgComponentReference.class,
             NgImportProvider.class,
+            NgImportModule.class,
             NgImportReference.class,
             NgConstructorBody.class,
             NgConstructorParameter.class,
@@ -145,6 +147,9 @@ public class AnnotationsMap
             NgInterface.class,
             NgMethod.class,
             NgApp.class,
+            NgLocale.class,
+            NgTranslations.class,
+            NgTranslationSource.class,
             NgComponent.class,
             NgDataService.class,
             NgDataType.class,

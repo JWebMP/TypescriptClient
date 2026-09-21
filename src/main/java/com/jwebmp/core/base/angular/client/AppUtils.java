@@ -5,20 +5,19 @@ import com.jwebmp.core.base.angular.client.annotations.angular.NgApp;
 import com.jwebmp.core.base.angular.client.services.interfaces.INgApp;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
-import lombok.extern.java.Log;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;
 import java.util.*;
-import java.util.logging.Level;
 
 import static com.guicedee.client.Environment.getSystemPropertyOrEnvironment;
 import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getTsFilename;
 import static com.jwebmp.core.base.angular.client.services.interfaces.ImportsStatementsComponent.getClassLocationDirectory;
 
-@Log
+@Log4j2
 public class AppUtils {
 
     //app name to base user directory map
@@ -77,7 +76,7 @@ public class AppUtils {
                 FileUtils.forceMkdir(baseUserDirectory);
             }
         } catch (IOException e) {
-            log.log(Level.SEVERE, "Unable to create base directory for creating typescript! - " + baseUserDirectory.getPath());
+            log.error("Unable to create base directory for creating typescript! - " + baseUserDirectory.getPath());
         }
         if (useOutputDirectoryOverride) {
             log.info("TypeScript base path is " + baseUserDirectory.getPath() + ". Change with env property \"jwebmp.outputDirectory\"");
@@ -732,7 +731,7 @@ public class AppUtils {
             try {
                 inputStream.close();
             } catch (IOException e) {
-                log.fine("Failed to close input stream for file: " + assetFilePath);
+                log.debug("Failed to close input stream for file: " + assetFilePath);
             }
         }
     }
@@ -756,7 +755,7 @@ public class AppUtils {
         try (InputStream existing = new BufferedInputStream(new FileInputStream(file))) {
             return IOUtils.contentEquals(existing, new ByteArrayInputStream(newData));
         } catch (IOException e) {
-            log.log(Level.FINE, "Unable to compare existing file content, will overwrite: " + file, e);
+            log.debug("Unable to compare existing file content, will overwrite: " + file, e);
             return false;
         }
     }

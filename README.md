@@ -1,5 +1,29 @@
 # Angular TypeScript Client
 
+## Locale annotation
+
+```java
+import com.jwebmp.core.base.angular.client.annotations.angular.NgLocale;
+
+@NgLocale("en-ZA")
+```
+
+Place `@NgLocale` on the `@NgApp` class or its boot component. The Angular plugin
+registers locale data before bootstrap and provides the application's `LOCALE_ID`.
+The application declaration takes precedence; declarations can be inherited.
+Optional `dataLocale` selects an Angular locale file independently of the locale
+ID, and `extraData = true` includes extra day-period data.
+
+For user-selected formatting, use
+`@NgLocale(value = "en-ZA", supportedLocales = {"de", "fr"})` and reference
+`com.jwebmp.core.base.angular.client.services.LocaleService` with
+`@NgComponentReference(LocaleService.class)`. The generated `localeService`
+exposes `setLocale(id)`, `resetLocale()`, `defaultLocale`, and the read-only
+`locale()` signal. Pass that signal as the locale argument of Angular's formatting
+pipes for immediate updates. The startup `LOCALE_ID` remains unchanged; save and
+restore preferences through your application's user-profile flow. Text translation
+is separate. See the Angular plugin README for pipe examples and limitations.
+
 [![Build](https://github.com/JWebMP/Plugins/TypescriptClient/actions/workflows/maven-publish.yml/badge.svg)](https://github.com/JWebMP/Plugins/actions/workflows/maven-package.yml)
 [![Maven Central](https://img.shields.io/maven-central/v/com.jwebmp.plugins/typescript-client)](https://central.sonatype.com/artifact/com.jwebmp.plugins/typescript-client)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue)](https://www.apache.org/licenses/LICENSE-2.0)
@@ -189,6 +213,7 @@ IGuiceContext.instance()
 | `AnnotationsMap` | Central registry mapping single → repeatable annotation pairs, global annotations, and the set of classes to scan |
 | `AppUtils` | File-system utilities — resolves output directories, reads/writes generated TS files, locates `angular.json`, `package.json`, `tsconfig.json`, etc. |
 | `EventBusService` | Built-in Angular provider that manages a STOMP WebSocket connection with auto-reconnect, listener registration, and RxJS subjects |
+| `TranslationService` | Runtime Transloco language selection, fallback bundles, REST/classpath overrides, direct dictionary application, race cancellation, and context reset |
 | `DynamicData` | Generic wrapper for sending heterogeneous data payloads through `INgDataService` |
 | `ComponentConfiguration` | Runtime configuration holder for a single component's generated metadata |
 | `TypescriptIndexPageConfigurator` | SPI for customising the generated `index.html` |
@@ -212,6 +237,32 @@ IGuiceContext.instance()
 | `jwebmp` | `~` (user home) | Base directory when `jwebmp.outputDirectory` is not set (output goes to `<base>/.jwebmp/<appName>`) |
 
 > **Important:** Generated TypeScript is read-only. Change Java annotations and rerun the build — never edit the output files directly.
+
+## Runtime translations
+
+Use `@NgTranslations` on `@NgApp` or its boot component and add
+`@NgTranslationSource` entries for classpath defaults or runtime URLs:
+
+```java
+@NgTranslations(defaultLanguage = "en", supportedLanguages = {"en", "de"})
+@NgTranslationSource(namespace = "orders", resource = "META-INF/jwebmp/i18n/orders")
+@NgTranslationSource(namespace = "orders", url = "/rest/translations/orders/{language}", priority = 200)
+```
+
+Libraries conventionally package `META-INF/jwebmp/i18n/<namespace>/<language>.json`.
+The Angular generator discovers selected dictionaries with ClassGraph and writes
+merged `public/i18n/jwebmp` bundles. Library defaults use priority `0`; application
+sources and URL sources default to `100`. Equal-priority conflicts are errors.
+
+The generated `TranslationService` uses Transloco 8.4, Angular `HttpClient`, and
+the optional ICU message-format provider. It exposes `setLanguage`,
+`setLanguageAndLocale`, `applyTranslations(language, namespace, data)`, `reload`,
+and `clearContext`, plus signal state for `language`, `loading`, and `errors`.
+Reference it using `@NgComponentReference(TranslationService.class)` and use
+`{{ 'orders.save' | transloco }}` or the `transloco` directive. HTTP sources use the
+normal Angular interceptor chain and may be optional; stale responses are ignored
+after a language or context change. Persistence and user/tenant lifecycle belong to
+the consumer application.
 
 ## 🔗 Dependencies
 
