@@ -9,7 +9,6 @@ import com.jwebmp.core.base.angular.client.implementations.GuicedConfig;
 import com.jwebmp.core.base.angular.client.services.spi.*;
 
 module com.jwebmp.core.base.angular.client {
-    requires transitive com.guicedee.client;
     requires transitive com.jwebmp.client;
     //requires transitive com.jwebmp.core;
     //requires org.apache.commons.io;
@@ -17,8 +16,6 @@ module com.jwebmp.core.base.angular.client {
     requires transitive com.guicedee.guicedinjection;
 
     requires static lombok;
-    requires transitive com.guicedee.jsonrepresentation;
-    requires transitive org.apache.commons.lang3;
     requires transitive org.apache.commons.io;
     requires transitive jakarta.validation;
     requires transitive org.apache.logging.log4j.core;
