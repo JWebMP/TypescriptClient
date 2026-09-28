@@ -35,6 +35,8 @@ import java.util.List;
           private readonly reconnectDelay: number = 5000;
           private readonly maxReconnectDelay: number = 30000;
           private disconnected = false;
+          private serverConnectionId: string | null = null;
+          private secureSubscriptions = new Set<StompSubscription>();
         
           private registeredListeners = new Set<string>();
           private totalExpectedListeners = 0;
@@ -64,6 +66,8 @@ import java.util.List;
                       });
                       this.processQueuedMessages();
                   } else {
+                      this.serverConnectionId = null;
+                      this.secureSubscriptions.clear();
                       console.warn('[EventBusService] Connection lost. Waiting for reconnection...');
                       this.stompSubscriptions.clear();
                   }
@@ -248,12 +252,14 @@ import java.util.List;
                   heartbeatOutgoing: 10000,
                   heartbeatStrategy: TickerStrategy.Worker,
                   discardWebsocketOnCommFailure: true,
-                  onConnect: () => {
+                  onConnect: (frame) => {
                       if (this.disconnected) {
                           return;
                       }
                       // Subscription handles belong to the previous socket, even if no close was observed.
                       this.stompSubscriptions.clear();
+                      this.secureSubscriptions.clear();
+                      this.serverConnectionId = frame.headers['session'] || null;
                       this.pendingListeners = [];
                       this.connectionState$.next(true);
                   },
@@ -277,6 +283,37 @@ import java.util.List;
           public waitForListeners(totalListeners: number): void {
             this.totalExpectedListeners = totalListeners;
             this.checkAllListenersReady();
+          }
+
+          public connectionId(): string | null {
+              return this.stompClient?.connected ? this.serverConnectionId : null;
+          }
+
+          public connectionChanges(): Observable<boolean> {
+              return this.connectionState$.asObservable();
+          }
+
+          /** Capabilities are never queued or replayed after reconnect; obtain a new one for the new session. */
+          public subscribeSecure(destination: string, headers: Record<string, string>, onMessage: (message: any) => void): () => void {
+              const client = this.stompClient;
+              const connection = this.connectionId();
+              if (!client?.connected || !connection || this.secureSubscriptions.size >= 16) {
+                  throw new Error('Secure subscription unavailable');
+              }
+              if (!/^\\/[A-Za-z0-9_./:-]{1,255}$/.test(destination)) {
+                  throw new Error('Invalid subscription destination');
+              }
+              const subscription = client.subscribe(destination, message => {
+                  if (this.connectionId() === connection) {
+                      onMessage(JSON.parse(message.body));
+                  }
+              }, { ...headers, id: this.generateGUID(), ack: 'auto' });
+              this.secureSubscriptions.add(subscription);
+              return () => {
+                  if (this.secureSubscriptions.delete(subscription) && client.connected && this.connectionId() === connection) {
+                      subscription.unsubscribe();
+                  }
+              };
           }
         
         

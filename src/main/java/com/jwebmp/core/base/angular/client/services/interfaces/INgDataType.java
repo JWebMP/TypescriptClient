@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Strings;
 import com.guicedee.client.IGuiceContext;
 import com.guicedee.modules.services.jsonrepresentation.IJsonRepresentation;
+import com.guicedee.modules.services.jsonrepresentation.JsonRenderException;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgDataType;
 import com.jwebmp.core.base.angular.client.annotations.references.NgComponentReference;
 import com.jwebmp.core.base.angular.client.annotations.references.NgImportReference;
@@ -30,6 +31,9 @@ import java.util.function.IntFunction;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.ObjectMapper;
 
 import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getNgComponentReference;
 import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getNgImportReference;
@@ -40,9 +44,74 @@ public interface INgDataType<J extends INgDataType<J>>
         extends IComponent<J>, IJsonRepresentation<J>
 {
     @Override
+    default String toJson(boolean tiny)
+    {
+        if (!getClass().isRecord()) return IJsonRepresentation.super.toJson(tiny);
+        try
+        {
+            var mapper = IJsonRepresentation.configureObjectMapper(new ObjectMapper());
+            var writer = tiny ? mapper.writer().without(SerializationFeature.INDENT_OUTPUT) : mapper.writerWithDefaultPrettyPrinter();
+            return writer.writeValueAsString(RecordDataTypeSupport.jsonValue(this));
+        }
+        catch (JacksonException e)
+        {
+            throw new JsonRenderException("Unable to serialize record as JSON", e);
+        }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    default J fromJson(String json)
+    {
+        if (!getClass().isRecord()) return IJsonRepresentation.super.fromJson(json);
+        try
+        {
+            return (J) IJsonRepresentation.configureObjectMapper(new ObjectMapper()).readValue(json, getClass());
+        }
+        catch (JacksonException e)
+        {
+            throw new JsonRenderException("Unable to deserialize record from JSON", e);
+        }
+    }
+    @Override
+    default StringBuilder renderClassBody()
+    {
+        if (getClass().isRecord())
+        {
+            return new StringBuilder("{\n").append(renderFields()).append("}\n");
+        }
+        return IComponent.super.renderClassBody();
+    }
+
+    @Override
+    default StringBuilder renderClassDefinition()
+    {
+        if (getClass().isRecord() && typeClass() != NgDataType.DataTypeClass.Interface &&
+                typeClass() != NgDataType.DataTypeClass.Class)
+        {
+            throw new IllegalArgumentException("Record data types require Interface or Class mode: " + getClass().getName());
+        }
+        StringBuilder definition = IComponent.super.renderClassDefinition();
+        if (getClass().isRecord() && getClass().getTypeParameters().length > 0)
+        {
+            String name = getTsFilename(getClass());
+            String parameters = Arrays.stream(getClass().getTypeParameters())
+                    .map(Type::getTypeName)
+                    .collect(java.util.stream.Collectors.joining(", ", "<", ">"));
+            int index = definition.indexOf(name + "\n");
+            if (index >= 0) definition.replace(index, index + name.length(), name + parameters);
+        }
+        return definition;
+    }
+
+    @Override
     default List<NgImportReference> getAllImportAnnotations()
     {
         List<NgImportReference> out = IComponent.super.getAllImportAnnotations();
+        if (getClass().isRecord())
+        {
+            RecordDataTypeSupport.correctImports(out, getClass());
+        }
         if (isInjectableDataType())
         {
             out.add(getNgImportReference("Injectable", "@angular/core"));
@@ -99,6 +168,15 @@ public interface INgDataType<J extends INgDataType<J>>
         }
         StringBuilder sb = new StringBuilder();
         Class<?> clazz = getClass();
+        if (clazz.isRecord())
+        {
+            for (var component : clazz.getRecordComponents())
+            {
+                RecordDataTypeSupport.render(sb, component, typeClass());
+            }
+            fields.add(sb.toString());
+            return fields;
+        }
         while (!clazz.equals(Object.class))
         {
             renderClassFields(sb, clazz);
@@ -491,6 +569,10 @@ public interface INgDataType<J extends INgDataType<J>>
 
     static StringBuilder renderObjectStructure(Class<?> o)
     {
+        if (o.isRecord())
+        {
+            return RecordDataTypeSupport.objectStructure(o);
+        }
         StringBuilder out = new StringBuilder();
         out.append("{");
         for (Field declaredField : o.getDeclaredFields())
@@ -607,6 +689,14 @@ public interface INgDataType<J extends INgDataType<J>>
     private List<NgComponentReference> renderFieldReferences(Class<?> clazz)
     {
         List<NgComponentReference> out = IComponent.super.getComponentReferences();
+        if (clazz.isRecord())
+        {
+            for (var component : clazz.getRecordComponents())
+            {
+                RecordDataTypeSupport.references(out, component.getGenericType());
+            }
+            return out;
+        }
         for (Field declaredField : clazz.getDeclaredFields())
         {
             out.addAll(renderFieldReference(declaredField.getName(), declaredField.getType(), declaredField, false));
