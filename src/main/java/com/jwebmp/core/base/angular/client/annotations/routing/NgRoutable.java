@@ -46,4 +46,16 @@ public @interface NgRoutable
 	 * @return true if this is the default route
 	 */
 	boolean isDefault() default false;
+
+	/**
+	 * Loads this route's component on demand with {@code loadComponent: () => import(...)}
+	 * instead of importing it statically into the routing module, so the Angular builder
+	 * emits it (and dependencies only it uses) as a separate lazy chunk.
+	 * <p>
+	 * The chunk is only split out when no other generated file imports the component
+	 * statically. Keep the default (first-paint) route eager.
+	 *
+	 * @return true to lazy-load this route's component
+	 */
+	boolean lazy() default false;
 }

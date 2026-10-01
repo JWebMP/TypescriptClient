@@ -1,6 +1,6 @@
 // First run mvn test -Dtest=LocaleServiceRenderingTest.
 // Install Angular 21, TypeScript 5.9, RxJS 7, @jsverse/transloco@8.4.0 and
-// @jsverse/transloco-messageformat@8.4.0 into target/locale-runtime, then run this file.
+// intl-messageformat@12.1.2 into target/locale-runtime, then run this file.
 import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync, mkdirSync, copyFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
@@ -14,7 +14,7 @@ const {Injector, LOCALE_ID, inject} = await load('@angular/core');
 const {registerLocaleData} = await load('@angular/common');
 const {HttpClient} = await load('@angular/common/http');
 const {TranslocoService, provideTransloco} = await load('@jsverse/transloco');
-const {provideTranslocoMessageformat} = await load('@jsverse/transloco-messageformat');
+const {TRANSLOCO_TRANSPILER} = await load('@jsverse/transloco');
 const {of, throwError, Subject} = await load('rxjs');
 registerLocaleData((await load('@angular/common/locales/en-ZA')).default, 'en-ZA');
 registerLocaleData((await load('@angular/common/locales/de')).default, 'de');
@@ -40,6 +40,15 @@ for (const file of files) {
 }
 const {LocaleService} = await import(new URL('generated/LocaleService/LocaleService.mjs', directory).href);
 const {TranslationService} = await import(new URL('generated/TranslationService/TranslationService.mjs', directory).href);
+const transpilerSource = readFileSync(new URL('../../../../angular/target/translation-integration/messageformat-transpiler.ts', import.meta.url), 'utf8');
+const transpilerFile = new URL('messageformat-transpiler.ts', directory);
+writeFileSync(transpilerFile, transpilerSource);
+const transpilerDiagnostics = ts.getPreEmitDiagnostics(ts.createProgram([fileURLToPath(transpilerFile)], options));
+assert.equal(transpilerDiagnostics.length, 0, ts.formatDiagnosticsWithColorAndContext(transpilerDiagnostics, {
+    getCurrentDirectory: () => process.cwd(), getCanonicalFileName: f => f, getNewLine: () => '\n'
+}));
+writeFileSync(new URL('messageformat-transpiler.mjs', directory), ts.transpileModule(transpilerSource, {compilerOptions: options}).outputText);
+const {JWebMPMessageFormatTranspiler} = await import(new URL('messageformat-transpiler.mjs', directory).href);
 const defaults = {
     defaultLanguage: 'en', languages: ['en', 'de', 'fr'], namespaces: ['orders'],
     bundleUrl: '/bundles/{language}.json', timeoutMs: 1000, sources: []
@@ -56,7 +65,7 @@ function app(config = {}, responses = {}) {
     const injector = Injector.create({providers: [
         {provide: LOCALE_ID, useValue: 'en-ZA'},
         provideTransloco({config: {defaultLang: 'en', availableLangs: ['en', 'de', 'fr'], reRenderOnLangChange: true}}),
-        provideTranslocoMessageformat(), TranslocoService,
+        {provide: TRANSLOCO_TRANSPILER, useFactory: () => new JWebMPMessageFormatTranspiler()}, TranslocoService,
         {provide: 'JWEBMP_TRANSLATIONS', useValue: {...defaults, ...config}},
         {provide: HttpClient, useValue: {get(url) {
             calls.push(url);
@@ -74,6 +83,28 @@ const first = app();
 assert.equal(await first.service.initialize(), true);
 assert.equal(first.engine.translate('orders.welcome', {name: 'Marc'}), 'Hello Marc');
 assert.equal(first.engine.translate('orders.count', {count: 2}), '2 items');
+// Block both string-to-code entry points while interpreting real ICU dictionaries.
+const originalFunction = globalThis.Function;
+const originalEval = globalThis.eval;
+try {
+    globalThis.Function = function () { throw new EvalError('CSP forbids Function'); };
+    globalThis.eval = function () { throw new EvalError('CSP forbids eval'); };
+    first.service.applyTranslations('en', 'orders', {
+        mixed: '{{name}} has {count, plural, one {# item} other {# items}}',
+        select: '{gender, select, female {She} other {They}} saved {count, number} items',
+        literal: "Don't interpret <b>markup</b>",
+        count: '{count, plural, one {# item} other {# items}}'
+    });
+    assert.equal(first.engine.translate('orders.mixed', {name: '{secret}', count: 2}), '{secret} has 2 items');
+    assert.equal(first.engine.translate('orders.mixed', {name: 'Marc', count: 1}), 'Marc has 1 item');
+    assert.equal(first.engine.translate('orders.select', {gender: 'female', count: 3}), 'She saved 3 items');
+    assert.equal(first.engine.translate('orders.literal'), "Don't interpret <b>markup</b>");
+    assert.equal(first.engine.translate('orders.count', {count: 2}), '2 items');
+} finally {
+    globalThis.Function = originalFunction;
+    globalThis.eval = originalEval;
+    first.service.clearContext();
+}
 assert.equal(await first.service.setLanguage('de'), true);
 assert.equal(first.engine.translate('orders.save'), 'Speichern');
 assert.equal(first.engine.translate('orders.cancel'), 'Cancel');
