@@ -4,14 +4,22 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class EventBusSecureSubscriptionRenderingTest {
-    @Test void exposesActualSessionAndNeverQueuesCapabilitiesForReconnect() {
+    @Test void exposesActualSessionAndNeverQueuesCapabilitiesForReconnect() throws Exception {
         var directory = com.jwebmp.core.base.angular.client.services.interfaces.IComponent.getCurrentAppFile();
         var previous = directory.get();
+        var globals = AnnotationHelper.instance.getGlobalAnnotations(
+                com.jwebmp.core.base.angular.client.annotations.globals.NgGlobalConstructorParameter.class);
+        var saved = new java.util.ArrayList<>(globals);
         String output;
         try {
+            globals.clear();
             directory.set(java.nio.file.Path.of("target", "eventbus-runtime").toFile());
             output = new EventBusService().renderClassTs().toString();
-        } finally { directory.set(previous); }
+            var root = java.nio.file.Path.of("target", "eventbus-runtime");
+            java.nio.file.Files.createDirectories(root);
+            java.nio.file.Files.writeString(root.resolve("EventBusService.ts"), output);
+            java.nio.file.Files.writeString(root.resolve("ContextIdService.ts"), new ContextIdService().renderClassTs().toString());
+        } finally { globals.addAll(saved); directory.set(previous); }
         assertTrue(output.contains("public connectionId(): string | null"));
         assertTrue(output.contains("public connectionChanges(): Observable<boolean>"));
         assertTrue(output.contains("this.serverConnectionId = frame.headers['session'] || null"));

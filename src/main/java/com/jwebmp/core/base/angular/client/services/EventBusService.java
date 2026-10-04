@@ -412,7 +412,7 @@ import java.util.List;
                   // A close event can lag behind the actual socket state.
                   if (!this.connectionState$.value || !this.stompClient?.connected) {
                       console.warn('[EventBus] Connection is not ready. Message queued.');
-                      this.messageQueue.push(message);
+                      this.enqueueMessage(message);
                       return;
                   }
         
@@ -422,7 +422,7 @@ import java.util.List;
         
               private sendMessageNow(message: { action: string; data: object; eventType: string; event?: any; component?: ElementRef<any> }) {
                   if (!this.stompClient?.connected) {
-                      this.messageQueue.push(message);
+                      this.enqueueMessage(message);
                       return;
                   }
                   const news: any = {};
@@ -474,6 +474,11 @@ import java.util.List;
                   }
               }
         
+              private enqueueMessage(message: { action: string; data: object; eventType: string; event?: any; component?: ElementRef<any> }): void {
+                  if (this.messageQueue.length >= 256) throw new Error('Event bus offline queue capacity reached');
+                  this.messageQueue.push(message);
+              }
+
               private processQueuedMessages(): void {
                   while (this.messageQueue.length > 0 && this.connectionState$.value && this.stompClient?.connected) {
                       const message = this.messageQueue.shift(); // Remove the first message from the queue
