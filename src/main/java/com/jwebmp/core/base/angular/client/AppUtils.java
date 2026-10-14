@@ -1,5 +1,7 @@
 package com.jwebmp.core.base.angular.client;
 
+import com.guicedee.client.utils.ClassLoading;
+
 import com.guicedee.client.IGuiceContext;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgApp;
 import com.jwebmp.core.base.angular.client.services.interfaces.INgApp;
@@ -58,12 +60,11 @@ public class AppUtils {
             String userDir = getSystemPropertyOrEnvironment("jwebmp", new File(System.getProperty("user.home"))
                     .getPath());
             // todo find the @NgApp and add as a subdirectory in AppUtils, the name of the app must be before the /webroot/
-            var ngApp = IGuiceContext
+            var ngApp = ClassLoading.loadClass(IGuiceContext
                     .instance()
                     .getScanResult()
                     .getClassesWithAnnotation(NgApp.class)
-                    .get(0)
-                    .loadClass()
+                    .get(0))
                     .getAnnotation(NgApp.class);
             ;
             userDir = userDir + "/.jwebmp/" + ngApp.value();
@@ -790,13 +791,13 @@ public class AppUtils {
                 .getScanResult();
         Set<Class<?>> classes = new HashSet<>();
         if (a.isInterface() || a.isAbstract()) {
-            for (ClassInfo subclass : !a.isInterface() ? scan.getSubclasses(a.loadClass()) : scan.getClassesImplementing(a.loadClass())) {
+            for (ClassInfo subclass : !a.isInterface() ? scan.getAllSubclasses(ClassLoading.loadClass(a)) : scan.getAllClassesImplementing(ClassLoading.loadClass(a))) {
                 if (!subclass.isAbstract() && !subclass.isInterface()) {
-                    classes.add(subclass.loadClass());
+                    classes.add(ClassLoading.loadClass(subclass));
                 }
             }
         } else {
-            Class<?> aClass = a.loadClass();
+            Class<?> aClass = ClassLoading.loadClass(a);
             classes.add(aClass);
         }
         return classes;

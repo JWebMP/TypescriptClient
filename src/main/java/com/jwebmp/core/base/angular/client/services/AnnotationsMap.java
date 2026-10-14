@@ -1,5 +1,7 @@
 package com.jwebmp.core.base.angular.client.services;
 
+import com.guicedee.client.utils.ClassLoading;
+
 import com.guicedee.client.IGuiceContext;
 import com.jwebmp.core.base.angular.client.annotations.angular.*;
 import com.jwebmp.core.base.angular.client.annotations.angularconfig.*;
@@ -198,7 +200,7 @@ public class AnnotationsMap
             for (ClassInfo allClass : scanResult
                     .getClassesWithAnnotation(annotation))
             {
-                allAffectedClasses.add(allClass.loadClass());
+                allAffectedClasses.add(ClassLoading.loadClass(allClass));
             }
         }
         for (Class<? extends Annotation> annotation : ngAllMultiples.values())
@@ -206,7 +208,7 @@ public class AnnotationsMap
             for (ClassInfo allClass : scanResult
                     .getClassesWithAnnotation(annotation))
             {
-                allAffectedClasses.add(allClass.loadClass());
+                allAffectedClasses.add(ClassLoading.loadClass(allClass));
             }
         }
         return allAffectedClasses;

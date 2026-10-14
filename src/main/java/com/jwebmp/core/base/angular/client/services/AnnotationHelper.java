@@ -1,5 +1,7 @@
 package com.jwebmp.core.base.angular.client.services;
 
+import com.guicedee.client.utils.ClassLoading;
+
 import com.google.inject.Singleton;
 import com.guicedee.client.IGuiceContext;
 import com.guicedee.guicedinjection.GuiceContext;
@@ -53,7 +55,7 @@ public class AnnotationHelper
             ClassInfoList classesWithAnnotationMultiple = scanResult.getClassesWithAnnotation(value);
             for (ClassInfo classInfo : classesWithAnnotationMultiple)
             {
-                for (Annotation listOfAnnotation : getListOfAnnotations(classInfo.loadClass(), key, value))
+                for (Annotation listOfAnnotation : getListOfAnnotations(ClassLoading.loadClass(classInfo), key, value))
                 {
                     if (listOfAnnotation != null)
                     {
@@ -63,7 +65,7 @@ public class AnnotationHelper
             }
             for (ClassInfo classInfo : classesWithAnnotation)
             {
-                Annotation annotation = classInfo.loadClass()
+                Annotation annotation = ClassLoading.loadClass(classInfo)
                                                  .getAnnotation(key);
                 if (annotation != null)
                 {
