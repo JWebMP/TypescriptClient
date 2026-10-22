@@ -59,7 +59,7 @@ import java.util.List;
               .pipe(takeUntil(this.destroy$))
               .subscribe((isConnected) => {
                   if (isConnected) {
-                      console.log('[EventBusService] Connection restored. Re-registering all listeners...');
+                     // console.log('[EventBusService] Connection restored. Re-registering all listeners...');
                       // Requeue all existing listeners
                       this.messageSubjects.forEach((_, address) => {
                           this.queueListener(address);
@@ -170,7 +170,7 @@ import java.util.List;
         
                           // Store the subscription for later unsubscribe
                           this.stompSubscriptions.set(addressKey, subscription);
-                          console.log(`[EventBusService] Listener registered for address: "${address}"`);
+                          //console.log(`[EventBusService] Listener registered for address: "${address}"`);
                       }
         
                       // Ensure private subscriptions for both GUID and current ContextId
@@ -648,7 +648,7 @@ import java.util.List;
                           // Remove this specific handler
                           listeners!.get(handlerId)!.complete(); // Notify subscribers of closure
                           listeners!.delete(handlerId);
-                          console.log(`[EventBusService] Unregistered handler ID "${handlerId}" for address: "${normalizedAddress}"`);
+                          //console.log(`[EventBusService] Unregistered handler ID "${handlerId}" for address: "${normalizedAddress}"`);
         
                           // If no listeners remain for this address, clean up
                           if (listeners!.size === 0) {
@@ -679,7 +679,7 @@ import java.util.List;
                                       this.stompSubscriptions.delete(privateKey);
                                   }
                               });
-                              console.log(`[EventBusService] All handlers removed for address: "${normalizedAddress}"`);
+                              //console.log(`[EventBusService] All handlers removed for address: "${normalizedAddress}"`);
                           }
                       } else {
                           console.warn(`[EventBusService] No handler found with ID "${handlerId}" for address: "${normalizedAddress}"`);
