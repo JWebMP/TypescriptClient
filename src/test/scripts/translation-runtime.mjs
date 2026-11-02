@@ -1,5 +1,5 @@
 // First run mvn test -Dtest=LocaleServiceRenderingTest.
-// Install Angular 21, TypeScript 5.9, RxJS 7, @jsverse/transloco@8.4.0 and
+// Install Angular 22, TypeScript 6.0, RxJS 7, @jsverse/transloco@8.4.0 and
 // intl-messageformat@12.1.2 into target/locale-runtime, then run this file.
 import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync, mkdirSync, copyFileSync} from 'node:fs';

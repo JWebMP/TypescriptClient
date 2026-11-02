@@ -592,6 +592,7 @@ public interface AnnotationUtils
         private String value;
         private String providedIn;
         private boolean standalone = true;
+        private ChangeDetection changeDetection = ChangeDetection.EAGER;
 
         @Override
         public String value()
@@ -612,6 +613,12 @@ public interface AnnotationUtils
         }
 
         @Override
+        public ChangeDetection changeDetection()
+        {
+            return changeDetection;
+        }
+
+        @Override
         public Class<? extends Annotation> annotationType()
         {
             return NgComponent.class;
@@ -625,13 +632,13 @@ public interface AnnotationUtils
                 return false;
             }
             MyNgComponent that = (MyNgComponent) o;
-            return isStandalone() == that.isStandalone() && Objects.equals(getValue(), that.getValue()) && Objects.equals(getProvidedIn(), that.getProvidedIn());
+            return isStandalone() == that.isStandalone() && getChangeDetection() == that.getChangeDetection() && Objects.equals(getValue(), that.getValue()) && Objects.equals(getProvidedIn(), that.getProvidedIn());
         }
 
         @Override
         public int hashCode()
         {
-            return Objects.hash(getValue(), getProvidedIn(), isStandalone());
+            return Objects.hash(getValue(), getProvidedIn(), isStandalone(), getChangeDetection());
         }
     }
 

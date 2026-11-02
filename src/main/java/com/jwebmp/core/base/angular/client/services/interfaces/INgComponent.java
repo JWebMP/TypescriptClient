@@ -19,6 +19,7 @@ import java.util.Set;
 import static com.jwebmp.core.base.angular.client.services.interfaces.AnnotationUtils.getTsFilename;
 
 @NgImportReference(value = "Component", reference = "@angular/core")
+@NgImportReference(value = "ChangeDetectionStrategy", reference = "@angular/core")
 public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBase<?, J>> extends IComponent<J> {
     String componentString = """
             @Component({
@@ -30,6 +31,7 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
             \tanimations:[%s],
             \tproviders:[%s],
             \tpreserveWhitespaces:true,
+            \tchangeDetection:ChangeDetectionStrategy.%s,
             \thost:%s
             })""";
 
@@ -44,6 +46,7 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
             \tproviders:[%s],
             \tschemas:[%s],
             \tpreserveWhitespaces:true,
+            \tchangeDetection:ChangeDetectionStrategy.%s,
             \thost:%s,
             \timports:[%s],
             \tstandalone:%b
@@ -138,6 +141,11 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
             importsModules = renderImportModules();
         }
 
+        var strategy = changeDetectionOverride();
+        if (strategy == null) {
+            strategy = ngComponent.changeDetection();
+        }
+
         String componentString;
         if (!standalone) {
             componentString = String.format(INgComponent.componentString,
@@ -148,6 +156,7 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
                                             "", //viewProviders
                                             "", //Animations
                                             providers, //Directive Providers,
+                                            strategy.angularName(),
                                             hosts //hosts entry
             );
         } else {
@@ -160,6 +169,7 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
                                             "", //Animations
                                             providers, //Directive Providers,
                                             "", //schemas
+                                            strategy.angularName(),
                                             hosts, //hosts entry
                                             importsModules,
                                             standalone);
@@ -203,6 +213,11 @@ public interface INgComponent<J extends INgComponent<J> & IComponentHierarchyBas
     }
 
     default Boolean standaloneOverride() {
+        return null;
+    }
+
+    /** Overrides the annotation's change-detection strategy when non-null. */
+    default NgComponent.ChangeDetection changeDetectionOverride() {
         return null;
     }
 

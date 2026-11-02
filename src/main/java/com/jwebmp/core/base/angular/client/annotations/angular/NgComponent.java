@@ -25,4 +25,24 @@ public @interface NgComponent
      * @return If the component must render as a standalone component
      */
     boolean standalone() default true;
+
+    /** Change detection for the generated component; EAGER preserves pre-Angular 22 behavior. */
+    ChangeDetection changeDetection() default ChangeDetection.EAGER;
+
+    enum ChangeDetection
+    {
+        EAGER("Eager"), ON_PUSH("OnPush");
+
+        private final String angularName;
+
+        ChangeDetection(String angularName)
+        {
+            this.angularName = angularName;
+        }
+
+        public String angularName()
+        {
+            return angularName;
+        }
+    }
 }
