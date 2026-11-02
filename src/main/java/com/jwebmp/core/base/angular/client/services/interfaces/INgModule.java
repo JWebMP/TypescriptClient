@@ -6,26 +6,28 @@ import com.jwebmp.core.base.angular.client.annotations.references.NgImportRefere
 import com.jwebmp.core.base.angular.client.annotations.typescript.TsDependency;
 import com.jwebmp.core.base.angular.client.annotations.typescript.TsDevDependency;
 
+import static com.jwebmp.core.base.angular.client.annotations.angular.AngularToolchainVersions.*;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@TsDependency(value = "@angular/common", version = "^22.0.0")
-@TsDependency(value = "@angular/core", version = "^22.0.0")
-@TsDependency(value = "@angular/forms", version = "^22.0.0")
-@TsDependency(value = "@angular/animations", version = "^22.0.0")
-@TsDependency(value = "@angular/platform-browser", version = "^22.0.0")
+@TsDependency(value = "@angular/common", version = ANGULAR)
+@TsDependency(value = "@angular/core", version = ANGULAR)
+@TsDependency(value = "@angular/forms", version = ANGULAR)
+@TsDependency(value = "@angular/animations", version = ANGULAR)
+@TsDependency(value = "@angular/platform-browser", version = ANGULAR)
 
 @TsDependency(value = "uuid", version = "^11.1.0")
 
 @TsDependency(value = "@stomp/stompjs", version = "^7.2.1")
 
-@TsDevDependency(value = "@angular/build", version = "^22.0.0")
-@TsDevDependency(value = "@angular/cli", version = "^22.0.0")
-@TsDevDependency(value = "@angular/compiler-cli", version = "^22.0.0")
+@TsDevDependency(value = "@angular/build", version = ANGULAR)
+@TsDevDependency(value = "@angular/cli", version = ANGULAR)
+@TsDevDependency(value = "@angular/compiler-cli", version = ANGULAR)
 @TsDevDependency(value = "@eslint/js", version = "^9.0.0")
 @TsDevDependency(value = "@types/jasmine", version = "~5.1.0")
-@TsDevDependency(value = "angular-eslint", version = "^22.0.0")
+@TsDevDependency(value = "angular-eslint", version = ANGULAR)
 @TsDevDependency(value = "eslint", version = "^9.0.0")
 @TsDevDependency(value = "jasmine-core", version = "~5.6.0")
 @TsDevDependency(value = "istanbul-lib-instrument", version = "^6.0.0")
@@ -34,10 +36,10 @@ import java.util.List;
 @TsDevDependency(value = "karma-coverage", version = "~2.2.0")
 @TsDevDependency(value = "karma-jasmine", version = "~5.1.0")
 @TsDevDependency(value = "karma-jasmine-html-reporter", version = "~2.1.0")
-@TsDevDependency(value = "ng-packagr", version = "^22.0.0")
+@TsDevDependency(value = "ng-packagr", version = ANGULAR)
 @TsDevDependency(value = "rxjs", version = "~7.8.0")
 @TsDevDependency(value = "tslib", version = "^2.3.0")
-@TsDevDependency(value = "typescript", version = "~6.0.0")
+@TsDevDependency(value = "typescript", version = TYPESCRIPT)
 @TsDevDependency(value = "typescript-eslint", version = "8.72.1")
 @TsDevDependency(value = "zone.js", version = "~0.15.0")
 

@@ -24,6 +24,9 @@ public @interface NgApp
 
     String value();
 
+    /** Application-only tooling omits framework-provided test/lint/library scaffolding. */
+    boolean applicationOnly() default false;
+
     /**
      * Overrides for angular.json's build.configurations.production.
      */
