@@ -22,8 +22,8 @@ import java.util.List;
 
 @TsDependency(value = "@stomp/stompjs", version = "^7.2.1")
 
-@TsDevDependency(value = "@angular/build", version = ANGULAR)
-@TsDevDependency(value = "@angular/cli", version = ANGULAR)
+@TsDevDependency(value = "@angular/build", version = BUILD)
+@TsDevDependency(value = "@angular/cli", version = BUILD)
 @TsDevDependency(value = "@angular/compiler-cli", version = ANGULAR)
 @TsDevDependency(value = "@eslint/js", version = "^9.0.0")
 @TsDevDependency(value = "@types/jasmine", version = "~5.1.0")
