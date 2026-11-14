@@ -73,6 +73,9 @@ public class AnnotationHelper
                 }
             }
 
+            Set<String> scannedClasses = new HashSet<>(classesWithAnnotation.getNames());
+            scannedClasses.addAll(classesWithAnnotationMultiple.getNames());
+            globals.addAll(PageConfiguratorAnnotations.unscanned(key, scannedClasses));
             globalAnnotations.put(key, globals);
         });
     }
