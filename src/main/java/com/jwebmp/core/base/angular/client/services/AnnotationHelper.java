@@ -1,12 +1,8 @@
 package com.jwebmp.core.base.angular.client.services;
 
 import com.guicedee.client.utils.ClassLoading;
-
-import com.google.inject.Singleton;
-import com.guicedee.client.IGuiceContext;
+import com.guicedee.client.utils.Discovery;
 import com.guicedee.guicedinjection.GuiceContext;
-import io.github.classgraph.ClassInfo;
-import io.github.classgraph.ClassInfoList;
 import io.github.classgraph.ScanResult;
 import lombok.extern.java.Log;
 
@@ -45,39 +41,42 @@ public class AnnotationHelper
             annotationsListing.add(annotation);
         }
         globalAnnotations = new HashMap<>();
+        ScanResult scan = Discovery.isSpiOnly() ? null : GuiceContext.instance().getScanResult();
+        List<Class<?>> registered = scan == null
+                ? Discovery.registeredClasses().stream().sorted(Comparator.comparing(Class::getName)).toList()
+                : List.of();
         ngAllGlobals.forEach((key, value) -> {
-            ScanResult scanResult = GuiceContext.instance()
-                                                .getScanResult();
             List<Annotation> globals = new ArrayList<>();
+            Set<String> discoveredClasses = new HashSet<>();
 
-            ClassInfoList classesWithAnnotation = scanResult.getClassesWithAnnotation(key);
-
-            ClassInfoList classesWithAnnotationMultiple = scanResult.getClassesWithAnnotation(value);
-            for (ClassInfo classInfo : classesWithAnnotationMultiple)
+            for (Class<?> type : classesWithAnnotation(scan, registered, value))
             {
-                for (Annotation listOfAnnotation : getListOfAnnotations(ClassLoading.loadClass(classInfo), key, value))
-                {
-                    if (listOfAnnotation != null)
-                    {
-                        globals.add(listOfAnnotation);
-                    }
-                }
+                globals.addAll(getListOfAnnotations(type, key, value));
+                discoveredClasses.add(type.getName());
             }
-            for (ClassInfo classInfo : classesWithAnnotation)
+            for (Class<?> type : classesWithAnnotation(scan, registered, key))
             {
-                Annotation annotation = ClassLoading.loadClass(classInfo)
-                                                 .getAnnotation(key);
+                Annotation annotation = type.getAnnotation(key);
                 if (annotation != null)
                 {
                     globals.add(annotation);
                 }
+                discoveredClasses.add(type.getName());
             }
 
-            Set<String> scannedClasses = new HashSet<>(classesWithAnnotation.getNames());
-            scannedClasses.addAll(classesWithAnnotationMultiple.getNames());
-            globals.addAll(PageConfiguratorAnnotations.unscanned(key, scannedClasses));
+            globals.addAll(PageConfiguratorAnnotations.unscanned(key, discoveredClasses));
             globalAnnotations.put(key, globals);
         });
+    }
+
+    private static List<Class<?>> classesWithAnnotation(ScanResult scan, List<Class<?>> registered,
+                                                        Class<? extends Annotation> annotation)
+    {
+        if (scan != null)
+        {
+            return ClassLoading.loadClasses(scan.getClassesWithAnnotation(annotation));
+        }
+        return registered.stream().filter(type -> type.isAnnotationPresent(annotation)).toList();
     }
 
     public <T> List<T> getGlobalAnnotations(Class<T> annotationClass)

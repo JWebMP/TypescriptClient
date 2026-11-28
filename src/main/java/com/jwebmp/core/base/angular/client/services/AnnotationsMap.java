@@ -1,8 +1,7 @@
 package com.jwebmp.core.base.angular.client.services;
 
 import com.guicedee.client.utils.ClassLoading;
-
-import com.guicedee.client.IGuiceContext;
+import com.guicedee.client.utils.Discovery;
 import com.jwebmp.core.base.angular.client.annotations.angular.*;
 import com.jwebmp.core.base.angular.client.annotations.angularconfig.*;
 import com.jwebmp.core.base.angular.client.annotations.boot.*;
@@ -193,8 +192,20 @@ public class AnnotationsMap
     public static Set<Class<?>> loadAllClasses()
     {
         Set<Class<?>> allAffectedClasses = new HashSet<>();
-        ScanResult scanResult = IGuiceContext.instance()
-                                             .getScanResult();
+        ScanResult scanResult = Discovery.scanResult();
+        if (scanResult == null)
+        {
+            Set<Class<? extends Annotation>> relevantAnnotations = new HashSet<>(annotations);
+            relevantAnnotations.addAll(ngAllMultiples.values());
+            for (Class<?> type : Discovery.registeredClasses())
+            {
+                if (Arrays.stream(type.getAnnotations()).anyMatch(a -> relevantAnnotations.contains(a.annotationType())))
+                {
+                    allAffectedClasses.add(type);
+                }
+            }
+            return allAffectedClasses;
+        }
         for (Class<? extends Annotation> annotation : annotations)
         {
             for (ClassInfo allClass : scanResult

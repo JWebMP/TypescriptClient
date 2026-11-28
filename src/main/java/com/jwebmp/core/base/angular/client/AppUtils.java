@@ -1,6 +1,7 @@
 package com.jwebmp.core.base.angular.client;
 
 import com.guicedee.client.utils.ClassLoading;
+import com.guicedee.client.utils.Discovery;
 
 import com.guicedee.client.IGuiceContext;
 import com.jwebmp.core.base.angular.client.annotations.angular.NgApp;
@@ -59,15 +60,15 @@ public class AppUtils {
             useOutputDirectoryOverride = false;
             String userDir = getSystemPropertyOrEnvironment("jwebmp", new File(System.getProperty("user.home"))
                     .getPath());
-            // todo find the @NgApp and add as a subdirectory in AppUtils, the name of the app must be before the /webroot/
-            var ngApp = ClassLoading.loadClass(IGuiceContext
-                    .instance()
-                    .getScanResult()
-                    .getClassesWithAnnotation(NgApp.class)
-                    .get(0))
-                    .getAnnotation(NgApp.class);
-            ;
-            userDir = userDir + "/.jwebmp/" + ngApp.value();
+            // Preserve ClassGraph's first annotated class in scan mode and its name ordering in SPI mode.
+            var scan = Discovery.scanResult();
+            Class<?> appClass = scan != null
+                    ? ClassLoading.loadClass(scan.getClassesWithAnnotation(NgApp.class).get(0))
+                    : Discovery.annotatedClasses(NgApp.class).stream()
+                            .min(Comparator.comparing(Class::getName))
+                            .orElseThrow(() -> new IndexOutOfBoundsException(
+                                    "No @NgApp class is registered for the default output directory"));
+            userDir = userDir + "/.jwebmp/" + appClass.getAnnotation(NgApp.class).value();
 
             baseUserDirectory = new File(userDir.replaceAll("\\\\", "/"));
         }
